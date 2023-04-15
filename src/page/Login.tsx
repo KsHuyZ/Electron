@@ -9,6 +9,7 @@ import toastify from "../lib/toastify"
 const Login = () => {
 
   const [error, setError] = useState("")
+  const [loadings, setLoadings] = useState<boolean[]>([]);
 
   const navigate = useNavigate()
 
@@ -36,19 +37,40 @@ const Login = () => {
       setError("Tên đăng nhập và mật khẩu trống")
     } else {
       ipcRenderer.send("login-request", { username, password })
+      setLoadings((prevLoadings) => {
+        const newLoadings = [...prevLoadings];
+        newLoadings[0] = true;
+        return newLoadings;
+      });
+
     }
   }
 
   useEffect(() => {
     ipcRenderer.on('login-success', (event, data) => {
-      console.log(data.message); // "Hello from main process!"
+      setLoadings((prevLoadings) => {
+        const newLoadings = [...prevLoadings];
+        newLoadings[0] = false;
+        return newLoadings;
+      });
+      notifySuccess("Đăng nhập thành công")// "Hello from main process!"
       navigate("/home")
     });
 
     ipcRenderer.on('login-failed', (event, data) => {
+      setLoadings((prevLoadings) => {
+        const newLoadings = [...prevLoadings];
+        newLoadings[0] = false;
+        return newLoadings;
+      });
       console.log(data.message); // "Hello from main process!"
       setError("Thông tin đăng nhập không đúng")
     });
+
+    return () => {
+      ipcRenderer.off('login-sucess', () => console.log("ji"))
+      ipcRenderer.off('login-failed', () => console.log("ji"))
+    }
 
   }, [])
 
