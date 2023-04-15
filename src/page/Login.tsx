@@ -18,6 +18,7 @@ const Login = () => {
   const passwordInput = useRef<InputRef | null>(null);
   const userNameInput = useRef<InputRef | null>(null);
 
+
   const handleDownInput = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.code === "ArrowDown") {
       passwordInput.current!.focus()
@@ -46,33 +47,36 @@ const Login = () => {
     }
   }
 
-  useEffect(() => {
-    ipcRenderer.on('login-success', (event, data) => {
-      setLoadings((prevLoadings) => {
-        const newLoadings = [...prevLoadings];
-        newLoadings[0] = false;
-        return newLoadings;
-      });
-      notifySuccess("Đăng nhập thành công")// "Hello from main process!"
-      navigate("/home")
+  const handleLoginSucess = () => {
+    setLoadings((prevLoadings) => {
+      const newLoadings = [...prevLoadings];
+      newLoadings[0] = false;
+      return newLoadings;
     });
+    notifySuccess("Đăng nhập thành công")// "Hello from main process!"
+   navigate("/home")
+  }
 
-    ipcRenderer.on('login-failed', (event, data) => {
-      setLoadings((prevLoadings) => {
-        const newLoadings = [...prevLoadings];
-        newLoadings[0] = false;
-        return newLoadings;
-      });
-      console.log(data.message); // "Hello from main process!"
-      setError("Thông tin đăng nhập không đúng")
+  const handleLoginFailed = () => {
+    setLoadings((prevLoadings) => {
+      const newLoadings = [...prevLoadings];
+      newLoadings[0] = false;
+      return newLoadings;
     });
+    setError("Thông tin đăng nhập không đúng")
+  }
 
-    return () => {
-      ipcRenderer.off('login-sucess', () => console.log("ji"))
-      ipcRenderer.off('login-failed', () => console.log("ji"))
-    }
+    useEffect(() => {
+      ipcRenderer.on('login-success', handleLoginSucess);
 
-  }, [])
+      ipcRenderer.on('login-failed', handleLoginFailed);
+
+      return () => {
+        ipcRenderer.removeListener('login-success', handleLoginSucess)
+        ipcRenderer.removeListener('login-failed', handleLoginFailed)
+      }
+
+    }, [])
 
   const closeApp = () => {
     ipcRenderer.send('close', [])
