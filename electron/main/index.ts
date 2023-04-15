@@ -97,6 +97,8 @@ async function createWindow() {
   }
 
   const login = (data: {username: string, password: string}) => {
+    console.log(data);
+    
     const sql = `SELECT * FROM admin WHERE username = ? AND password = ?`;
     db.all(sql,[data.username, data.password], (err,rows)=> {
       if (err) {
@@ -104,7 +106,7 @@ async function createWindow() {
       }
      if(rows.length > 0) {
       const mainWindow = BrowserWindow.getFocusedWindow();
-      if (mainWindow) {
+      if (mainWindow) { 
         mainWindow.webContents.send('login-success', { message: 'Login-success' });
       }
      } else {
