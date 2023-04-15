@@ -4,16 +4,15 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Input, Button, InputRef } from 'antd';
 const { ipcRenderer } = window.require('electron');
 import { useNavigate } from 'react-router-dom';
+import toastify from "../lib/toastify"
 
 const Login = () => {
 
-  const [error, setError] = useState({
-    username: "",
-    password: "",
-    wrong: ""
-  })
+  const [error, setError] = useState("")
 
   const navigate = useNavigate()
+
+  const { notifySuccess } = toastify
 
   const passwordInput = useRef<InputRef | null>(null);
   const userNameInput = useRef<InputRef | null>(null);
@@ -34,20 +33,10 @@ const Login = () => {
     const username = userNameInput.current!.input!.value
     const password = passwordInput.current!.input!.value
     if (username === "" || password === "") {
-      if (username === "") {
-        setError(prev => ({ ...prev, userName: "Tên đăng nhập không được để trống" }))
-      }
-      if (password) {
-        setError(prev => ({ ...prev, password: "Mật khẩu không được để trống" }))
-      }
+      setError("Tên đăng nhập và mật khẩu trống")
+    } else {
+      ipcRenderer.send("login-request", { username, password })
     }
-    // else {
-    //   // login({ username, password })
-    //   setError(prev => ({ ...prev, wrong: "Thông tin đăng nhập không đúng" }))
-    // }
-    ipcRenderer.send("login-request", { username, password })
-
-
   }
 
   useEffect(() => {
@@ -58,13 +47,15 @@ const Login = () => {
 
     ipcRenderer.on('login-failed', (event, data) => {
       console.log(data.message); // "Hello from main process!"
-      setError(prev => ({ ...prev, wrong: "Thông tin đăng nhập không đúng" }))
+      setError("Thông tin đăng nhập không đúng")
     });
+
   }, [])
 
   const closeApp = () => {
     ipcRenderer.send('close', [])
   }
+
   return (
     <div className='login-form'>
       <form className="form">
@@ -75,11 +66,10 @@ const Login = () => {
           <div className="input">
             <Input size="large" placeholder="Tên đăng nhập" prefix={<UserOutlined />} onKeyDown={handleDownInput} ref={userNameInput} autoFocus />
           </div>
-          <div className="error">{error.username}</div>
+          <div className="error">{error}</div>
           <div className="input">
             <Input.Password placeholder="Mật khẩu" size="large" prefix={<LockOutlined />} onKeyDown={handleUpInput} ref={passwordInput} />
           </div>
-          <div className="error">{error.wrong.length > 0 ? error.wrong : error.password}</div>
         </div>
         <div className="submit-form">
           <div className="login">
