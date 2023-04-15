@@ -76,6 +76,9 @@ async function createWindow() {
 
   const createTable = () => {
     db.run("CREATE TABLE IF NOT EXISTS admin (ID INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(100) NOT NULL, password CHAR NOT NULL)")
+    db.run("CREATE TABLE IF NOT EXISTS itemsource (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, address VARCHAR(255), phonenumber VARCHAR(255))")
+    db.run("CREATE TABLE IF NOT EXISTS warehouse (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL)")
+    db.run("CREATE TABLE IF NOT EXISTS product (ID INTEGER PRIMARY KEY AUTOINCREMENT,  name VARCHAR(100) NOT NULL, unit VARCHAR(10) NOT NULL, quality INTEGER, numplan INTEGER, numreal INTEGER,price REAL)")
   }
 
   const createAdmin = () => {
@@ -116,7 +119,6 @@ async function createWindow() {
     })
   }
   ipcMain.on('login-request',(event,data:{username: string, password: string})=>{
-  
     login({username:data.username,password: data.password})
   })
   createTable() 
