@@ -1,0 +1,40 @@
+.login-form {
+  background-color: rgba(255, 255, 255, 0.54);
+  border-radius: 10px;
+  .form {
+    margin: 3vw;
+    .header {
+      .title {
+        color: #fff;
+      }
+    }
+    .form-input {
+      .input {
+        width: 20vw;
+        margin: 20px 0px;
+      }
+      .error {
+        height: 10px;
+        color: red;
+      }
+    }
+    .submit-form {
+      display: flex;
+      justify-content: space-around;
+      .login {
+        button {
+          font-weight: bold;
+          background-color: #00b96b;
+          &:hover {
+            border-color: #00b96b;
+          }
+        }
+      }
+      .exit {
+        span {
+          font-weight: bold;
+        }
+      }
+    }
+  }
+}
