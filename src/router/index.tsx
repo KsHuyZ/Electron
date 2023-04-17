@@ -5,6 +5,7 @@ import { FC } from "react";
 import MainDash from "@/components/MainDash/MainDash";
 import TableData from "@/components/TableData/TableData";
 import "../App.scss"
+import Warehouse from "@/components/Warehouse/Warehouse";
 
 const MainLayout: FC = () => {
   return (
@@ -26,7 +27,7 @@ export default createBrowserRouter([
     element: <MainLayout />,
     children: [
       {
-        element: <TableData />,
+        element: <Warehouse />,
         path: "/home"
       }
     ]

@@ -1,0 +1,16 @@
+.form-table {
+    display: flex;
+    flex-direction: column;
+    .header {
+      .add-data {
+        margin: 20px 0;
+        button {
+          background-color: #00b96b;
+          &:hover {
+            border-color: #00b96b;
+          }
+        }
+      }
+    }
+  }
+  

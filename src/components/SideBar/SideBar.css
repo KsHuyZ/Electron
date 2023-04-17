@@ -21,7 +21,7 @@
   height: 4%;
 }
 .logo > span > span {
-  color: var(--pink);
+  color: #71b280;
 }
 
 .logo > img {
@@ -59,14 +59,14 @@
 }
 
 .active {
-  background: var(--activeItem);
+  background: #71b280;
   margin-left: 0;
 }
 .active::before {
   content: "";
   width: 8px;
   height: 100%;
-  background: var(--pink);
+  background: #134e5e;
   margin-right: calc(1rem - 8px);
 }
 

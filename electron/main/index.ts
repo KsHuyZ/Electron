@@ -66,7 +66,7 @@ async function createWindow() {
     resizable: false
   })
   win.maximize();
-  // win.setMenuBarVisibility(false)
+  win.setMenuBarVisibility(false)
   db = new sqlite3.Database("./inventory.sqlite", (err)=>{
     if(err) {
       console.log(err.message)
@@ -76,10 +76,11 @@ async function createWindow() {
 
   const createTable = () => {
     db.run("CREATE TABLE IF NOT EXISTS admin (ID INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(100) NOT NULL, password CHAR NOT NULL)")
-    db.run("CREATE TABLE IF NOT EXISTS itemsource (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, address VARCHAR(255), phonenumber VARCHAR(255))")
+    db.run("CREATE TABLE IF NOT EXISTS itemsource (ID INTEGER PRIMARY KEY AUTOINCREMENT, IDsource VARCHAR(20) NOT NULL, name VARCHAR(100) NOT NULL, address VARCHAR(255), phonenumber VARCHAR(255))")
     db.run("CREATE TABLE IF NOT EXISTS warehouse (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL)")
-    db.run("CREATE TABLE IF NOT EXISTS product (ID INTEGER PRIMARY KEY AUTOINCREMENT,  name VARCHAR(100) NOT NULL, unit VARCHAR(10) NOT NULL, quality INTEGER, numplan INTEGER, numreal INTEGER,price REAL)")
+    // db.run("CREATE TABLE IF NOT EXISTS product (ID INTEGER PRIMARY KEY AUTOINCREMENT,  name VARCHAR(100) NOT NULL, unit VARCHAR(10) NOT NULL, quality INTEGER, numplan INTEGER, numreal INTEGER,price REAL)")
   }
+
 
   const createAdmin = () => {
     db.run("INSERT INTO admin (username,password) VALUES (?,?)", ["admin","123456789"], (err)=>{
@@ -97,6 +98,23 @@ async function createWindow() {
       }
       console.log(rows)
     })
+  }
+
+  const getAllWarehouse = () => {
+    let data = []
+    db.all("SELECT * FROM warehouse", (err, rows)=> {
+      if(err) {
+      console.log(err)
+      }
+      console.log(rows)
+      
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send('all-warehouse', rows);
+        }
+      
+    })
+   
   }
 
   const login = (data: {username: string, password: string}) => {
@@ -120,9 +138,36 @@ async function createWindow() {
      }
     })
   }
+
   ipcMain.on('login-request',(event,data:{username: string, password: string})=>{
     login({username:data.username,password: data.password})
   })
+
+  ipcMain.on("create-new-warehouse", (event,data: string) => {
+
+    db.run("INSERT INTO warehouse (name) VALUES (?)", [data], (err) => {
+      if(err) {
+      console.log(err.message)
+      }
+      const id = this.lastID
+      const mainWindow = BrowserWindow.getFocusedWindow();
+      if (mainWindow) {
+        mainWindow.webContents.send('append-warehouse');
+      }
+    })
+
+  })
+
+  ipcMain.on("warehouse-request-read",()=> {
+     getAllWarehouse()
+    // console.log("warehouse",data)
+    // const mainWindow = BrowserWindow.getFocusedWindow();
+    // if (mainWindow) {
+    //   mainWindow.webContents.send('all-warehouse', data);
+    // }
+  })
+
+
   createTable() 
   getAdmin()
   if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
