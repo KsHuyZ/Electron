@@ -54,7 +54,7 @@ async function createWindow() {
       contextIsolation: false,
     },
     fullscreen: true,
-    resizable: false
+    // resizable: false
   })
 
   if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298

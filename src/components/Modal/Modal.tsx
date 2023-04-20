@@ -5,10 +5,11 @@ import { ipcRenderer } from "electron";
 import { useEffect, useState } from "react";
 
 type ModalProps = {
-    closeModal: () => void
+    closeModal: () => void,
+    setLoading: () => void
 }
 
-const Modal = ({ closeModal }: ModalProps) => {
+const Modal = ({ closeModal, setLoading }: ModalProps) => {
 
     const [name, setName] = useState<string>("")
 
@@ -19,7 +20,9 @@ const Modal = ({ closeModal }: ModalProps) => {
     }
 
     const handleAddNewWareHouse = () => {
+        setLoading()
         ipcRenderer.send("create-new-warehouse", name)
+
     }
 
     return (

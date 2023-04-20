@@ -5,7 +5,10 @@ import { FC } from "react";
 import MainDash from "@/components/MainDash/MainDash";
 import TableData from "@/components/TableData/TableData";
 import "../App.scss"
-import Warehouse from "@/components/Warehouse/Warehouse";
+import Warehouse from "@/page/Warehouse/Warehouse";
+import ModalItemSource from "@/components/ModalItemSource/ModalItemSource";
+import ItemSource from "@/page/ItemSource/ItemSource";
+import Product from "@/page/Product/Product";
 
 const MainLayout: FC = () => {
   return (
@@ -28,7 +31,15 @@ export default createBrowserRouter([
     children: [
       {
         element: <Warehouse />,
-        path: "/home"
+        path: "/home",
+      },
+      {
+        element: <Product />,
+        path: "/home/:id"
+      },
+      {
+        element: <ItemSource />,
+        path: "/item-source"
       }
     ]
   }
