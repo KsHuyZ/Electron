@@ -97,7 +97,8 @@ const columns: ColumnsType<DataType> = [
 
 const Product = () => {
   const { id } = useParams()
-
+  console.log(id);
+  
   const [showAddModal, setShowAddModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [allProductItem, setAllProductItem] = useState([])

@@ -52,7 +52,17 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
     }
 
     const handleAddNewProductItem = () => {
-        ipcRenderer.send("create-product-item", inputValue)
+        const {name,
+        price,
+        wareHouse,
+        unit,
+        quality,
+        numplan,
+        numreal,
+        confirm,
+        expiry,
+        imported_date} = inputValue
+        ipcRenderer.send("create-product-item", JSON.stringify(inputValue))
         setLoading()
 
     }

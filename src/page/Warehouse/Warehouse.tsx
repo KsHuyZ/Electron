@@ -29,11 +29,11 @@ const columns: ColumnsType<DataType> = [
     {
         title: "Hành động",
         dataIndex: "action",
-        render: (record) => (
+        render: (_,record) => (
             <Space size="middle">
                 <UilPen style={{ cursor: "pointer", color: "#00b96b" }} />
                 <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} />
-                <Link to={`/home/${record}`}>Xem các mặt hàng trong kho</Link>
+                <Link to={`/home/${record.ID}`}>Xem các mặt hàng trong kho</Link>
             </Space>
         ),
     }

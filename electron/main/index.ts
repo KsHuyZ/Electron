@@ -318,10 +318,12 @@ async function createWindow() {
     }
   );
 
-  ipcMain.on("create-product-item", (event, data: ProductItem) => {
-    console.log("data", data);
-    const productId = createProduct(data);
-    createWareHouseItem(data, productId);
+  ipcMain.on("create-product-item", (event, data: string) => {
+    const newData = JSON.parse(data)
+    console.log(newData)
+    return
+    const productId = createProduct(newData);
+    createWareHouseItem(newData, productId);
   });
 
   ipcMain.on("itemsource-request-read", () => {

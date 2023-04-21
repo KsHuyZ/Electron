@@ -68,14 +68,11 @@ const Login = () => {
 
     useEffect(() => {
       ipcRenderer.on('login-success', handleLoginSucess);
-
       ipcRenderer.on('login-failed', handleLoginFailed);
-
       return () => {
         ipcRenderer.removeListener('login-success', handleLoginSucess)
         ipcRenderer.removeListener('login-failed', handleLoginFailed)
       }
-
     }, [])
 
   const closeApp = () => {
