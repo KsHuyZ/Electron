@@ -52,7 +52,7 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
     }
 
     const handleAddNewProductItem = () => {
-        ipcRenderer.send("create-product-item", inputValue )
+        ipcRenderer.send("create-product-item", inputValue)
         setLoading()
 
     }
@@ -109,7 +109,7 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
                             <div className="title">Chất lượng</div>
                             <Select
                                 labelInValue
-                                defaultValue={{ value: 0, label: 'Rất tốt' }}
+                                value={inputValue.quality}
                                 style={{ width: "100%" }}
                                 onChange={(value) => handleChangeInput(value.value, "quality")}
                                 size='large'
@@ -144,6 +144,17 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
                         <div className="row">
                             <div className="title">Số lượng nhập vào thực tế</div>
                             <Input size="large" placeholder="Số lượng nhập vào thực tế" name='' onChange={(e) => handleChangeInput(e.target.value, "numreal")} />
+                        </div>
+                        <div className="row">
+                            <div className="title">Ngày nhập</div>
+                            <DatePicker
+                                value={inputValue.expiry}
+                                format={"DD/MM/YYYY"}
+                                // locale={viVn}
+                                onChange={handleDateChange}
+                                placeholder='Ngày nhập'
+                                size='large'
+                            />
                         </div>
                     </div>
                 </div>
