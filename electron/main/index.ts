@@ -49,16 +49,19 @@ const indexHtml = join(process.env.DIST, "index.html");
 let db;
 
 type ProductItem = {
+  id_wareHouse: number;
+  id_nguonHang: number;
   name: string;
   price: number;
   unit: string;
-  wareHouse: string;
   quality: number;
-  numplan: number;
-  numreal: number;
-  confirm: boolean;
-  expiry: Moment | null;
-  imported_date: Moment | null;
+  date_expried: Moment | null;
+  date_created_at: Moment | null;
+  date_updated_at: Moment | null;
+  quantity_plane: number;
+  quantity_real: number;
+  status: number;
+  note: string;
 };
 
 async function createWindow() {
@@ -86,58 +89,14 @@ async function createWindow() {
 
   const createTable = () => {
     db.run(
-      "CREATE TABLE IF NOT EXISTS admin (ID INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(100) NOT NULL, password CHAR NOT NULL)"
+      "CREATE TABLE IF NOT EXISTS warehouse (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, description VARCHAR(255))"
     );
     db.run(
-      "CREATE TABLE IF NOT EXISTS itemsource (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, address VARCHAR(255), phonenumber VARCHAR(255))"
+      "CREATE TABLE IF NOT EXISTS nguonHang (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, address VARCHAR(255), phone VARCHAR(20))"
     );
     db.run(
-      "CREATE TABLE IF NOT EXISTS recipients (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, address VARCHAR(255), phonenumber VARCHAR(255))"
+      "CREATE TABLE IF NOT EXISTS warehouseitem (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_wareHouse INTEGER NOT NULL, id_nguonHang INTEGER NOT NULL, name VARCHAR (255), price REAL, unit VARCHAR(10) NOT NULL, quality INTEGER, date_expried DATE, date_create_at DATE, date_updated_at DATE, note VARCHAR(255), quantity_plane INTEGER, quantity_real INTEGER, status INTEGER, FOREIGN KEY (id_wareHouse) REFERENCES wareHouse(ID), FOREIGN KEY (id_nguonHang) REFERENCES nguonHang(ID))"
     );
-    db.run(
-      "CREATE TABLE IF NOT EXISTS warehouse (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL)"
-    );
-    db.run(
-      "CREATE TABLE IF NOT EXISTS product (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, price REAL)"
-    );
-    db.run(
-      "CREATE TABLE IF NOT EXISTS warehouseitem (ID INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER NOT NULL, warehouse_id INTEGER NOT NULL, unit VARCHAR(10) NOT NULL, quality INTEGER, numplan INTEGER, numreal INTEGER, confirm BOOLEAN, expiry DATE, imported_date DATE, confirmed_date DATE,FOREIGN KEY (product_id) REFERENCES product(ID), FOREIGN KEY (warehouse_id) REFERENCES warehouse(ID))"
-    );
-    // db.run("CREATE TABLE IF NOT EXISTS product (ID INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER NOT NULL, warehouse_id INTEGER NOT NULL, unit VARCHAR(10) NOT NULL, quality INTEGER, numplan INTEGER, numreal INTEGER,price REAL, confirm BOOLEAN, imported_date DATE, confirmed_date DATE,FOREIGN KEY (product_id) REFERENCES product(ID), FOREIGN KEY (warehouse_id) REFERENCES warehouse(ID))")
-  };
-
-  const createAdmin = () => {
-    db.run(
-      "INSERT INTO admin (username,password) VALUES (?,?)",
-      ["admin", "123456789"],
-      (err) => {
-        if (err) {
-          return console.log(err.message);
-        }
-        console.log("Create admin success");
-      }
-    );
-  };
-
-  const getAdmin = () => {
-    db.all("SELECT * FROM admin", (err, rows) => {
-      if (err) {
-        return console.log(err);
-      }
-      console.log(rows);
-    });
-    db.all("SELECT * FROM product", (err, rows) => {
-      if (err) {
-        return console.log(err);
-      }
-      console.log(rows);
-    });
-    db.all("SELECT * FROM product", (err, rows) => {
-      if (err) {
-        return console.log(err);
-      }
-      console.log(rows);
-    });
   };
 
   const getAllWarehouse = () => {
@@ -169,83 +128,60 @@ async function createWindow() {
   };
 
   const login = (data: { username: string; password: string }) => {
-    console.log(data);
-
-    const sql = `SELECT * FROM admin WHERE username = ? AND password = ?`;
-    db.all(sql, [data.username, data.password], (err, rows) => {
-      if (err) {
-        console.error(err.message);
+    const mainWindow = BrowserWindow.getFocusedWindow();
+    const {username,password}= data;
+    if(username!="admin"){
+      if (mainWindow) {
+        mainWindow.webContents.send("wrong-username", {
+          message: "Tài khoản không tồn tại",
+        });
       }
-      if (rows.length > 0) {
-        const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
-          mainWindow.webContents.send("login-success", {
-            message: "Login-success",
-          });
-        }
-      } else {
-        const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
-          mainWindow.webContents.send("login-failed", {
-            message: "Login-success",
-          });
-        }
+    }
+    else if(password!="123456789"){
+      if (mainWindow) {
+        mainWindow.webContents.send("wrong-password", {
+          message: "Mật khẩu sai",
+        });
       }
-    });
+    }
+    else (mainWindow) {
+      mainWindow.webContents.send("login-success", {
+        message: "Đăng nhập thành công",
+      });
+    }
   };
-
-  const createProduct = (data: ProductItem) => {
+  const createWareHouseItem = (data: ProductItem) => {
     const {
+      id_wareHouse,
+      id_nguonHang,
       name,
       price,
       unit,
-      wareHouse,
       quality,
-      numplan,
-      numreal,
-      confirm,
-      imported_date,
-    } = data;
-    let productId = null;
-    db.run(
-      "INSERT INTO product (name,price) VALUES (?,?)",
-      [name, price],
-      function (err) {
-        if (err) {
-          console.log(err.message);
-        } else {
-          productId = this.lastID;
-        }
-      }
-    );
-    return productId;
-  };
-
-  const createWareHouseItem = (data: ProductItem, idProduct: number | null) => {
-    const {
-      name,
-      price,
-      unit,
-      wareHouse,
-      quality,
-      numplan,
-      numreal,
-      confirm,
-      expiry,
-      imported_date,
+      date_expried,
+      date_created_at,
+      date_updated_at,
+      quantity_plane,
+      quantity_real,
+      note,
+      status,
     } = data;
     db.run(
-      "INSERT INTO warehouseitem (product_id,warehouse_id,unit,quality, numplan, numreal, confirm,expiry, imported_date) VALUES (?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO warehouseitem (id_wareHouse, name, price, unit, quality, id_nguonHang, date_expried, date_create_at, date_updated_at, note, quantity_plane, quantity_real, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
       [
-        idProduct,
-        wareHouse,
+        id_wareHouse,
+        id_nguonHang,
+        name,
+        price,
         unit,
         quality,
-        numplan,
-        numreal,
-        confirm,
-        expiry,
-        imported_date,
+        date_expried,
+        date_created_at,
+        date_updated_at,
+        note,
+        quantity_plane,
+        quantity_real,
+        status,
       ],
       function (err) {
         if (err) {
@@ -254,15 +190,19 @@ async function createWindow() {
           const ID = this.lastID;
           const newData = {
             ID,
+            id_wareHouse,
+            id_nguonHang,
             name,
             price,
             unit,
             quality,
-            numplan,
-            numreal,
-            confirm,
-            expiry,
-            imported_date,
+            date_expried,
+            date_created_at,
+            date_updated_at,
+            note,
+            quantity_plane,
+            quantity_real,
+            status,
           };
           const mainWindow = BrowserWindow.getFocusedWindow();
           if (mainWindow) {
@@ -280,13 +220,13 @@ async function createWindow() {
     }
   );
 
-  ipcMain.on("create-new-warehouse", (event, data: string) => {
-    db.run("INSERT INTO warehouse (name) VALUES (?)", [data], function (err) {
+  ipcMain.on("create-new-warehouse", (event, name: string,description: string) => {
+    db.run("INSERT INTO warehouse (name, description) VALUES (?,?)", [name,description], function (err) {
       if (err) {
         console.log(err.message);
       } else {
         const ID = this.lastID;
-        const newData = { ID, name: data };
+        const newData = { ID, name,description};
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (mainWindow) {
           mainWindow.webContents.send("append-warehouse", newData);
@@ -296,11 +236,11 @@ async function createWindow() {
   });
 
   ipcMain.on(
-    "create-new-itemsource",
+    "create-new-nguonHang",
     (event, data: { name: string; address: string; phonenumber: string }) => {
       const { name, address, phonenumber } = data;
       db.run(
-        "INSERT INTO itemsource (name,address,phonenumber) VALUES (?,?,?)",
+        "INSERT INTO nguonHang (name,address,phone) VALUES (?,?,?)",
         [name, address, phonenumber],
         function (err) {
           if (err) {
@@ -321,9 +261,7 @@ async function createWindow() {
   ipcMain.on("create-product-item", (event, data: string) => {
     const newData = JSON.parse(data)
     console.log(newData)
-    return
-    const productId = createProduct(newData);
-    createWareHouseItem(newData, productId);
+    createWareHouseItem(newData);
   });
 
   ipcMain.on("itemsource-request-read", () => {
@@ -336,7 +274,6 @@ async function createWindow() {
 
   // db.run("DROP TABLE warehouseitem");
   createTable();
-  getAdmin();
   if (process.env.VITE_DEV_SERVER_URL) {
     // electron-vite-vue#298
     win.loadURL(url);
