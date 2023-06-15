@@ -101,7 +101,7 @@ async function createWindow() {
       "CREATE TABLE IF NOT EXISTS product (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, price REAL)"
     );
     db.run(
-      "CREATE TABLE IF NOT EXISTS warehouseitem (ID INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER NOT NULL, warehouse_id INTEGER NOT NULL, unit VARCHAR(10) NOT NULL, quality INTEGER, numplan INTEGER, numreal INTEGER, confirm BOOLEAN, expiry DATE, imported_date DATE, confirmed_date DATE,FOREIGN KEY (product_id) REFERENCES product(ID), FOREIGN KEY (warehouse_id) REFERENCES warehouse(ID))"
+      "CREATE TABLE IF NOT EXISTS warehouseitem (ID INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER NOT NULL, warehouse_id INTEGER NOT NULL, unit VARCHAR(10) NOT NULL, quality INTEGER, numplan INTEGER, numreal INTEGER, confirm BOOLEAN, expiry DATE, itemsource_id INTEGER, imported_date DATE, confirmed_date DATE,FOREIGN KEY (product_id) REFERENCES product(ID), FOREIGN KEY (warehouse_id) REFERENCES warehouse(ID),FOREIGN KEY (itemsource_id) REFERENCES itemsource(ID))"
     );
     // db.run("CREATE TABLE IF NOT EXISTS product (ID INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER NOT NULL, warehouse_id INTEGER NOT NULL, unit VARCHAR(10) NOT NULL, quality INTEGER, numplan INTEGER, numreal INTEGER,price REAL, confirm BOOLEAN, imported_date DATE, confirmed_date DATE,FOREIGN KEY (product_id) REFERENCES product(ID), FOREIGN KEY (warehouse_id) REFERENCES warehouse(ID))")
   };
@@ -132,7 +132,7 @@ async function createWindow() {
       }
       console.log(rows);
     });
-    db.all("SELECT * FROM product", (err, rows) => {
+    db.all("SELECT * FROM warehouseitem", (err, rows) => {
       if (err) {
         return console.log(err);
       }
@@ -168,6 +168,22 @@ async function createWindow() {
     });
   };
 
+  const getAllProductInWarehouse = (id: string) => {
+    db.all(
+      "SELECT warehouseitem.ID, warehouseitem.unit,warehouseitem.quality,warehouseitem.numplan,warehouseitem.numreal,warehouseitem.confirm,warehouseitem.expiry,warehouseitem.confirmed_date, product.name, product.price FROM warehouseitem JOIN product ON warehouseitem.product_id = product.ID WHERE warehouseitem.warehouse_id = ?",
+      [id],
+      (err, rows) => {
+        if (err) {
+          console.log(err);
+        }
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("all-warehouseitem", rows);
+        }
+      }
+    );
+  };
+
   const login = (data: { username: string; password: string }) => {
     console.log(data);
 
@@ -195,30 +211,21 @@ async function createWindow() {
   };
 
   const createProduct = (data: ProductItem) => {
-    const {
-      name,
-      price,
-      unit,
-      wareHouse,
-      quality,
-      numplan,
-      numreal,
-      confirm,
-      imported_date,
-    } = data;
-    let productId = null;
+    const { name, price } = data;
+
     db.run(
       "INSERT INTO product (name,price) VALUES (?,?)",
       [name, price],
       function (err) {
         if (err) {
           console.log(err.message);
+          return null;
         } else {
-          productId = this.lastID;
+          const id = this.lastID;
+          createWareHouseItem(data, id);
         }
       }
     );
-    return productId;
   };
 
   const createWareHouseItem = (data: ProductItem, idProduct: number | null) => {
@@ -319,11 +326,8 @@ async function createWindow() {
   );
 
   ipcMain.on("create-product-item", (event, data: string) => {
-    const newData = JSON.parse(data)
-    console.log(newData)
-    return
-    const productId = createProduct(newData);
-    createWareHouseItem(newData, productId);
+    const newData = JSON.parse(data);
+    createProduct(newData);
   });
 
   ipcMain.on("itemsource-request-read", () => {
@@ -334,7 +338,12 @@ async function createWindow() {
     getAllWarehouse();
   });
 
+  ipcMain.on("warehouseitem-request-read", (event, data: string) => {
+    getAllProductInWarehouse(data);
+  });
+
   // db.run("DROP TABLE warehouseitem");
+  // db.run("DROP TABLE product");
   createTable();
   getAdmin();
   if (process.env.VITE_DEV_SERVER_URL) {
