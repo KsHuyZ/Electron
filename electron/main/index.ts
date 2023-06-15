@@ -127,6 +127,22 @@ async function createWindow() {
     });
   };
 
+  const getAllProductInWarehouse = (id: string) => {
+    db.all(
+      "SELECT warehouseitem.ID, warehouseitem.unit,warehouseitem.quality,warehouseitem.numplan,warehouseitem.numreal,warehouseitem.confirm,warehouseitem.expiry,warehouseitem.confirmed_date, product.name, product.price FROM warehouseitem JOIN product ON warehouseitem.product_id = product.ID WHERE warehouseitem.warehouse_id = ?",
+      [id],
+      (err, rows) => {
+        if (err) {
+          console.log(err);
+        }
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("all-warehouseitem", rows);
+        }
+      }
+    );
+  };
+
   const login = (data: { username: string; password: string }) => {
     const mainWindow = BrowserWindow.getFocusedWindow();
     const {username,password}= data;
@@ -136,6 +152,7 @@ async function createWindow() {
           message: "Tài khoản không tồn tại",
         });
       }
+
     }
     else if(password!="123456789"){
       if (mainWindow) {
@@ -149,6 +166,7 @@ async function createWindow() {
         message: "Đăng nhập thành công",
       });
     }
+
   };
   const createWareHouseItem = (data: ProductItem) => {
     const {
@@ -272,7 +290,10 @@ async function createWindow() {
     getAllWarehouse();
   });
 
-  // db.run("DROP TABLE warehouseitem");
+  ipcMain.on("warehouseitem-request-read", (event, data: string) => {
+    getAllProductInWarehouse(data);
+  });
+
   createTable();
   if (process.env.VITE_DEV_SERVER_URL) {
     // electron-vite-vue#298

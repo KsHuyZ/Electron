@@ -1,7 +1,7 @@
 import { UilMultiply } from '@iconscout/react-unicons'
 import { Button, DatePicker, Input, Select } from 'antd'
 import { ipcRenderer } from 'electron'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import moment, { Moment } from 'moment'
 import dayjs, { Dayjs } from 'dayjs'
 // import viVn from 'antd/lib/locale/vi_VN';
@@ -14,6 +14,12 @@ type ModalProps = {
     id: string | undefined
 }
 
+type ItemSourceType = {
+    ID: number,
+    name: string,
+    address: string,
+    phonenumber: string
+}
 interface FormState {
     name: string;
     price: string;
@@ -25,6 +31,7 @@ interface FormState {
     imported_date: Moment | null;
     wareHouse: string | undefined;
     confirm: boolean;
+    itemsource: number | null;
 }
 
 const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
@@ -40,7 +47,9 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
         confirm: false,
         expiry: null,
         imported_date: moment(new Date()),
+        itemsource: null
     })
+    const [itemsource, setItemSource] = useState<ItemSourceType[]>([])
     // const [name, setName] = useState<string>("")
     // const [price, setPrice] = useState<string>("")
     // const [wareHouse, setWareHouse] = useState()
@@ -52,16 +61,6 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
     }
 
     const handleAddNewProductItem = () => {
-        const {name,
-        price,
-        wareHouse,
-        unit,
-        quality,
-        numplan,
-        numreal,
-        confirm,
-        expiry,
-        imported_date} = inputValue
         ipcRenderer.send("create-product-item", JSON.stringify(inputValue))
         setLoading()
 
@@ -80,6 +79,25 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
         // console.log(dateString); // dateString chính là giá trị ngày tháng được chọn dưới dạng chuỗi
     }
 
+    const handleGetAllItemSource = () => {
+        ipcRenderer.send("itemsource-request-read")
+    }
+
+    useEffect(() => {
+        handleGetAllItemSource()
+    }, [])
+
+    const getAllItemSourceCallback = (event: Electron.IpcRendererEvent, data: ItemSourceType[]) => {
+        setItemSource(data)
+    }
+
+    useEffect(() => {
+        ipcRenderer.on("all-itemsource", getAllItemSourceCallback)
+        return () => {
+            ipcRenderer.removeListener("all-itemsource", getAllItemSourceCallback)
+        }
+    }, [])
+
     return (
         <div className='backdrop'>
             <div className="modal" onKeyDown={handleCloseModal} tabIndex={0} style={{ margin: "10vh auto", width: "40vw" }}>
@@ -89,7 +107,7 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
                     </div>
                 </div>
                 <div className="main-body" style={{ display: "flex", justifyContent: "space-between" }}>
-                    <div className="left">
+                    <div className="left" style={{ width: "40%" }}>
                         <div className="row">
                             <div className="title">Tên mặt hàng</div>
                             <Input size="large" placeholder="Tên mặt hàng" name='name' onChange={(e) => handleChangeInput(e.target.value, "name")} />
@@ -114,7 +132,7 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
                             />
                         </div>
                     </div>
-                    <div className="right">
+                    <div className="right" style={{ width: "40%" }}>
                         <div className="row">
                             <div className="title">Chất lượng</div>
                             <Select
@@ -156,14 +174,19 @@ const ModalProductItem = ({ closeModal, setLoading, id }: ModalProps) => {
                             <Input size="large" placeholder="Số lượng nhập vào thực tế" name='' onChange={(e) => handleChangeInput(e.target.value, "numreal")} />
                         </div>
                         <div className="row">
-                            <div className="title">Ngày nhập</div>
-                            <DatePicker
-                                value={inputValue.expiry}
-                                format={"DD/MM/YYYY"}
-                                // locale={viVn}
-                                onChange={handleDateChange}
-                                placeholder='Ngày nhập'
+                            <div className="title">Nguồn nhập</div>
+                            <Select
+                                labelInValue
+                                value={inputValue.itemsource}
+                                style={{ width: "100%" }}
+                                onChange={(value) => handleChangeInput(value, "itemsource")}
                                 size='large'
+                                options={itemsource.map(item => (
+                                    {
+                                        value: item.ID,
+                                        label: item.name
+                                    }
+                                ))}
                             />
                         </div>
                     </div>
