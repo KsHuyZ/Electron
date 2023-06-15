@@ -161,11 +161,13 @@ async function createWindow() {
         });
       }
     }
-    else (mainWindow) {
-      mainWindow.webContents.send("login-success", {
-        message: "Đăng nhập thành công",
-      });
-    }
+    else {
+      if (mainWindow) {
+        mainWindow.webContents.send("login-success", {
+          message: "Đăng nhập thành công",
+        });
+      }
+    } 
 
   };
   const createWareHouseItem = (data: ProductItem) => {
