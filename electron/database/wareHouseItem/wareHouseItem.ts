@@ -50,7 +50,6 @@ const wareHouseItem = {
         note,
         quantity_plane,
         quantity_real,
-        status,
       ],
       function (err) {
         if (err) {
@@ -80,6 +79,80 @@ const wareHouseItem = {
         }
       }
     );
+  },
+  updateWareHouseItem: (data: WarehouseItem, id: number) => {
+    const {
+      id_wareHouse,
+      id_nguonHang,
+      name,
+      price,
+      unit,
+      quality,
+      date_expried,
+      date_created_at,
+      date_updated_at,
+      quantity_plane,
+      quantity_real,
+      note,
+      status,
+    } = data;
+    db.run(
+      "UPDATE warehouseitem SET id_wareHouse = ?, name = ?, price =?, unit = ?, quality = ?, id_nguonHang = ?, date_expried = ?, date_create_at = ?, date_updated_at = ?, note = ?, quantity_plane = ?, quantity_real = ?) WHERE id = ?",
+      [
+        id_wareHouse,
+        id_nguonHang,
+        name,
+        price,
+        unit,
+        quality,
+        date_expried,
+        date_created_at,
+        date_updated_at,
+        note,
+        quantity_plane,
+        quantity_real,
+        status,
+        id,
+      ],
+      function (err) {
+        if (err) {
+          console.log(err.message);
+        } else {
+          const newData = {
+            id,
+            id_wareHouse,
+            id_nguonHang,
+            name,
+            price,
+            unit,
+            quality,
+            date_expried,
+            date_created_at,
+            date_updated_at,
+            note,
+            quantity_plane,
+            quantity_real,
+            status,
+          };
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (mainWindow) {
+            mainWindow.webContents.send("update-success", newData);
+          }
+        }
+      }
+    );
+  },
+  deleteWareHouseItem: (id: number) => {
+    db.run("DELETE FROM warehouseitem WHERE ID = ?", [id], function (err) {
+      if (err) {
+        console.log(err.message);
+      } else {
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("delete-success", id);
+        }
+      }
+    });
   },
 };
 

@@ -33,6 +33,27 @@ const wareHouse = {
       }
     });
   },
+  updateWarehouse: (name: string, description: string, id: number) => {
+    db.run(
+      "UPDATE warehouse SET name = ?, description = ?) WHERE id = ?",
+      [name, description, id],
+      function (err) {
+        if (err) {
+          console.log(err.message);
+        } else {
+          const newData = {
+            id,
+            name,
+            description,
+          };
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (mainWindow) {
+            mainWindow.webContents.send("update-success", newData);
+          }
+        }
+      }
+    );
+  },
 };
 
-export default wareHouse
+export default wareHouse;

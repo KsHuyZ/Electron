@@ -34,5 +34,45 @@ const nguonHang = {
       }
     });
   },
+
+  updateItemSource: (
+    name: string,
+    address: string,
+    phonenumber: string,
+    id: number
+  ) => {
+    db.run(
+      "UPDATE nguonHang SET name = ?, address = ?, phone = ?) WHERE id = ?",
+      [name, address, phonenumber, id],
+      function (err) {
+        if (err) {
+          console.log(err.message);
+        } else {
+          const newData = {
+            id,
+            name,
+            address,
+            phonenumber,
+          };
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (mainWindow) {
+            mainWindow.webContents.send("update-success", newData);
+          }
+        }
+      }
+    );
+  },
+  deleteItemSource: (id: number) => {
+    db.run("DELETE FROM nguonHang WHERE ID = ?", [id], function (err) {
+      if (err) {
+        console.log(err.message);
+      } else {
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("delete-success", id);
+        }
+      }
+    });
+  },
 };
 export default nguonHang;
