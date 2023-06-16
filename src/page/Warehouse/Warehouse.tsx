@@ -1,49 +1,21 @@
 import "./warehouse.scss"
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
-import { Button, Space, Table } from 'antd';
+import { Button, Space, Table, message } from 'antd';
 import { UilMultiply, UilPen } from '@iconscout/react-unicons'
 import { useEffect, useState } from "react";
-import Modal from "../../components/Modal/Modal";
 import { ipcRenderer } from "electron";
-import { FilterValue, SorterResult } from "antd/es/table/interface";
 import { Link } from "react-router-dom";
 import toastify from "@/lib/toastify";
+
+import ModalWareHouse from "./components/ModalWareHouse";
 
 type DataType = {
     ID: string;
     name: string;
 }
 
-const columns: ColumnsType<DataType> = [
-    {
-        title: 'Mã kho hàng',
-        dataIndex: 'ID',
-        render: (record) => {
-            return `K${record < 10 ? "0" : ""}${record}`
-        }
-    },
-    {
-        title: 'Tên kho',
-        dataIndex: 'name',
-    },
-    {
-        title: "Hành động",
-        dataIndex: "action",
-        render: (_,record) => (
-            <Space size="middle">
-                <UilPen style={{ cursor: "pointer", color: "#00b96b" }} />
-                <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} />
-                <Link to={`/home/${record.ID}`}>Xem các mặt hàng trong kho</Link>
-            </Space>
-        ),
-    }
-];
-
 interface TableParams {
     pagination?: TablePaginationConfig;
-    sortField?: string;
-    sortOrder?: string;
-    filters?: Record<string, FilterValue>;
 }
 
 const Warehouse = () => {
@@ -56,81 +28,119 @@ const Warehouse = () => {
             current: 1,
             pageSize: 5,
         },
-    })
+    });
+    const [formEdit, setFormEdit] = useState<{idEdit: string, name: string}>();
 
-    const { notifySuccess } = toastify
+
+    const columns: ColumnsType<DataType> = [
+        {
+            title: 'Mã kho hàng',
+            dataIndex: 'ID',
+            key: 'ID',
+            render: (record) => {
+                return <Link to={`/home/${record.ID}`}>K{record < 10 ? "0" : ""}{record}</Link>
+            }
+        },
+        {
+            title: 'Tên kho',
+            dataIndex: 'name',
+            key:'name'
+        },
+        {
+            title: "Hành động",
+            dataIndex: "action",
+            width: 150,
+            render: (_,record) => (
+                <Space size="middle">
+                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={()=> handleOpenEditModal(record.ID, record.name)}/>
+                </Space>
+            ),
+        }
+    ];
 
     const handleShowAddModal = () => {
         setShowAddModal(true)
     }
 
     const handleGetAllWarehouse = () => {
-        setLoading(true)
+        setLoading(true);
         ipcRenderer.send("warehouse-request-read")
     }
 
-    const handleTableChange = (
-        pagination: TablePaginationConfig,
-        filters: Record<string, FilterValue>,
-        sorter: SorterResult<DataType>,
-    ) => {
-        setTableParams({
-            pagination,
-            filters,
-            ...sorter,
-        });
-
-        // `dataSource` is useless since `pageSize` changed
-        // if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-        //   setData([]);
-        // }
-    };
+    const handleTableChange = (pagination: TablePaginationConfig) => {
+        setTableParams((prevParams) => ({
+          ...prevParams,
+          pagination,
+        }));
+      };
 
     useEffect(() => {
         handleGetAllWarehouse()
     }, [])
 
     const allWareHouseCallBack = (event: Electron.IpcRendererEvent, data: DataType[]) => {
-        setAllWareHouse(data)
         setLoading(false)
+        setAllWareHouse(data)
     }
 
     const appendWarehouseCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
-        setAllWareHouse((prev: DataType[]) => {
-            let copyData = prev.slice()
-            copyData.push(data)
-            return copyData
-        })
+        setAllWareHouse((prev: DataType[]) => [...prev, data]);
         setShowAddModal(false)
         setLoading(false)
-        notifySuccess("Thêm kho hàng thành công")
+        message.success("Thêm kho hàng thành công")
     }
 
     useEffect(() => {
         ipcRenderer.on("all-warehouse", allWareHouseCallBack)
         ipcRenderer.on("append-warehouse", appendWarehouseCallBack)
+        setLoading(false);
         return () => {
             ipcRenderer.removeListener("all-warehouse", allWareHouseCallBack)
             ipcRenderer.removeListener("append-warehouse", appendWarehouseCallBack)
         }
-    }, [])
+    }, []);
+
+    const handleOpenEditModal = (id: string, name: string) =>{
+        setShowAddModal(true);
+        setFormEdit({
+            idEdit: id,
+            name
+        })
+    };
+
+    const cleanFormEdit = () =>{
+        setFormEdit({
+            idEdit: '',
+            name: ''
+        })
+    }
+
+    const handleOpenModal = () =>{
+        setLoading(true)
+        cleanFormEdit()
+    }
+    
+    const handleCloseModal = () =>{
+        setShowAddModal(false)
+        cleanFormEdit()
+    }
 
     return (
         <div className="form-table">
-            {showAddModal && <Modal closeModal={() => setShowAddModal(false)} setLoading={() => setLoading(true)} />}
+            {
+                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={()=>cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()}/>
+            }
             <div className="header">
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>
             </div>
             <Table
                 columns={columns}
-                dataSource={allWareHouse}
+                dataSource={allWareHouse.map((item) => ({ ...item, key: item.ID }))}
                 style={{ backgroundColor: "transparent" }}
-                // pagination={true}
                 loading={loading}
                 pagination={tableParams.pagination}
                 bordered
                 onChange={handleTableChange}
-            // style={{ margin: 20 }}
             />
         </div>
     )
