@@ -13,10 +13,13 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
+    "build": " vite build && electron-builder",
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "dist": "electron-builder",
+    "pakage-win": "electron-packager . eduwap --overwrite --asar=true --platform=win32 --arch=ia32 --icon=assets/win/icons/medicine.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Quản lý kho\" --electron-version=1.6.10",
+    "package": "electron-packager . --platform=win32 --arch=x64 --version-string.ProductName=\"Quản lý kho\" --electron-version=1.6.10"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
@@ -24,6 +27,7 @@
     "@types/electron": "^1.6.10",
     "antd": "^5.4.0",
     "dayjs": "^1.11.7",
+    "electron-packager": "^17.1.1",
     "electron-updater": "^5.3.0",
     "framer-motion": "^10.10.0",
     "moment": "^2.29.4",

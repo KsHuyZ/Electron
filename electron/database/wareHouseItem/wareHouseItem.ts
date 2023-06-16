@@ -3,20 +3,16 @@ import db from "../../utils/connectDB";
 import { WarehouseItem } from "../../types";
 
 const wareHouseItem = {
-  getAllProductInWarehouse: (id: string) => {
-    db.all(
-      "SELECT warehouseitem.ID, warehouseitem.unit,warehouseitem.quality,warehouseitem.numplan,warehouseitem.numreal,warehouseitem.confirm,warehouseitem.expiry,warehouseitem.confirmed_date, product.name, product.price FROM warehouseitem JOIN product ON warehouseitem.product_id = product.ID WHERE warehouseitem.warehouse_id = ?",
-      [id],
-      (err, rows) => {
-        if (err) {
-          console.log(err);
-        }
-        const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
-          mainWindow.webContents.send("all-warehouseitem", rows);
-        }
+  getAllWarehouseItem: (id: string) => {
+    db.all("SELECT * FROM warehouseitem", (err, rows) => {
+      if (err) {
+        console.log(err);
       }
-    );
+      const mainWindow = BrowserWindow.getFocusedWindow();
+      if (mainWindow) {
+        mainWindow.webContents.send("all-warehouseitem", rows);
+      }
+    });
   },
   createWareHouseItem: (data: WarehouseItem) => {
     const {

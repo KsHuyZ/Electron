@@ -24,7 +24,7 @@ const nguonHang = {
   },
 
   getAllItemSource: () => {
-    db.all("SELECT * FROM itemsource", (err, rows) => {
+    db.all("SELECT * FROM nguonHang", (err, rows) => {
       if (err) {
         console.log(err);
       }
@@ -62,6 +62,7 @@ const nguonHang = {
       }
     );
   },
+
   deleteItemSource: (id: number) => {
     db.run("DELETE FROM nguonHang WHERE ID = ?", [id], function (err) {
       if (err) {

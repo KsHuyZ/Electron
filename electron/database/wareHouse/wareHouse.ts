@@ -20,6 +20,7 @@ const wareHouse = {
       }
     );
   },
+  
   getAllWarehouse: () => {
     db.all("SELECT * FROM warehouse", (err, rows) => {
       if (err) {
@@ -33,6 +34,7 @@ const wareHouse = {
       }
     });
   },
+
   updateWarehouse: (name: string, description: string, id: number) => {
     db.run(
       "UPDATE warehouse SET name = ?, description = ?) WHERE id = ?",
@@ -54,6 +56,7 @@ const wareHouse = {
       }
     );
   },
+  
 };
 
 export default wareHouse;
