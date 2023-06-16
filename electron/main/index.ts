@@ -3,8 +3,9 @@ import { release } from "node:os";
 import { join } from "node:path";
 import { update } from "./update";
 import sqlite3 from "sqlite3";
-import { Moment } from "moment";
 sqlite3.verbose();
+import handlersRequest from "../handlers";
+import deleteDB from "../utils/deleteDB";
 
 // The built directory structure
 //
@@ -46,24 +47,6 @@ const preload = join(__dirname, "../preload/index.js");
 const url = process.env.VITE_DEV_SERVER_URL;
 const indexHtml = join(process.env.DIST, "index.html");
 
-let db;
-
-type ProductItem = {
-  id_wareHouse: number;
-  id_nguonHang: number;
-  name: string;
-  price: number;
-  unit: string;
-  quality: number;
-  date_expried: Moment | null;
-  date_created_at: Moment | null;
-  date_updated_at: Moment | null;
-  quantity_plane: number;
-  quantity_real: number;
-  status: number;
-  note: string;
-};
-
 async function createWindow() {
   win = new BrowserWindow({
     title: "Main window",
@@ -80,228 +63,14 @@ async function createWindow() {
   });
   win.maximize();
   win.setMenuBarVisibility(false);
-  db = new sqlite3.Database("./inventory.sqlite", (err) => {
-    if (err) {
-      console.log(err.message);
-    }
-    console.log("Connect to Database success!");
-  });
 
-  const createTable = () => {
-    db.run(
-      "CREATE TABLE IF NOT EXISTS warehouse (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, description VARCHAR(255))"
-    );
-    db.run(
-      "CREATE TABLE IF NOT EXISTS nguonHang (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, address VARCHAR(255), phone VARCHAR(20))"
-    );
-    db.run(
-      "CREATE TABLE IF NOT EXISTS warehouseitem (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_wareHouse INTEGER NOT NULL, id_nguonHang INTEGER NOT NULL, name VARCHAR (255), price REAL, unit VARCHAR(10) NOT NULL, quality INTEGER, date_expried DATE, date_create_at DATE, date_updated_at DATE, note VARCHAR(255), quantity_plane INTEGER, quantity_real INTEGER, status INTEGER, FOREIGN KEY (id_wareHouse) REFERENCES wareHouse(ID), FOREIGN KEY (id_nguonHang) REFERENCES nguonHang(ID))"
-    );
-  };
+  handlersRequest();
 
-  const getAllWarehouse = () => {
-    db.all("SELECT * FROM warehouse", (err, rows) => {
-      if (err) {
-        console.log(err);
-      }
-      console.log(rows);
-
-      const mainWindow = BrowserWindow.getFocusedWindow();
-      if (mainWindow) {
-        mainWindow.webContents.send("all-warehouse", rows);
-      }
-    });
-  };
-
-  const getAllItemSource = () => {
-    db.all("SELECT * FROM itemsource", (err, rows) => {
-      if (err) {
-        console.log(err);
-      }
-      console.log(rows);
-
-      const mainWindow = BrowserWindow.getFocusedWindow();
-      if (mainWindow) {
-        mainWindow.webContents.send("all-itemsource", rows);
-      }
-    });
-  };
-
-  const getAllProductInWarehouse = (id: string) => {
-    db.all(
-      "SELECT warehouseitem.ID, warehouseitem.unit,warehouseitem.quality,warehouseitem.numplan,warehouseitem.numreal,warehouseitem.confirm,warehouseitem.expiry,warehouseitem.confirmed_date, product.name, product.price FROM warehouseitem JOIN product ON warehouseitem.product_id = product.ID WHERE warehouseitem.warehouse_id = ?",
-      [id],
-      (err, rows) => {
-        if (err) {
-          console.log(err);
-        }
-        const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
-          mainWindow.webContents.send("all-warehouseitem", rows);
-        }
-      }
-    );
-  };
-
-  const login = (data: { username: string; password: string }) => {
-    const mainWindow = BrowserWindow.getFocusedWindow();
-    const {username,password}= data;
-    if(username!="admin"){
-      if (mainWindow) {
-        mainWindow.webContents.send("wrong-username", {
-          message: "Tài khoản không tồn tại",
-        });
-      }
-
-    }
-    else if(password!="123456789"){
-      if (mainWindow) {
-        mainWindow.webContents.send("wrong-password", {
-          message: "Mật khẩu sai",
-        });
-      }
-    }
-    else {
-      if (mainWindow) {
-        mainWindow.webContents.send("login-success", {
-          message: "Đăng nhập thành công",
-        });
-      }
-    } 
-
-  };
-  const createWareHouseItem = (data: ProductItem) => {
-    const {
-      id_wareHouse,
-      id_nguonHang,
-      name,
-      price,
-      unit,
-      quality,
-      date_expried,
-      date_created_at,
-      date_updated_at,
-      quantity_plane,
-      quantity_real,
-      note,
-      status,
-    } = data;
-    db.run(
-      "INSERT INTO warehouseitem (id_wareHouse, name, price, unit, quality, id_nguonHang, date_expried, date_create_at, date_updated_at, note, quantity_plane, quantity_real, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-      [
-        id_wareHouse,
-        id_nguonHang,
-        name,
-        price,
-        unit,
-        quality,
-        date_expried,
-        date_created_at,
-        date_updated_at,
-        note,
-        quantity_plane,
-        quantity_real,
-        status,
-      ],
-      function (err) {
-        if (err) {
-          console.log(err.message);
-        } else {
-          const ID = this.lastID;
-          const newData = {
-            ID,
-            id_wareHouse,
-            id_nguonHang,
-            name,
-            price,
-            unit,
-            quality,
-            date_expried,
-            date_created_at,
-            date_updated_at,
-            note,
-            quantity_plane,
-            quantity_real,
-            status,
-          };
-          const mainWindow = BrowserWindow.getFocusedWindow();
-          if (mainWindow) {
-            mainWindow.webContents.send("append-warehouseitem", newData);
-          }
-        }
-      }
-    );
-  };
-
-  ipcMain.on(
-    "login-request",
-    (event, data: { username: string; password: string }) => {
-      login({ username: data.username, password: data.password });
-    }
-  );
-
-  ipcMain.on("create-new-warehouse", (event, name: string,description: string) => {
-    db.run("INSERT INTO warehouse (name, description) VALUES (?,?)", [name,description], function (err) {
-      if (err) {
-        console.log(err.message);
-      } else {
-        const ID = this.lastID;
-        const newData = { ID, name,description};
-        const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
-          mainWindow.webContents.send("append-warehouse", newData);
-        }
-      }
-    });
-  });
-
-  ipcMain.on(
-    "create-new-nguonHang",
-    (event, data: { name: string; address: string; phonenumber: string }) => {
-      const { name, address, phonenumber } = data;
-      db.run(
-        "INSERT INTO nguonHang (name,address,phone) VALUES (?,?,?)",
-        [name, address, phonenumber],
-        function (err) {
-          if (err) {
-            console.log(err.message);
-          } else {
-            const ID = this.lastID;
-            const newData = { ID, name, address, phonenumber };
-            const mainWindow = BrowserWindow.getFocusedWindow();
-            if (mainWindow) {
-              mainWindow.webContents.send("append-itemsource", newData);
-            }
-          }
-        }
-      );
-    }
-  );
-
-  ipcMain.on("create-product-item", (event, data: string) => {
-    const newData = JSON.parse(data)
-    console.log(newData)
-    createWareHouseItem(newData);
-  });
-
-  ipcMain.on("itemsource-request-read", () => {
-    getAllItemSource();
-  });
-
-  ipcMain.on("warehouse-request-read", () => {
-    getAllWarehouse();
-  });
-
-  ipcMain.on("warehouseitem-request-read", (event, data: string) => {
-    getAllProductInWarehouse(data);
-  });
-
-  createTable();
   if (process.env.VITE_DEV_SERVER_URL) {
     // electron-vite-vue#298
     win.loadURL(url);
     // Open devTool if the app is not packaged
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
   } else {
     win.loadFile(indexHtml);
   }
