@@ -5,48 +5,17 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
 import ModalItemSource from '../../components/ModalItemSource/ModalItemSource';
 import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
-import { ipcRenderer } from 'electron';
+import { Data, ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 
 type DataType = {
-  ID: string;
+  ID: number;
   name: string;
   address: string;
-  phonenumber: string;
+  phone: string;
 }
 
-const columns: ColumnsType<DataType> = [
-  {
-    title: 'Mã kho hàng',
-    dataIndex: 'ID',
-    render: (record) => {
-      return `NH${record < 10 ? "0" : ""}${record}`
-    }
-  },
-  {
-    title: 'Tên nguồn hàng',
-    dataIndex: 'name',
-  },
-  {
-    title: 'Địa chỉ',
-    dataIndex: 'address',
-  },
-  {
-    title: 'Số điện thoại',
-    dataIndex: 'phonenumber',
-  },
-  {
-    title: "Hành động",
-    dataIndex: "action",
-    render: () => (
-      <Space size="middle">
-        <UilPen style={{ cursor: "pointer", color: "#00b96b" }} />
-        <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} />
-        <Link to={"/login"}>Xem các mặt hàng đã nhập từ nguồn này</Link>
-      </Space>
-    ),
-  }
-];
+
 
 interface TableParams {
   pagination?: TablePaginationConfig;
@@ -55,6 +24,43 @@ interface TableParams {
   filters?: Record<string, FilterValue>;
 }
 
+interface ModalItemSourceProps {
+  data: DataType | null | undefined,
+  deleteFunc: (id: number | undefined) => void
+  closeModal: () => void
+}
+
+
+const ModalDelete = (props: ModalItemSourceProps) => {
+  const { data, deleteFunc, closeModal } = props
+
+  return (
+    <div className='backdrop'>
+      <div className="modal">
+        <div className="header">
+          <div className="close-btn">
+            <UilMultiply onClick={closeModal} />
+          </div>
+        </div>
+        <div className="main-body">
+          <div className="row">
+            <p>Bạn có chắc chắn muốn xóa nguồn hàng <span>{data?.name}</span> ?</p>
+          </div>
+        </div>
+        <div className="action">
+          <div className="cancel">
+            <Button type="text" onClick={closeModal}>Thoát</Button>
+          </div>
+          <div className="create">
+            <Button type="primary" danger ghost onClick={() => deleteFunc(data?.ID)} style={{ backgroundColor: "transparent" }}>Xác nhận</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 
 const ItemSource = () => {
 
@@ -62,13 +68,56 @@ const ItemSource = () => {
   const [loading, setLoading] = useState<boolean>(false)
   const [allItemSource, setAllItemSource] = useState<DataType[]>([])
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [currentItemSource, setCurrentItemSource] = useState<DataType | null | undefined>()
+  const [pagination, setPagination] = useState<TablePaginationConfig>({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [showModalDelete, setShowModalDelete] = useState(false)
 
-  const [tableParams, setTableParams] = useState<TableParams>({
-    pagination: {
-      current: 1,
-      pageSize: 5,
+  const columns: ColumnsType<DataType> = [
+    {
+      title: 'Mã nguồn hàng',
+      dataIndex: 'ID',
+      render: (record) => {
+        return `NH${record < 10 ? "0" : ""}${record}`
+      }
     },
-  })
+    {
+      title: 'Tên nguồn hàng',
+      dataIndex: 'name',
+    },
+    {
+      title: 'Địa chỉ',
+      dataIndex: 'address',
+    },
+    {
+      title: 'Số điện thoại',
+      dataIndex: 'phone',
+    },
+    {
+      title: "Hành động",
+      dataIndex: "action",
+      render: (_, data) => (
+        <Space size="middle">
+          <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
+          <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} onClick={() => handleSelectRowDelete(data)} />
+          <Link to={"/login"}>Xem các mặt hàng đã nhập từ nguồn này</Link>
+        </Space>
+      ),
+    }
+  ];
+
+  const handleSelectRow = (data: DataType) => {
+    setShowAddModal(true)
+    setCurrentItemSource(data)
+  }
+
+  const handleSelectRowDelete = (data: DataType) => {
+    setShowModalDelete(true)
+    setCurrentItemSource(data)
+  }
 
   const { notifySuccess } = toastify
 
@@ -116,16 +165,15 @@ const ItemSource = () => {
   };
 
   const handleTableChange = (
-    pagination: TablePaginationConfig,
-    filters: Record<string, FilterValue>,
-    sorter: SorterResult<DataType>,
+    pagination: TablePaginationConfig
   ) => {
-    setTableParams({
-      pagination,
-      filters,
-      ...sorter,
-    });
+    setPagination((prevPagination) => ({
+      ...prevPagination,
+      ...pagination
+    }));
 
+    const { current, pageSize } = pagination
+    handleGetAllItemSource(pageSize, current)
     // `dataSource` is useless since `pageSize` changed
     // if (pagination.pageSize !== tableParams.pagination?.pageSize) {
     //   setData([]);
@@ -136,13 +184,18 @@ const ItemSource = () => {
     setShowAddModal(true)
   }
 
-  const handleGetAllItemSource = () => {
+  const handleGetAllItemSource = (pageSize: number | undefined, current: number | undefined) => {
     setLoading(true)
-    ipcRenderer.send("itemsource-request-read")
+    ipcRenderer.send("itemsource-request-read", { pageSize, currentPage: current })
   }
 
-  const allItemSourceCallBack = (event: Electron.IpcRendererEvent, data: DataType[]) => {
-    setAllItemSource(data)
+  const allItemSourceCallBack = (event: Electron.IpcRendererEvent, data: { rows: DataType[], total: number }) => {
+    const { rows, total } = data
+    setAllItemSource(rows)
+    setPagination(prevPagination => ({
+      ...prevPagination,
+      total // Sửa giá trị total thành tổng số dòng dữ liệu
+    }));
     setLoading(false)
   }
 
@@ -157,33 +210,81 @@ const ItemSource = () => {
     notifySuccess("Thêm nguồn thành công")
   }
 
+  const updateItemSourceCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
+    const { ID } = data
+    setAllItemSource(prev => {
+      let prevItemSource = [...prev]
+      const index = prevItemSource.findIndex(item => item.ID === ID)
+      if (index > -1) {
+        prevItemSource[index] = data
+      }
+      return prevItemSource
+    })
+    setLoading(false)
+    setShowAddModal(false)
+    notifySuccess("Cập nhật thành công!")
+  }
+
+  const deleteItemSourceCallBack = (event: Electron.IpcRendererEvent, id: number) => {
+    setAllItemSource(prev => {
+      let prevAllItemSource = [...prev]
+      const index = prevAllItemSource.findIndex(item => item.ID === id)
+      if (index > -1) {
+        prevAllItemSource.splice(index, 1)
+      }
+      return prevAllItemSource
+    })
+    notifySuccess("Xóa nguồn hàng thành công!")
+  }
+
+  const handleCloseModal = () => {
+    setShowAddModal(false)
+    setCurrentItemSource(null)
+  }
+
+  const handleCloseModalDelete = () => {
+    setShowModalDelete(false)
+    setCurrentItemSource(null)
+  }
+
+  const handleDeleteItemSource = (id: number | undefined | null) => {
+    ipcRenderer.send("delete-itemsource", id)
+    setShowModalDelete(false)
+  }
+
   useEffect(() => {
-    handleGetAllItemSource()
+    const { pageSize, current } = pagination
+    handleGetAllItemSource(pageSize, current)
   }, [])
 
   useEffect(() => {
     ipcRenderer.on("all-itemsource", allItemSourceCallBack)
     ipcRenderer.on("append-itemsource", appendItemSourceCallBack)
+    ipcRenderer.on("update-success", updateItemSourceCallBack)
+    ipcRenderer.on("delete-success", deleteItemSourceCallBack)
     return () => {
       ipcRenderer.removeListener("all-itemsource", allItemSourceCallBack)
       ipcRenderer.removeListener("append-itemsource", appendItemSourceCallBack)
+      ipcRenderer.removeListener("update-success", updateItemSourceCallBack)
+      ipcRenderer.removeListener("delete-success", deleteItemSourceCallBack)
     }
   }, [])
 
   return (
     <div className="form-table">
-      {showAddModal && <ModalItemSource closeModal={() => setShowAddModal(false)} setLoading={() => setLoading(true)} />}
+      {showAddModal && <ModalItemSource closeModal={handleCloseModal} setLoading={() => setLoading(true)} data={currentItemSource} />}
+      {showModalDelete && <ModalDelete data={currentItemSource} deleteFunc={handleDeleteItemSource} closeModal={handleCloseModalDelete} />}
       <div className="header">
         <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm nguồn hàng</Button></div>
       </div>
       <Table
         rowSelection={rowSelection}
         columns={columns}
-        dataSource={allItemSource}
+        dataSource={allItemSource.map(item => ({ ...item, key: item.ID }))}
         style={{ backgroundColor: "transparent" }}
         // pagination={true}
         loading={loading}
-        pagination={tableParams.pagination}
+        pagination={pagination}
         bordered
         onChange={handleTableChange}
       // style={{ margin: 20 }}

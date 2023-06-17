@@ -1,7 +1,12 @@
 import { ipcMain } from "electron";
 import nguonHangDB from "../../database/nguonHang/nguonHang";
 const nguonHang = () => {
-  const { createItemSource, getAllItemSource } = nguonHangDB;
+  const {
+    createItemSource,
+    getAllItemSource,
+    updateItemSource,
+    deleteItemSource,
+  } = nguonHangDB;
 
   // listen create nguon hang request
   ipcMain.on(
@@ -13,8 +18,38 @@ const nguonHang = () => {
   );
 
   // listen get all nguon hang request
-  ipcMain.on("itemsource-request-read", () => {
-    getAllItemSource();
+  ipcMain.on(
+    "itemsource-request-read",
+    (
+      event,
+      data: { pageSize: number; currentPage: number } = {
+        pageSize: 10,
+        currentPage: 1,
+      }
+    ) => {
+      const { pageSize, currentPage } = data;
+      getAllItemSource(pageSize, currentPage);
+    }
+  );
+
+  //listen update
+  ipcMain.on(
+    "update-itemsource",
+    (
+      event,
+      data: { id: number; name: string; address: string; phonenumber: string }
+    ) => {
+      const { id, name, address, phonenumber } = data;
+      updateItemSource(name, address, phonenumber, id);
+    }
+  );
+
+  // listen delete event
+  ipcMain.on("delete-itemsource", (event, id: number) => {
+    console.log(id);
+    deleteItemSource(id);
   });
+
+  // ipcMain.on("get-product-nguonHang")
 };
 export default nguonHang;

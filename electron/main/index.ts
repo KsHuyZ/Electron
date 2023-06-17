@@ -6,7 +6,6 @@ import sqlite3 from "sqlite3";
 sqlite3.verbose();
 import handlersRequest from "../handlers";
 import deleteDB from "../utils/deleteDB";
-import electronReload from "electron-reload";
 
 // The built directory structure
 //
@@ -71,7 +70,7 @@ async function createWindow() {
     // electron-vite-vue#298
     win.loadURL(url);
     // Open devTool if the app is not packaged
-    // win.webContents.openDevTools();
+    win.webContents.openDevTools();
   } else {
     win.loadFile(indexHtml);
   }
@@ -92,7 +91,6 @@ async function createWindow() {
 }
 
 app.whenReady().then(createWindow);
-electronReload(__dirname,{}); 
 
 app.on("window-all-closed", () => {
   win = null;

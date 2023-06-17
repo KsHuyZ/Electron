@@ -40,7 +40,12 @@ export default createBrowserRouter([
       {
         element: <ItemSource />,
         path: "/item-source"
-      }
+      },
+      {
+        element: <ItemSource />,
+        path: "/item-source/:id"
+      },
+
     ]
   }
 ])
