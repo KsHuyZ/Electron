@@ -21,19 +21,43 @@ const wareHouse = {
     );
   },
   
-  getAllWarehouse: () => {
-    db.all("SELECT * FROM warehouse", (err, rows) => {
+  // getAllWarehouse: () => {
+  //   db.all("SELECT * FROM warehouse", (err, rows) => {
+  //     if (err) {
+  //       console.log(err);
+  //     }
+  //     console.log(rows);
+
+  //     const mainWindow = BrowserWindow.getFocusedWindow();
+  //     if (mainWindow) {
+  //       mainWindow.webContents.send("all-warehouse", rows);
+  //     }
+  //   });
+  // },
+  getAllWareHouse: (pageSize: number, currentPage: number) => {
+    const offsetValue = (currentPage - 1) * pageSize;
+    db.get("SELECT COUNT(ID) as count FROM warehouse", (err, row:any) => {
       if (err) {
         console.log(err);
       }
-      console.log(rows);
-
-      const mainWindow = BrowserWindow.getFocusedWindow();
-      if (mainWindow) {
-        mainWindow.webContents.send("all-warehouse", rows);
-      }
+      const count = row?.count
+      db.all(
+        " SELECT * FROM warehouse LIMIT ? OFFSET ?",
+        [pageSize, offsetValue],
+        (err, rows) => {
+          if (err) {
+            console.log(err);
+          }
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (mainWindow) {
+            const data = { rows, total: count };
+            mainWindow.webContents.send("all-warehouse", data);
+          }
+        }
+      );
     });
   },
+
 
   updateWarehouse: (name: string, description: string, id: number) => {
     db.run(
