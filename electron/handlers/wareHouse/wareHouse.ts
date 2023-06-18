@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import wareHouseDB from "../../database/wareHouse/wareHouse";
 
 const wareHouse = () => {
-  const { createWareHouse, getAllWareHouse } = wareHouseDB;
+  const { createWareHouse, getAllWarehouse, updateWarehouse } = wareHouseDB;
 
   //listen create warehouse request
   ipcMain.on(
@@ -24,6 +24,14 @@ const wareHouse = () => {
     ) => {
       const { pageSize, currentPage } = data;
       getAllWareHouse(pageSize, currentPage);
+    }
+  );
+
+  ipcMain.on(
+    "update-warehouse",
+    (event, data: { name: string; description: string; id: number }) => {
+      const { name, description, id } = data;
+      updateWarehouse(name, description, id);
     }
   );
 

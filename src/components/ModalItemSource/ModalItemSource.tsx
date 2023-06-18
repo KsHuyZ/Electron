@@ -1,18 +1,39 @@
 import { UilMultiply } from '@iconscout/react-unicons'
 import { Button, Input } from 'antd'
 import { ipcRenderer } from 'electron'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
-type ModalProps = {
-    closeModal: () => void,
-    setLoading: () => void
+
+type DataType = {
+    ID: number;
+    name: string;
+    address: string;
+    phone: string;
 }
 
-const ModalItemSource = ({ closeModal, setLoading }: ModalProps) => {
+interface ModalItemSourceProps {
+    closeModal: () => void,
+    setLoading: () => void
+    data: DataType | null | undefined
+}
 
-    const [name, setName] = useState<string>("")
-    const [address, setAddress] = useState<string>("")
-    const [phonenumber, setPhonenumber] = useState<string>("")
+
+
+
+const ModalItemSource = (props: ModalItemSourceProps) => {
+    const { closeModal, setLoading, data } = props
+    const [value, setValue] = useState({
+        name: "",
+        address: "",
+        phonenumber: ""
+    })
+    const [error, setError] = useState({
+        name: "",
+        address: "",
+        phonenumber: ""
+    })
+    const [isSubmit, setIsSubmit] = useState(false)
+
 
     const handleCloseModal = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Escape") {
@@ -20,10 +41,43 @@ const ModalItemSource = ({ closeModal, setLoading }: ModalProps) => {
         }
     }
 
-    const hanldeAddNewItemSource = () => {
+    const hanldeSubmit = () => {
+        setIsSubmit(true)
+        let error = { name: "", address: "", phonenumber: "" }
+        const { name, address, phonenumber } = value
+        if (name === "") {
+            error.name = "Chưa nhập tên nguồn hàng"
+        }
+        if (address === "") {
+            error.address = "Chưa nhập địa chỉ nguồn hàng"
+        }
+        if (phonenumber === "") {
+            error.phonenumber = "Chưa nhập số điện thoại nguồn hàng"
+        }
+
+        if (error.name.length > 0 || error.address.length > 0 || error.phonenumber.length > 0) {
+            setError(error)
+            return
+        }
         setLoading()
-        ipcRenderer.send("create-new-itemsource", { name, address, phonenumber })
+        if (data) {
+            const { ID } = data
+            return ipcRenderer.send("update-itemsource", { id: ID, name, address, phonenumber })
+        }
+        ipcRenderer.send("create-new-nguonHang", { name, address, phonenumber })
     }
+
+    const handleChangeInput = (field: string, value: string) => {
+        setError(prev => ({ ...prev, [field]: "" }))
+        setValue(prev => ({ ...prev, [field]: value }))
+    }
+
+    useEffect(() => {
+        if (data) {
+            const { name, address, phone } = data
+            setValue({ name, phonenumber: phone, address })
+        }
+    }, [])
 
     return (
         <div className='backdrop'>
@@ -36,15 +90,18 @@ const ModalItemSource = ({ closeModal, setLoading }: ModalProps) => {
                 <div className="main-body">
                     <div className="row">
                         <div className="title">Tên nguồn hàng</div>
-                        <Input size="large" placeholder="Tên nguồn hàng" onChange={(e) => setName(e.target.value)} />
+                        <div className="error">{error.name}</div>
+                        <Input size="large" placeholder="Tên nguồn hàng" status={isSubmit && error.name.length > 0 ? "error" : ""} value={value.name} onChange={(e) => handleChangeInput("name", e.target.value)} />
                     </div>
                     <div className="row">
                         <div className="title">Địa chỉ</div>
-                        <Input size="large" placeholder="Địa chỉ" onChange={(e) => setAddress(e.target.value)} />
+                        <div className="error">{error.address}</div>
+                        <Input size="large" placeholder="Địa chỉ" value={value.address} onChange={(e) => handleChangeInput("address", e.target.value)} status={isSubmit && error.address.length > 0 ? "error" : ""} />
                     </div>
                     <div className="row">
                         <div className="title">Số điện thoại</div>
-                        <Input size="large" placeholder="Số điện thoại" onChange={(e) => setPhonenumber(e.target.value)} />
+                        <div className="error">{error.phonenumber}</div>
+                        <Input size="large" placeholder="Số điện thoại" type='number' value={value.phonenumber} status={isSubmit && error.phonenumber.length > 0 ? "error" : ""} onChange={(e) => handleChangeInput("phonenumber", e.target.value)} />
                     </div>
                 </div>
                 <div className="action">
@@ -54,7 +111,7 @@ const ModalItemSource = ({ closeModal, setLoading }: ModalProps) => {
                         }}>Thoát</Button>
                     </div>
                     <div className="create">
-                        <Button type="primary" onClick={hanldeAddNewItemSource}>Thêm nguồn hàng</Button>
+                        <Button type="primary" onClick={hanldeSubmit}>{!data ? "Thêm nguồn hàng" : "Cập nhật"}</Button>
                     </div>
                 </div>
             </div>

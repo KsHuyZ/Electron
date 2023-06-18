@@ -1,13 +1,11 @@
+import { ModalProps } from "@/types";
 import "./modal.scss"
 import { UilMultiply } from '@iconscout/react-unicons'
 import { Input, Button } from 'antd';
 import { ipcRenderer } from "electron";
 import { useEffect, useState } from "react";
 
-type ModalProps = {
-    closeModal: () => void,
-    setLoading: () => void
-}
+
 
 const Modal = ({ closeModal, setLoading }: ModalProps) => {
 
