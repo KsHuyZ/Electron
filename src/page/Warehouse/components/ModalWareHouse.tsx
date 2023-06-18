@@ -20,9 +20,6 @@ const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean }: ModalProps)
 
   useEffect(() =>{
     if(dataEdit?.idEdit){
-        console.log('ne',dataEdit);
-        
-        // ipcRenderer.send("warehouse-request-read");
         form.setFieldValue('name', dataEdit.name);
 
     }
@@ -35,9 +32,9 @@ const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean }: ModalProps)
       setIsLoading(true); // Set loading state to true
       const { name } = form.getFieldsValue(); // Get the value of the name field
       if(dataEdit?.idEdit){
-        
+        ipcRenderer.send('update-warehouse', {name: name,description: '', id: dataEdit.idEdit});
       }else{
-          ipcRenderer.send('create-new-warehouse', name);
+        ipcRenderer.send('create-new-warehouse', name);
       }
 
       // Simulating loading completion after 3 seconds

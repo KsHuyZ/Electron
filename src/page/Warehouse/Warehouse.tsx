@@ -15,7 +15,7 @@ type DataType = {
 
 type ResponseCallBackWareHouse = {
     rows: DataType[],
-    total:  number
+    total: number
 }
 
 interface TableParams {
@@ -34,7 +34,7 @@ const Warehouse = () => {
             total: 0
         },
     });
-    const [formEdit, setFormEdit] = useState<{idEdit: string, name: string}>();
+    const [formEdit, setFormEdit] = useState<{ idEdit: string, name: string }>();
 
 
     const columns: ColumnsType<DataType> = [
@@ -49,15 +49,15 @@ const Warehouse = () => {
         {
             title: 'Tên kho',
             dataIndex: 'name',
-            key:'name'
+            key: 'name'
         },
         {
             title: "Hành động",
             dataIndex: "action",
             width: 150,
-            render: (_,record) => (
+            render: (_, record) => (
                 <Space size="middle">
-                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={()=> handleOpenEditModal(record.ID, record.name)}/>
+                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleOpenEditModal(record.ID, record.name)} />
                 </Space>
             ),
         }
@@ -69,16 +69,16 @@ const Warehouse = () => {
 
     const handleGetAllWarehouse = (pageSize: number, currentPage: number) => {
         setLoading(true);
-        ipcRenderer.send("warehouse-request-read",{pageSize, currentPage})
+        ipcRenderer.send("warehouse-request-read", { pageSize, currentPage })
     }
 
     const handleTableChange = (pagination: TablePaginationConfig) => {
         setTableParams((prevParams) => ({
-          ...prevParams,
-          pagination,
+            ...prevParams,
+            pagination,
         }));
         handleGetAllWarehouse(pagination.pageSize!, pagination.current!);
-      };
+    };
 
     useEffect(() => {
         handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
@@ -86,9 +86,9 @@ const Warehouse = () => {
 
     const allWareHouseCallBack = (event: Electron.IpcRendererEvent, data: ResponseCallBackWareHouse) => {
         setLoading(false)
-        setTableParams((prev) =>({
+        setTableParams((prev) => ({
             ...prev,
-            total : data.total
+            total: data.total
         }))
         setAllWareHouse(data.rows)
     }
@@ -100,17 +100,34 @@ const Warehouse = () => {
         message.success("Thêm kho hàng thành công")
     }
 
+    const updateWarehouseCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
+        const { ID } = data
+        setAllWareHouse(prev => {
+            let prevItemSource = [...prev]
+            const index = prevItemSource.findIndex(item => item.ID === ID)
+            if (index > -1) {
+                prevItemSource[index] = data
+            }
+            return prevItemSource
+        })
+        setShowAddModal(false)
+        setLoading(false)
+        message.success("Thêm kho hàng thành công")
+    }
+
     useEffect(() => {
         ipcRenderer.on("all-warehouse", allWareHouseCallBack)
         ipcRenderer.on("append-warehouse", appendWarehouseCallBack)
+        ipcRenderer.on("update-success", updateWarehouseCallBack)
         setLoading(false);
         return () => {
             ipcRenderer.removeListener("all-warehouse", allWareHouseCallBack)
             ipcRenderer.removeListener("append-warehouse", appendWarehouseCallBack)
+            ipcRenderer.removeListener("update-success", updateWarehouseCallBack)
         }
     }, []);
 
-    const handleOpenEditModal = (id: string, name: string) =>{
+    const handleOpenEditModal = (id: string, name: string) => {
         setShowAddModal(true);
         setFormEdit({
             idEdit: id,
@@ -118,19 +135,19 @@ const Warehouse = () => {
         })
     };
 
-    const cleanFormEdit = () =>{
+    const cleanFormEdit = () => {
         setFormEdit({
             idEdit: '',
             name: ''
         })
     }
 
-    const handleOpenModal = () =>{
+    const handleOpenModal = () => {
         setLoading(true)
         cleanFormEdit()
     }
-    
-    const handleCloseModal = () =>{
+
+    const handleCloseModal = () => {
         setShowAddModal(false)
         cleanFormEdit()
     }
@@ -138,7 +155,7 @@ const Warehouse = () => {
     return (
         <div className="form-table">
             {
-                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={()=>cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()}/>
+                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} />
             }
             <div className="header">
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>

@@ -46,16 +46,16 @@ const wareHouse = {
   },
 
 
-  updateWarehouse: (name: string, description: string, id: number) => {
+  updateWarehouse: (name: string, description: string, ID: number) => {
     db.run(
-      "UPDATE warehouse SET name = ?, description = ?) WHERE id = ?",
-      [name, description, id],
+      "UPDATE warehouse SET name = ?, description = ? WHERE id = ?",
+      [name, description, ID],
       function (err) {
         if (err) {
           console.log(err.message);
         } else {
           const newData = {
-            id,
+            ID,
             name,
             description,
           };
