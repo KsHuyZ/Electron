@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import wareHouseDB from "../../database/wareHouse/wareHouse";
 
 const wareHouse = () => {
-  const { createWareHouse, getAllWarehouse } = wareHouseDB;
+  const { createWareHouse, getAllWareHouse } = wareHouseDB;
 
   //listen create warehouse request
   ipcMain.on(
@@ -12,9 +12,20 @@ const wareHouse = () => {
     }
   );
 
-  // listen get all warehouse request
-  ipcMain.on("warehouse-request-read", () => {
-    getAllWarehouse();
-  });
+   // listen get all nguon hang request
+   ipcMain.on(
+    "warehouse-request-read",
+    (
+      event,
+      data: { pageSize: number; currentPage: number } = {
+        pageSize: 10,
+        currentPage: 1,
+      }
+    ) => {
+      const { pageSize, currentPage } = data;
+      getAllWareHouse(pageSize, currentPage);
+    }
+  );
+
 };
 export default wareHouse;
