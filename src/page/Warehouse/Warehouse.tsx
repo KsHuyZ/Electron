@@ -13,6 +13,11 @@ type DataType = {
     name: string;
 }
 
+type ResponseCallBackWareHouse = {
+    rows: DataType[],
+    total:  number
+}
+
 interface TableParams {
     pagination?: TablePaginationConfig;
 }
@@ -26,6 +31,7 @@ const Warehouse = () => {
         pagination: {
             current: 1,
             pageSize: 10,
+            total: 0
         },
     });
     const [formEdit, setFormEdit] = useState<{idEdit: string, name: string}>();
@@ -78,9 +84,13 @@ const Warehouse = () => {
         handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
     }, [])
 
-    const allWareHouseCallBack = (event: Electron.IpcRendererEvent, data: DataType[]) => {
+    const allWareHouseCallBack = (event: Electron.IpcRendererEvent, data: ResponseCallBackWareHouse) => {
         setLoading(false)
-        setAllWareHouse(data)
+        setTableParams((prev) =>({
+            ...prev,
+            total : data.total
+        }))
+        setAllWareHouse(data.rows)
     }
 
     const appendWarehouseCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {

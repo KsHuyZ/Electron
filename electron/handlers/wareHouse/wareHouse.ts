@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import wareHouseDB from "../../database/wareHouse/wareHouse";
 
 const wareHouse = () => {
-  const { createWareHouse, getAllWarehouse, updateWarehouse } = wareHouseDB;
+  const { createWareHouse, getAllWareHouse, updateWarehouse } = wareHouseDB;
 
   //listen create warehouse request
   ipcMain.on(
