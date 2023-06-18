@@ -26,7 +26,6 @@ const nguonHang = {
   getAllItemSource: (pageSize: number, currentPage: number) => {
     const offsetValue = (currentPage - 1) * pageSize;
     db.get("SELECT COUNT(ID) as count FROM nguonHang", (err, row: any) => {
-      console.log("nguon hang", row);
       if (err) {
         console.log(err);
       }

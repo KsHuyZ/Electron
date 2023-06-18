@@ -54,7 +54,7 @@ const Login = () => {
       return newLoadings;
     });
     notifySuccess("Đăng nhập thành công")// "Hello from main process!"
-   navigate("/home")
+    navigate("/home")
   }
 
   const handleLoginFailed = () => {
@@ -66,14 +66,14 @@ const Login = () => {
     setError("Thông tin đăng nhập không đúng")
   }
 
-    useEffect(() => {
-      ipcRenderer.on('login-success', handleLoginSucess);
-      ipcRenderer.on('login-failed', handleLoginFailed);
-      return () => {
-        ipcRenderer.removeListener('login-success', handleLoginSucess)
-        ipcRenderer.removeListener('login-failed', handleLoginFailed)
-      }
-    }, [])
+  useEffect(() => {
+    ipcRenderer.on('login-success', handleLoginSucess);
+    ipcRenderer.on('login-failed', handleLoginFailed);
+    return () => {
+      ipcRenderer.removeListener('login-success', handleLoginSucess)
+      ipcRenderer.removeListener('login-failed', handleLoginFailed)
+    }
+  }, [])
 
   const closeApp = () => {
     ipcRenderer.send('close', [])

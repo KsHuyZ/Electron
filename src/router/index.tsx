@@ -6,7 +6,7 @@ import MainDash from "@/components/MainDash/MainDash";
 import TableData from "@/components/TableData/TableData";
 import "../App.scss"
 import Warehouse from "@/page/Warehouse/Warehouse";
-import ModalItemSource from "@/components/ModalItemSource/ModalItemSource";
+import ModalItemSource from "@/page/ItemSource/components/ModalItemSource";
 import ItemSource from "@/page/ItemSource/ItemSource";
 import Product from "@/page/Product/Product";
 
