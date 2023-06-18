@@ -41,11 +41,9 @@ const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean }: ModalProps)
       }
 
       // Simulating loading completion after 3 seconds
-      setTimeout(() => {
-        clean();
-        setIsLoading(false); // Set loading state to false
-        closeModal();
-      }, 3000);
+      clean();
+      setIsLoading(false); // Set loading state to false
+      closeModal();
     } catch (error) {
       console.log('Form validation error:', error);
     }

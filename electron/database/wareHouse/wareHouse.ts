@@ -21,19 +21,6 @@ const wareHouse = {
     );
   },
   
-  // getAllWarehouse: () => {
-  //   db.all("SELECT * FROM warehouse", (err, rows) => {
-  //     if (err) {
-  //       console.log(err);
-  //     }
-  //     console.log(rows);
-
-  //     const mainWindow = BrowserWindow.getFocusedWindow();
-  //     if (mainWindow) {
-  //       mainWindow.webContents.send("all-warehouse", rows);
-  //     }
-  //   });
-  // },
   getAllWareHouse: (pageSize: number, currentPage: number) => {
     const offsetValue = (currentPage - 1) * pageSize;
     db.get("SELECT COUNT(ID) as count FROM warehouse", (err, row:any) => {

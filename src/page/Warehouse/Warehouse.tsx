@@ -5,7 +5,6 @@ import { UilMultiply, UilPen } from '@iconscout/react-unicons'
 import { useEffect, useState } from "react";
 import { ipcRenderer } from "electron";
 import { Link } from "react-router-dom";
-import toastify from "@/lib/toastify";
 
 import ModalWareHouse from "./components/ModalWareHouse";
 
@@ -26,7 +25,7 @@ const Warehouse = () => {
     const [tableParams, setTableParams] = useState<TableParams>({
         pagination: {
             current: 1,
-            pageSize: 5,
+            pageSize: 10,
         },
     });
     const [formEdit, setFormEdit] = useState<{idEdit: string, name: string}>();
@@ -62,9 +61,9 @@ const Warehouse = () => {
         setShowAddModal(true)
     }
 
-    const handleGetAllWarehouse = () => {
+    const handleGetAllWarehouse = (pageSize: number, currentPage: number) => {
         setLoading(true);
-        ipcRenderer.send("warehouse-request-read")
+        ipcRenderer.send("warehouse-request-read",{pageSize, currentPage})
     }
 
     const handleTableChange = (pagination: TablePaginationConfig) => {
@@ -72,10 +71,11 @@ const Warehouse = () => {
           ...prevParams,
           pagination,
         }));
+        handleGetAllWarehouse(pagination.pageSize!, pagination.current!);
       };
 
     useEffect(() => {
-        handleGetAllWarehouse()
+        handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
     }, [])
 
     const allWareHouseCallBack = (event: Electron.IpcRendererEvent, data: DataType[]) => {
