@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { FormEvent, SyntheticEvent, useEffect, useRef, useState } from 'react'
 import "./login.scss"
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Input, Button, InputRef } from 'antd';
@@ -31,7 +31,8 @@ const Login = () => {
     }
   }
 
-  const handleLogin = () => {
+  const handleLogin = (e:SyntheticEvent) => {
+    e.preventDefault()
     const username = userNameInput.current!.input!.value
     const password = passwordInput.current!.input!.value
     if (username === "" || password === "") {
@@ -81,7 +82,7 @@ const Login = () => {
 
   return (
     <div className='login-form'>
-      <form className="form">
+      <form className="form" onSubmit={handleLogin}>
         <div className="header">
           <h2 className="title">Đăng nhập</h2>
         </div>
@@ -96,7 +97,7 @@ const Login = () => {
         </div>
         <div className="submit-form">
           <div className="login">
-            <Button type="primary" onClick={handleLogin}>Đăng nhập</Button>
+            <Button type="primary" htmlType='submit'>Đăng nhập</Button>
           </div>
           <div className="exit">
             <Button type="primary" danger ghost onClick={closeApp}>

@@ -1,7 +1,7 @@
 import "./warehouse.scss"
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { Button, Space, Table, message } from 'antd';
-import { UilMultiply, UilPen } from '@iconscout/react-unicons'
+import { UilPen } from '@iconscout/react-unicons'
 import { useEffect, useState } from "react";
 import { ipcRenderer } from "electron";
 import { Link } from "react-router-dom";
@@ -15,7 +15,7 @@ type DataType = {
 
 type ResponseCallBackWareHouse = {
     rows: DataType[],
-    total:  number
+    total: number
 }
 
 interface TableParams {
@@ -34,7 +34,7 @@ const Warehouse = () => {
             total: 0
         },
     });
-    const [formEdit, setFormEdit] = useState<{idEdit: string, name: string}>();
+    const [formEdit, setFormEdit] = useState<{ idEdit: string, name: string }>();
 
     const columns: ColumnsType<DataType> = [
         {
@@ -48,15 +48,15 @@ const Warehouse = () => {
         {
             title: 'Tên kho',
             dataIndex: 'name',
-            key:'name'
+            key: 'name'
         },
         {
             title: "Hành động",
             dataIndex: "action",
             width: 150,
-            render: (_,record) => (
+            render: (_, record) => (
                 <Space size="middle">
-                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={()=> handleOpenEditModal(record.ID, record.name)}/>
+                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleOpenEditModal(record.ID, record.name)} />
                 </Space>
             ),
         }
@@ -68,16 +68,16 @@ const Warehouse = () => {
 
     const handleGetAllWarehouse = (pageSize: number, currentPage: number) => {
         setLoading(true);
-        ipcRenderer.send("warehouse-request-read",{pageSize, currentPage})
+        ipcRenderer.send("warehouse-request-read", { pageSize, currentPage })
     }
 
     const handleTableChange = (pagination: TablePaginationConfig) => {
         setTableParams((prevParams) => ({
-          ...prevParams,
-          pagination,
+            ...prevParams,
+            pagination,
         }));
         handleGetAllWarehouse(pagination.pageSize!, pagination.current!);
-      };
+    };
 
     useEffect(() => {
         handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
@@ -85,9 +85,9 @@ const Warehouse = () => {
 
     const allWareHouseCallBack = (event: Electron.IpcRendererEvent, data: ResponseCallBackWareHouse) => {
         setLoading(false)
-        setTableParams((prev) =>({
+        setTableParams((prev) => ({
             ...prev,
-            total : data.total
+            total: data.total
         }))
         setAllWareHouse(data.rows)
     }
@@ -109,7 +109,7 @@ const Warehouse = () => {
         }
     }, []);
 
-    const handleOpenEditModal = (id: string, name: string) =>{
+    const handleOpenEditModal = (id: string, name: string) => {
         setShowAddModal(true);
         setFormEdit({
             idEdit: id,
@@ -117,19 +117,19 @@ const Warehouse = () => {
         })
     };
 
-    const cleanFormEdit = () =>{
+    const cleanFormEdit = () => {
         setFormEdit({
             idEdit: '',
             name: ''
         })
     }
 
-    const handleOpenModal = () =>{
+    const handleOpenModal = () => {
         setLoading(true)
         cleanFormEdit()
     }
-    
-    const handleCloseModal = () =>{
+
+    const handleCloseModal = () => {
         setShowAddModal(false)
         cleanFormEdit()
     }
@@ -137,7 +137,7 @@ const Warehouse = () => {
     return (
         <div className="form-table">
             {
-                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={()=>cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()}/>
+                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} />
             }
             <div className="header">
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>

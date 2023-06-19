@@ -104,7 +104,7 @@ const ModalItemSource = (props: ModalItemSourceProps) => {
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     )
 }
 
