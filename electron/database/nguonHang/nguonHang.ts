@@ -82,7 +82,6 @@ const nguonHang = {
       } else {
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (mainWindow) {
-          console.log(id);
           mainWindow.webContents.send("delete-success", id);
         }
       }

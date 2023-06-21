@@ -27,7 +27,7 @@ export const SidebarData = [
   {
     icon: UilClipboardAlt,
     heading: "Đơn vị nhận",
-    url: "/"
+    url: "/recipient"
   },
   {
     icon: UilUsersAlt,

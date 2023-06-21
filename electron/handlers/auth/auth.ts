@@ -5,11 +5,8 @@ const auth = () =>  {
     ipcMain.on(
       "login-request",
       (event, data: { username: string; password: string }) => {
-
         const mainWindow = BrowserWindow.getFocusedWindow();
-
         const { username, password } = data;
-
         if (username !== "admin") {
           if (mainWindow) {
             mainWindow.webContents.send("wrong-username", {

@@ -4,7 +4,7 @@ import { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useState } from 'react'
 import ModalItemSource from './components/ModalItemSource';
 import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
-import { Data, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 
 type DataType = {
