@@ -36,7 +36,6 @@ const Warehouse = () => {
     });
     const [formEdit, setFormEdit] = useState<{ idEdit: string, name: string }>();
 
-
     const columns: ColumnsType<DataType> = [
         {
             title: 'Mã kho hàng',

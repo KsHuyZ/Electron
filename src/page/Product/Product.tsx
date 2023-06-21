@@ -3,7 +3,7 @@ import { Table, Space, Button, Tag } from 'antd';
 import { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
-import ModalItemSource from '../../components/ModalItemSource/ModalItemSource';
+import ModalItemSource from '../ItemSource/components/ModalItemSource';
 import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
 import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
