@@ -224,7 +224,8 @@ const Product = () => {
   }, [])
 
   return (
-    !showConfirmForm ? (<div className="form-table">
+    !showConfirmForm ? (
+    <div className="form-table">
       {showAddModal && <ModalProductItem closeModal={() => setShowAddModal(false)} setLoading={() => setLoading(true)} id={id} />}
       <div className="header" style={{ display: "flex", alignItems: "center", justifyContent: "space-around" }}>
         <div className="add-data">
