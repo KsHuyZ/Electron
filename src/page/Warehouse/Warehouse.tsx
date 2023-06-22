@@ -1,7 +1,7 @@
 import "./warehouse.scss"
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { Button, Space, Table, message } from 'antd';
-import { UilMultiply, UilPen } from '@iconscout/react-unicons'
+import { UilPen } from '@iconscout/react-unicons'
 import { useEffect, useState } from "react";
 import { ipcRenderer } from "electron";
 import { Link } from "react-router-dom";
@@ -35,7 +35,6 @@ const Warehouse = () => {
         },
     });
     const [formEdit, setFormEdit] = useState<{ idEdit: string, name: string }>();
-
 
     const columns: ColumnsType<DataType> = [
         {

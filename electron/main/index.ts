@@ -74,7 +74,6 @@ async function createWindow() {
   } else {
     win.loadFile(indexHtml);
   }
-
   // Test actively push message to the Electron-Renderer
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());

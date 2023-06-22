@@ -2,10 +2,9 @@ import { UilMultiply, UilPen } from '@iconscout/react-unicons';
 import { Table, Space, Button } from 'antd';
 import { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
-import ModalItemSource from '../../components/ModalItemSource/ModalItemSource';
+import ModalItemSource from './components/ModalItemSource';
 import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
-import { Data, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 
 type DataType = {
@@ -49,7 +48,7 @@ const ModalDelete = (props: ModalItemSourceProps) => {
         </div>
         <div className="action">
           <div className="cancel">
-            <Button type="text" onClick={closeModal}>Thoát</Button>
+            <Button type="primary" ghost onClick={closeModal}>Thoát</Button>
           </div>
           <div className="create">
             <Button type="primary" danger ghost onClick={() => deleteFunc(data?.ID)} style={{ backgroundColor: "transparent" }}>Xác nhận</Button>
@@ -103,7 +102,6 @@ const ItemSource = () => {
         <Space size="middle">
           <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
           <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} onClick={() => handleSelectRowDelete(data)} />
-          <Link to={"/login"}>Xem các mặt hàng đã nhập từ nguồn này</Link>
         </Space>
       ),
     }

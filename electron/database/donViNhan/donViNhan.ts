@@ -13,10 +13,10 @@ const donViNhan = {
           console.log(err.message);
         } else {
           const ID = this.lastID;
-          const newData = { ID, name, address, phonenumber };
+          const newData = { ID, name, address, phone:phonenumber };
           const mainWindow = BrowserWindow.getFocusedWindow();
           if (mainWindow) {
-            mainWindow.webContents.send("append-itemsource", newData);
+            mainWindow.webContents.send("append-donViNhan", newData);
           }
         }
       }
@@ -44,6 +44,45 @@ const donViNhan = {
           }
         }
       );
+    });
+  },
+  updateDonViNhan: (
+    name: string,
+    address: string,
+    phonenumber: string,
+    id: number
+  ) => {
+    db.run(
+      "UPDATE donViNhan SET name = ?, address = ?, phone = ? WHERE id = ?",
+      [name, address, phonenumber, id],
+      function (err) {
+        if (err) {
+          console.log(err.message);
+        } else {
+          const newData = {
+            ID: id,
+            name,
+            address,
+            phone: phonenumber,
+          };
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (mainWindow) {
+            mainWindow.webContents.send("update-success", newData);
+          }
+        }
+      }
+    );
+  },
+  deleteDonViNhan: (id: number) => {
+    db.run("DELETE FROM donViNhan WHERE ID = ?", [id], function (err) {
+      if (err) {
+        console.log(err.message);
+      } else {
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("delete-success", id);
+        }
+      }
     });
   },
 };
