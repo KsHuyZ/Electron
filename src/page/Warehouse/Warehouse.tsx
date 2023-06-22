@@ -42,7 +42,7 @@ const Warehouse = () => {
             dataIndex: 'ID',
             key: 'ID',
             render: (record) => {
-                return <Link to={`/home/${record.ID}`}>K{record < 10 ? "0" : ""}{record}</Link>
+                return <Link to={`/home/${record}`}>K{record < 10 ? "0" : ""}{record}</Link>
             }
         },
         {

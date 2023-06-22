@@ -18,8 +18,15 @@ const wareHouseItem = () => {
 
   // listen get all warehouse item request
 
-  ipcMain.on("warehouseitem-request-read", (event, data: string) => {
-    getAllWarehouseItem(data);
+  ipcMain.on("warehouseitem-request-read", (
+    event,
+    data: { pageSize: number; currentPage: number; id?: string } = {
+      pageSize: 10,
+      currentPage: 1,
+    }
+  ) => {
+    const { pageSize, currentPage } = data;
+    getAllWarehouseItem(data.id ,pageSize, currentPage);
   });
 
   ipcMain.on(

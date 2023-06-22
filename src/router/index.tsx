@@ -9,7 +9,9 @@ import Warehouse from "@/page/Warehouse/Warehouse";
 import ModalItemSource from "@/page/ItemSource/components/ModalItemSource";
 import ItemSource from "@/page/ItemSource/ItemSource";
 import Product from "@/page/Product/Product";
+import WareHouseItem from "@/page/WarehouseItem/WareHouseItem";
 import Recipient from "@/page/Recipient/Recipient";
+
 
 const MainLayout: FC = () => {
   return (
@@ -34,9 +36,13 @@ export default createBrowserRouter([
         element: <Warehouse />,
         path: "/home",
       },
+      // {
+      //   element: <Product />,
+      //   path: "/home/:id"
+      // },
       {
-        element: <Product />,
-        path: "/home/:id"
+        element: <WareHouseItem/>,
+        path: "/home/:idWareHouse"
       },
       {
         element: <ItemSource />,
