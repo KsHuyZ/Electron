@@ -47,6 +47,18 @@ const nguonHang = {
     });
   },
 
+  getFulllItemSource: () => {
+    db.all("SELECT * FROM nguonHang", (err, rows) => {
+      if (err) {
+        console.log(err);
+      }
+      const mainWindow = BrowserWindow.getFocusedWindow();
+      if (mainWindow) {
+        mainWindow.webContents.send("all-nguonHang", rows);
+      }
+    });
+  },
+
   updateItemSource: (
     name: string,
     address: string,

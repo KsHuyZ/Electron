@@ -22,6 +22,6 @@
       ]
     },
   },
-  "include": ["src", "react-unicorn.d.ts"],
+  "include": ["src", "react-unicorn.d.ts",  "electron-printer.d.ts", "electron-pos-printer.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

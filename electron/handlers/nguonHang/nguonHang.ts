@@ -6,6 +6,7 @@ const nguonHang = () => {
     getAllItemSource,
     updateItemSource,
     deleteItemSource,
+    getFulllItemSource,
   } = nguonHangDB;
 
   // listen create nguon hang request
@@ -17,7 +18,7 @@ const nguonHang = () => {
     }
   );
 
-  // listen get all nguon hang request
+  // listen get nguon hang request
   ipcMain.on(
     "itemsource-request-read",
     (
@@ -31,6 +32,10 @@ const nguonHang = () => {
       getAllItemSource(pageSize, currentPage);
     }
   );
+
+  ipcMain.on("itemsource-request-get-all", () => {
+    getFulllItemSource();
+  });
 
   //listen update
   ipcMain.on(
