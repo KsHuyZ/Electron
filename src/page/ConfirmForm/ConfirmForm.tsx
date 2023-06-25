@@ -7,15 +7,6 @@ import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import docso from '@/utils/toVietnamese';
 import { ipcRenderer } from 'electron';
 
-type DataType = {
-    ID: string;
-    name: string;
-    price: number;
-    numplan: number;
-    numreal: number;
-    unit: string;
-    quality: number;
-}
 
 interface TableParams {
     pagination?: TablePaginationConfig;
@@ -71,7 +62,7 @@ const columns: ColumnsType<DataType> = [
         title: "Thành tiền",
         dataIndex: "tomoney",
         render: (_, record) => (
-            new Intl.NumberFormat().format(record.numreal * record.price)
+            new Intl.NumberFormat().format(record.quantity_real * record.price)
         )
     }
 ];
@@ -81,9 +72,32 @@ const countMoney = (allProductItem: any) => {
         value += product.price * product.numreal
     })
     return value
+
 }
 
-const ConfirmForm = ({ allProductItem, close }: any) => {
+type DataType = {
+    ID: string;
+    name: string;
+    price: number;
+    unit: string;
+    quality: number;
+    note: string;
+    quantity_plane: number;
+    quantity_real: number;
+    status: number;
+    date_expried: string;
+    date_created_at: string;
+    date_updated_at: string;
+    id_nguonHang?: string;
+}
+
+
+interface ConfirmFormProps {
+    allProductItem: DataType[],
+    close: () => void
+}
+
+const ConfirmForm = ({ allProductItem, close }: ConfirmFormProps) => {
     const [tableParams, setTableParams] = useState<TableParams>({
         pagination: {
             current: 1,
@@ -111,7 +125,7 @@ const ConfirmForm = ({ allProductItem, close }: any) => {
     };
 
 
- 
+
 
     return (
         <div className='form-table'>
@@ -201,11 +215,11 @@ const ConfirmForm = ({ allProductItem, close }: any) => {
 
             <Table
                 columns={columns}
-                dataSource={allProductItem}
+                dataSource={allProductItem.map(item => ({ ...item, key: item.ID }))}
                 style={{ marginTop: 10 }}
                 // pagination={true}
                 bordered
-                onChange={handleTableChange}
+            // onChange={handleTableChange}
             // style={{ margin: 20 }}
             />
             <div className="footer">
@@ -220,7 +234,6 @@ const ConfirmForm = ({ allProductItem, close }: any) => {
                     <div className="accepted">
                         <Button type="primary">Xác nhận</Button>
                     </div>
-
                 </div>
             </div>
         </div >

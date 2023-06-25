@@ -44,5 +44,7 @@ const donViNhan = () => {
   ipcMain.on("delete-recipient", (event, id: number) => {
     deleteDonViNhan(id);
   });
+
+ 
 };
 export default donViNhan;

@@ -1,0 +1,45 @@
+.filter-bar{
+    // background-color: aquamarine;
+    display: flex;
+    align-items:flex-end;
+    margin-bottom: 10px;
+    // justify-content: space-around;
+    button{
+        background-color: #00695c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        &:hover{
+            background-color: #fff!important;
+            border: 1px solid #00695c;
+            color: #00695c!important;
+        }
+    }
+    
+}
+
+.form-item{
+    display: flex;
+    flex-direction: column;
+    margin-right: 10px;
+    label{
+        font-weight: bold;
+        padding: 10px 0 5px 0;
+        text-transform: uppercase;
+    }
+}
+
+.modal-item{
+    button{
+        background-color: #00695c;
+        &:hover{
+            background-color: #fff!important;
+            border: 1px solid #00695c;
+            color: #00695c!important;
+        }
+    }
+}
+
+.w-100{
+    width: 100%;
+}

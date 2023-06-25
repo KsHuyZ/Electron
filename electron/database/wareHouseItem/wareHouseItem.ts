@@ -6,10 +6,11 @@ const wareHouseItem = {
   getAllWarehouseItem: async (id, pageSize, currentPage) => {
     try {
       const offsetValue = (currentPage - 1) * pageSize;
-      
-      const countQuery = "SELECT COUNT(ID) as count FROM warehouseitem WHERE id_wareHouse = ?";
+
+      const countQuery =
+        "SELECT COUNT(ID) as count FROM warehouseitem WHERE id_wareHouse = ?";
       const countResult = await new Promise((resolve, reject) => {
-        db.get(countQuery,[id], (err, row: any) => {
+        db.get(countQuery, [id], (err, row: any) => {
           if (err) {
             reject(err);
           } else {
@@ -17,8 +18,9 @@ const wareHouseItem = {
           }
         });
       });
-  
-      const selectQuery = "SELECT * FROM warehouseitem WHERE id_wareHouse = ? ORDER BY ID DESC LIMIT ? OFFSET ?";
+
+      const selectQuery =
+        "SELECT * FROM warehouseitem WHERE id_wareHouse = ? ORDER BY ID DESC LIMIT ? OFFSET ?";
       const rows = await new Promise((resolve, reject) => {
         db.all(selectQuery, [id, pageSize, offsetValue], (err, rows) => {
           if (err) {
@@ -28,12 +30,12 @@ const wareHouseItem = {
           }
         });
       });
-  
+
       const mainWindow = BrowserWindow.getFocusedWindow();
       if (mainWindow) {
         const data = { rows, total: countResult };
         console.log(data);
-        
+
         mainWindow.webContents.send("append-warehouse-item", data);
       }
     } catch (err) {
@@ -72,7 +74,7 @@ const wareHouseItem = {
         note,
         quantity_plane,
         quantity_real,
-        status
+        status,
       ],
       function (err) {
         if (err) {
@@ -97,7 +99,10 @@ const wareHouseItem = {
           };
           const mainWindow = BrowserWindow.getFocusedWindow();
           if (mainWindow) {
-            mainWindow.webContents.send("append-warehouse-item-success", newData);
+            mainWindow.webContents.send(
+              "append-warehouse-item-success",
+              newData
+            );
           }
         }
       }
@@ -120,8 +125,7 @@ const wareHouseItem = {
       status,
     } = data;
 
-    console.log('du lieu', data);
-    
+    console.log("du lieu", data);
 
     db.run(
       "UPDATE warehouseitem SET id_wareHouse = ?, name = ?, price =?, unit = ?, quality = ?, id_nguonHang = ?, date_expried = ?, date_create_at = ?, date_updated_at = ?, note = ?, quantity_plane = ?, quantity_real = ? WHERE ID = ?",
@@ -180,6 +184,49 @@ const wareHouseItem = {
         }
       }
     });
+  },
+  getWareHouseItemByRecipientId: async (
+    id: number,
+    pageSize: number,
+    currentPage: number
+  ) => {
+    try {
+      const offsetValue = (currentPage - 1) * pageSize;
+
+      const countQuery =
+        "SELECT COUNT(ID) as count FROM warehouseitem WHERE id_wareHouse = ?";
+      const countResult = await new Promise((resolve, reject) => {
+        db.get(countQuery, [id], (err, row: any) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row?.count);
+          }
+        });
+      });
+
+      const selectQuery =
+        "SELECT * FROM warehouseitem WHERE id_wareHouse = ? ORDER BY ID DESC LIMIT ? OFFSET ?";
+      const rows = await new Promise((resolve, reject) => {
+        db.all(selectQuery, [id, pageSize, offsetValue], (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+      });
+
+      const mainWindow = BrowserWindow.getFocusedWindow();
+      if (mainWindow) {
+        const data = { rows, total: countResult };
+        console.log(data);
+
+        mainWindow.webContents.send("append-warehouse-item", data);
+      }
+    } catch (err) {
+      console.log(err);
+    }
   },
 };
 
