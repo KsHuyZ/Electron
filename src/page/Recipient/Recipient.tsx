@@ -7,6 +7,7 @@ import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/inte
 import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 import ModalRecipient from './components/ModalRecipient';
+import { Link } from 'react-router-dom';
 
 
 type DataType = {
@@ -77,6 +78,9 @@ const Recipient = () => {
         {
             title: 'Tên đơn vị nhận',
             dataIndex: 'name',
+            render: (_, data) => {
+                return <Link to={`/recipient/${data.ID}`}>{data.name}</Link>
+            }
         },
         {
             title: 'Địa chỉ',
@@ -254,8 +258,8 @@ const Recipient = () => {
         return () => {
             ipcRenderer.removeListener("all-donViNhan", allRecipientCallBack)
             ipcRenderer.removeListener("append-donViNhan", appendRecipientCallBack)
-              ipcRenderer.removeListener("update-success", updateRecipientCallBack)
-              ipcRenderer.removeListener("delete-success", deleteRecipientCallBack)
+            ipcRenderer.removeListener("update-success", updateRecipientCallBack)
+            ipcRenderer.removeListener("delete-success", deleteRecipientCallBack)
         }
     }, [])
 

@@ -40,5 +40,6 @@ const wareHouseItem = () => {
   ipcMain.on("delete-warehouseitem", (event, id: number) => {
     deleteWareHouseItem(id);
   });
+  
 };
 export default wareHouseItem;

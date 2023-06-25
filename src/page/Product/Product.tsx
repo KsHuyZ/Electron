@@ -9,21 +9,24 @@ import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 import ColumnGroup from 'antd/es/table/ColumnGroup';
 import Column from 'antd/es/table/Column';
-import ModalProductItem from '@/components/ModalProductItem/ModalProductItem';
+// import ModalProductItem from '@/components/ModalProductItem/ModalProductItem';
 import ConfirmForm from '../ConfirmForm/ConfirmForm';
 
 type DataType = {
   ID: string;
   name: string;
   price: number;
-  numplan: number;
-  numreal: number;
   unit: string;
   quality: number;
-  confirm: boolean;
-  expiry: Date;
+  note: string;
+  quantity_plane: number;
+  quantity_real: number;
+  status: number;
+  date_expried: string;
+  date_created_at: string;
+  date_updated_at: string;
+  id_nguonHang?: string;
 }
-
 interface TableParams {
   pagination?: TablePaginationConfig;
   sortField?: string;
@@ -225,29 +228,29 @@ const Product = () => {
 
   return (
     !showConfirmForm ? (
-    <div className="form-table">
-      {showAddModal && <ModalProductItem closeModal={() => setShowAddModal(false)} setLoading={() => setLoading(true)} id={id} />}
-      <div className="header" style={{ display: "flex", alignItems: "center", justifyContent: "space-around" }}>
-        <div className="add-data">
-          <Button type="primary" onClick={handleShowAddModal}>Thêm hàng vào kho</Button>
+      <div className="form-table">
+         {/* {showAddModal && <ModalProductItem closeModal={() => setShowAddModal(false)} setLoading={() => setLoading(true)} id={id} />} */}
+        <div className="header" style={{ display: "flex", alignItems: "center", justifyContent: "space-around" }}>
+          <div className="add-data">
+            <Button type="primary" onClick={handleShowAddModal}>Thêm hàng vào kho</Button>
+          </div>
+          <div className="import-accept">
+            <Button type="primary" onClick={() => setShowConfirmForm(true)}>Làm phiếu nhập hàng </Button>
+          </div>
         </div>
-        <div className="import-accept">
-          <Button type="primary" onClick={() => setShowConfirmForm(true)}>Làm phiếu nhập hàng </Button>
-        </div>
-      </div>
-      <Table
-        rowSelection={rowSelection}
-        columns={columns}
-        dataSource={allProductItem}
-        rowKey={(record) => record.ID}
-        // pagination={true}
-        loading={loading}
-        pagination={tableParams.pagination}
-        bordered
-        onChange={handleTableChange}
-      // style={{ margin: 20 }}
-      />
-    </div>) : (<ConfirmForm allProductItem={selectedRow} close={() => setShowConfirmForm(false)} />)
+        <Table
+          rowSelection={rowSelection}
+          columns={columns}
+          dataSource={allProductItem}
+          rowKey={(record) => record.ID}
+          // pagination={true}
+          loading={loading}
+          pagination={tableParams.pagination}
+          bordered
+        // onChange={handleTableChange}
+        // style={{ margin: 20 }}
+        />
+      </div>) : (<ConfirmForm allProductItem={selectedRow} close={() => setShowConfirmForm(false)} />)
   )
 }
 

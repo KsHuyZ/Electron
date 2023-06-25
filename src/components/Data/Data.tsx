@@ -36,8 +36,8 @@ export const SidebarData = [
   },
   {
     icon: UilPackage,
-    heading: 'Products',
-    url: "/"
+    heading: 'Mặt hàng',
+    url: "/warehouse-item"
   },
   {
     icon: UilChart,

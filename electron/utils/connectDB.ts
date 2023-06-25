@@ -20,5 +20,8 @@ db.run(
 db.run(
   "CREATE TABLE IF NOT EXISTS warehouseitem (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_wareHouse INTEGER NOT NULL, id_nguonHang INTEGER NOT NULL, name VARCHAR (255), price REAL, unit VARCHAR(10) NOT NULL, quality INTEGER, date_expried DATE, date_create_at DATE, date_updated_at DATE, note VARCHAR(255), quantity_plane INTEGER, quantity_real INTEGER, status INTEGER, FOREIGN KEY (id_wareHouse) REFERENCES wareHouse(ID), FOREIGN KEY (id_nguonHang) REFERENCES nguonHang(ID))"
 );
+db.run(
+  "CREATE TABLE IF NOT EXISTS donViNhanItem (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_wareHouseItem INTEGER NOT NULL,idDonViNhan INTEGER NOT NULL, FOREIGN KEY (id_wareHouseItem) REFERENCES warehouseitem(ID), FOREIGN KEY (idDonViNhan) REFERENCES donViNhan(ID))"
+);
 
 export default db;
