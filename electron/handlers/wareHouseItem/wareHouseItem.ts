@@ -8,6 +8,7 @@ const wareHouseItem = () => {
     getAllWarehouseItem,
     deleteWareHouseItem,
     updateWareHouseItem,
+    changeWareHouse,
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -39,6 +40,10 @@ const wareHouseItem = () => {
   // listen delete event
   ipcMain.on("delete-warehouseitem", (event, id: number) => {
     deleteWareHouseItem(id);
+  });
+  //Change warehouse
+  ipcMain.on("change-warehouse", (event, id_newWareHouse:number, id_list: number[]) => {
+    changeWareHouse(id_newWareHouse, id_list);
   });
 };
 export default wareHouseItem;

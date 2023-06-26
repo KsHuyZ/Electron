@@ -181,6 +181,22 @@ const wareHouseItem = {
       }
     });
   },
-};
+  //ChangeWareHouse
+  changeWareHouse: (
+    id_newWareHouse: number, 
+    id_list: number[],
+    ) => {
+    db.run(`UPDATE FROM warehouseitem SET id_wareHouse=${id_newWareHouse} WHERE ID IN (${id_list.join(',')})`, function(err){
+      if (err) {
+        console.log(err.message);
+      } else {
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("Update-success", id_list);
+        }
+      }
+    });
+    } 
+}
 
 export default wareHouseItem;
