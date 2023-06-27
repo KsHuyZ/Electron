@@ -63,7 +63,6 @@ async function createWindow() {
   });
   win.maximize();
   win.setMenuBarVisibility(false);
-
   handlersRequest();
 
   if (process.env.VITE_DEV_SERVER_URL) {
