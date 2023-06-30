@@ -3,17 +3,19 @@ import "./styles/wareHouseItem.scss";
 import { UilPlus } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UilMultiply, UilPen,UilExclamationCircle } from '@iconscout/react-unicons';
 import { fakeData } from "./constants/test";
 import { renderTextStatus, formatNumberWithCommas } from "@/utils";
-import { DataType,FormWareHouseItem } from "./types";
+import { DataType,FormWareHouseItem,STATUS_MODAL } from "./types";
 import TableWareHouse from "./components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import AddWareHouseItem from "./components/AddWareHouseItem";
 import { ItemSource,ResponseIpc,TableData } from "@/types";
 import { useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
+import TransferModal from "./components/TransferModal";
+import { ERROR } from "./constants/messValidate";
 
 const {confirm} = Modal;
 
@@ -37,7 +39,7 @@ const defaultRows: DataType[] = [
 const defaultTable: TableData<DataType[]> = {
   pagination: {
     current: 1,
-    pageSize: 4,
+    pageSize: 10,
     total: 0,
   },
   loading: false,
@@ -52,6 +54,8 @@ const WareHouseItem = () =>{
     const {idWareHouse} = useParams();
     const [isEdit, setIsEdit] = useState<boolean>(false);
     const [itemEdit, setItemEdit] = useState<DataType>();
+    const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
+    const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>(defaultRows);
 
     const columns: ColumnsType<DataType> = [
       {
@@ -145,11 +149,13 @@ const WareHouseItem = () =>{
       ipcRenderer.on("append-warehouse-item-success", notifyAddCallBack)
       ipcRenderer.on("delete-success", deleteWareHouseCallBack)
       ipcRenderer.on("update-success", updateWareHouseCallBack)
+      ipcRenderer.on("change-warehouse-update-success", handleUpdateTransferCallback);
       return () => {
           ipcRenderer.removeListener("append-warehouse-item", allWareHouseCallItemBack)
           ipcRenderer.removeListener("append-warehouse-item-success", notifyAddCallBack)
           ipcRenderer.removeListener("delete-success", deleteWareHouseCallBack)
           ipcRenderer.removeListener("update-success", updateWareHouseCallBack)
+          ipcRenderer.removeListener("change-warehouse-update-success", handleUpdateTransferCallback);
       }
   }, [ipcRenderer]);
 
@@ -189,6 +195,19 @@ const WareHouseItem = () =>{
     message.success('Cập nhật sản phẩm thành công');
   }
 
+  const handleUpdateTransferCallback = (
+    event: Electron.IpcRendererEvent,
+    idWareHouse: number[]
+  ) =>{
+    setListData(prev => {
+      const updatedRows = prev.rows.filter(item => idWareHouse.includes(+item.ID));
+      const updatedListData = { ...prev, rows: updatedRows };
+      return updatedListData;
+    });
+    message.success('Chuyển kho thành công');
+        getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+  }
+
 
   const deleteWareHouseCallBack = (event: Electron.IpcRendererEvent, id: any) =>{
     setListData(prev => {
@@ -215,21 +234,57 @@ const WareHouseItem = () =>{
     getListItem(pagination.pageSize!, pagination.current!, pagination.total!)
 };
 
-    const handleDataRowSelected = (data: any) =>{
-      console.log(data);
+    const handleDataRowSelected = (listIdRow: number[]) =>{
+      console.log(listIdRow);
+      // console.log(listData);
+      // check nguon hang must be in the same place
+
+      const mergedList = listIdRow.map((id) => {
+        const foundItem = listData.rows.find((item) => Number(item.ID) === id);
+        return foundItem ? { ...foundItem } : null;
+      });
+
+      // const differentItems = getDifferentItems(mergedList as DataType[]);
+      // if(differentItems.length > 0){
+      //     message.open({
+      //       type: 'error',
+      //       content:`Sản phẩm ${differentItems.map((item) => `MH${item.ID}`).toString()} không cùng nguồn hàng cùng các sản phẩm còn lại`,
+      //       duration: 4
+      //     });
+      //     return;
+      // }
+
+      // handle choose WareHouse
+
+      console.log(mergedList);
+      if(mergedList.length > 0){
+        setStatusModal(STATUS_MODAL.TRANSFER);
+        setListItemHasChoose(mergedList as DataType[]);
+
+      }else{
+        message.error(ERROR.ERROR_3);
+        return;
+      }
+      
+
+      
       
     }
   
-    const removeItem = (idItem: number) =>{
-      ipcRenderer.send("delete-warehouseitem", idItem);
+    const getDifferentItems = (list: DataType[]) => {
+      const seenIds = new Set();
+      const differentItems = [];
+      for (const item of list) {
+        if (seenIds.has(item.id_nguonHang)) {
+          differentItems.push(item);
+        }
+        seenIds.add(item.id_nguonHang);
+      }
+      return differentItems;
     }
 
-    const Footer = () => {
-      return (
-        <>
-         
-        </>
-      )
+    const removeItem = (idItem: number) =>{
+      ipcRenderer.send("delete-warehouseitem", idItem);
     }
 
     const handleRemoveItem = (data: DataType) =>{
@@ -248,6 +303,10 @@ const WareHouseItem = () =>{
 
         }
       });
+    };
+
+    const handleShowTransferModal = () =>{
+      setStatusModal(STATUS_MODAL.CLOSE);
     }
 
     return(
@@ -287,34 +346,28 @@ const WareHouseItem = () =>{
               />
             </div>
         </Col>
-        <Modal
-        title={'form'}
-        centered
-        open={false}
-        // onCancel={() => setIsMiddleModalOpen(false)}
-        // size="medium"
-        footer={<Footer />}
-      >
-        <Space className="modal-item" direction="vertical" size={32} align="center" style={{justifyContent: 'center', width: '100%'}}>
-          <div className="form-item">
-              <label htmlFor="">Chọn kho hàng cần chuyển</label>
-          <Select>
-            <Select.Option value="demo">Demo</Select.Option>
-          </Select>
-          </div>
-          <Button size="large" type="primary">
-            Chuyển kho
-          </Button>
-        </Space>
-        </Modal>
-        <AddWareHouseItem
-          isEdit={isEdit}
-          setIsEdit={(status) => setIsEdit(status)}
-          itemEdit={itemEdit}
-          isShowModal={isShowModal}
+        {
+          isShowModal && (
+            <AddWareHouseItem
+              isEdit={isEdit}
+              setIsEdit={(status) => setIsEdit(status)}
+              itemEdit={itemEdit}
+              isShowModal={isShowModal}
+              idWareHouse={idWareHouse}
+              onCloseModal={() => setIsShowModal(false)}
+            />
+          )
+        }
+        {
+          statusModal === STATUS_MODAL.TRANSFER && (
+            <TransferModal
+          isShow={statusModal}
           idWareHouse={idWareHouse}
-          onCloseModal={() => setIsShowModal(false)}
+          setIsShow={handleShowTransferModal}
+          listItem={listItemHasChoose}
         />
+          )
+        }
       </Row>
 
     )

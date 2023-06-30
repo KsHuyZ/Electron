@@ -7,6 +7,7 @@ import { priceRegex, OptionSelect, ItemSource,QUALITY, STATUS} from "@/types";
 import { useState, useEffect } from "react";
 import { ipcRenderer } from "electron";
 import dayjs from 'dayjs';
+import React from "react";
 
 
 interface PropsAddWareHouseItem {
@@ -37,7 +38,7 @@ const defaultQuality : OptionSelect[] = [
     }
 ]
 
-const AddWareHouseItem = ({isShowModal = false,onCloseModal, idWareHouse, isEdit, itemEdit, setIsEdit}: PropsAddWareHouseItem) => {
+const AddWareHouseItem = React.memo(({isShowModal = false,onCloseModal, idWareHouse, isEdit, itemEdit, setIsEdit}: PropsAddWareHouseItem) => {
     const [formWareHouseItem] = Form.useForm();
     const [price, setPrice] = useState<any>();
     const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>();
@@ -100,7 +101,7 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'DD/MM/YYYY');
         formWareHouseItem.setFieldValue('price', formattedNumericValue)
       }  
       const ListSourceCallBack = (event: Electron.IpcRendererEvent, data: { rows: ItemSource[], total: number }) =>{
-        const customOption : OptionSelect[] = data?.rows.map((e) => ({
+        const customOption : OptionSelect[] = data?.rows?.map((e) => ({
             label: e.name,
             value: e.ID
         }));
@@ -135,6 +136,9 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'DD/MM/YYYY');
         onCloseModal();
         setIsEdit(false);
     }
+
+    console.log('loading ');
+    
     
 
     return (
@@ -259,6 +263,6 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'DD/MM/YYYY');
             </Form>
         </Modal>
     )
-}
+})
 
 export default AddWareHouseItem
