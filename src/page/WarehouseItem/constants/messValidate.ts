@@ -1,6 +1,7 @@
 export const ERROR = {
     ERROR_1 : 'Vui lòng không để trống {0}',
-    ERROR_2 : '{0} phải là số'
+    ERROR_2 : '{0} phải là số',
+    ERROR_3 : 'Vui lòng chọn sản phẩm trước khi chuyển kho'
 
 };
 

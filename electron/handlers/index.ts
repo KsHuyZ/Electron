@@ -1,15 +1,13 @@
 import auth from "./auth/auth";
-import donViNhan from "./donViNhan/donViNhan";
-import nguonHang from "./nguonHang/nguonHang";
-import wareHouse from "./wareHouse/wareHouse";
+import Source from "./Source/Source";
+import WareHouse from "./WareHouse-Receiving/WareHouse-Receiving";
 import wareHouseItem from "./wareHouseItem/wareHouseItem";
 
 const handlerRequest = () => {
-  nguonHang();
+  Source();
   auth();
-  wareHouse();
+  WareHouse();
   wareHouseItem();
-  donViNhan();
 };
 
 export default handlerRequest;

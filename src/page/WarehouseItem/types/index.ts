@@ -33,6 +33,13 @@ type FormWareHouseItem = WarehouseItem & {
   date_updated_at:any;
 }
 
+export enum STATUS_MODAL  {
+  TRANSFER = 'transfer',
+  RECEIPT = 'receipt',
+  DELIVERY = 'delivery',
+  CLOSE = 'close'
+}
+
 export type {
     DataType,
     WarehouseItem,
