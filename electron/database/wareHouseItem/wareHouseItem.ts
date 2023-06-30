@@ -10,19 +10,7 @@ const wareHouseItem = {
   ) => {
     try {
       const offsetValue = (currentPage - 1) * pageSize;
-      const countQuery =
-        "SELECT COUNT(ID) as count FROM Intermediary WHERE id_WareHouse = ? and status IN (1,3)  ";
-      const countResult = await new Promise((resolve, reject) => {
-        db.get(countQuery, [id], (err, row: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(row?.count);
-          }
-        });
-      });
-
-      const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,wi.id_Source,wi.date_expried,wi.note,wi.quantity_plane,wi.quantity_real,i.ID as IDIntermediary,i.id_WareHouse,i.status,i.quality,i.quantity,
+      const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,wi.id_Source,wi.date_expried,wi.note,wi.quantity_plane,wi.quantity_real,i.ID as IDIntermediary,i.id_WareHouse,i.status,i.quality,i.quantity,I.date,COUNT(ID) OVER() AS total,
         FROM warehouseItem wi
         JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
         WHERE i.idWarehouse = ? and status IN (1,3) ORDER BY ID DESC LIMIT ? OFFSET ?`;
@@ -35,7 +23,7 @@ const wareHouseItem = {
           }
         });
       });
-
+      const countResult = rows[0].length > 0 ? rows[0].total : 0;
       return { rows, total: countResult };
     } catch (err) {
       console.log(err);
@@ -53,6 +41,7 @@ const wareHouseItem = {
       date_created_at,
       date_updated_at,
       note,
+      date,
       quantity_plane,
       quantity_real,
       id_wareHouse,
@@ -69,7 +58,7 @@ const wareHouseItem = {
           }
         });
       });
-      const createIntermediary = `INSERT INTO Intermediary(id_WareHouse,id_WareHouseItem,status,quality,quantity,date_temp_export) VALUES (${id_wareHouse}, ${idWarehouseItem},${status},${quality},${quantity_real})`;
+      const createIntermediary = `INSERT INTO Intermediary(id_WareHouse,id_WareHouseItem,status,quality,quantity,date) VALUES (${id_wareHouse}, ${idWarehouseItem},${status},${quality},${quantity_real}, ${date})`;
       const idIntermedirary = await new Promise((resolve, reject) => {
         db.run(createIntermediary, function (err) {
           if (err) {
@@ -111,6 +100,7 @@ const wareHouseItem = {
         function (err) {
           if (err) {
             console.log(err);
+            reject(err);
           } else {
             resolve(true);
           }
@@ -127,6 +117,7 @@ const wareHouseItem = {
         function (err) {
           if (err) {
             console.log(err);
+            reject(err);
           } else {
             resolve(true);
           }
@@ -139,6 +130,7 @@ const wareHouseItem = {
         function (err) {
           if (err) {
             console.log(err);
+            reject(err);
           } else {
             resolve(true);
           }
@@ -173,6 +165,7 @@ const wareHouseItem = {
           function (err) {
             if (err) {
               console.log(err);
+              reject(err);
             } else {
               resolve(true);
             }
@@ -188,6 +181,7 @@ const wareHouseItem = {
           function (err) {
             if (err) {
               console.log(err.message);
+              reject(err);
             } else {
               resolve(this.lastID);
             }
@@ -208,6 +202,7 @@ const wareHouseItem = {
           function (err) {
             if (err) {
               console.log(err);
+              reject(err);
             } else {
               resolve(true);
             }
@@ -223,6 +218,7 @@ const wareHouseItem = {
           function (err) {
             if (err) {
               console.log(err.message);
+              reject(err);
             } else {
               resolve(this.lastID);
             }
@@ -233,6 +229,7 @@ const wareHouseItem = {
         db.run(`DELETE FROM WareHouseItem WHERE ID = ${ID}`, function (err) {
           if (err) {
             console.log(err.message);
+            reject(err.message);
           } else {
             resolve(this.lastID);
           }
@@ -258,6 +255,7 @@ const wareHouseItem = {
             function (err, row) {
               if (err) {
                 console.log(err);
+                reject(err)
               } else {
                 resolve(row.ID);
               }
@@ -271,6 +269,7 @@ const wareHouseItem = {
               function (err, row) {
                 if (err) {
                   console.log(err);
+                  reject(err)
                 } else {
                   resolve(row.quantity);
                 }
@@ -288,6 +287,7 @@ const wareHouseItem = {
               db.run(changeWareHouseQuery, function (err, row) {
                 if (err) {
                   console.log(err);
+                  reject(err)
                 } else {
                   resolve(true);
                 }
@@ -300,6 +300,7 @@ const wareHouseItem = {
               db.run(changeWareHouseQuery, function (err, row) {
                 if (err) {
                   console.log(err);
+                  reject(err)
                 } else {
                   resolve(true);
                 }
@@ -315,6 +316,7 @@ const wareHouseItem = {
               function (err, row) {
                 if (err) {
                   console.log(err);
+                  reject(err)
                 } else {
                   resolve(row.quantity);
                 }
@@ -330,6 +332,7 @@ const wareHouseItem = {
               db.run(changeWareHouseQuery, function (err, row) {
                 if (err) {
                   console.log(err);
+                  reject(err)
                 } else {
                   resolve(true);
                 }
@@ -342,6 +345,7 @@ const wareHouseItem = {
               db.run(changeWareHouseQuery, function (err, row) {
                 if (err) {
                   console.log(err);
+                  reject(err)
                 } else {
                   resolve(true);
                 }

@@ -21,5 +21,6 @@ export type Intermediary = {
   status: number;
   quality: number;
   quantity: number;
+  date: Moment | null;
   date_temp_export: Moment | null;
 };
