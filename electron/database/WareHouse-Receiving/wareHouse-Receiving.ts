@@ -33,64 +33,50 @@ const WareHouse = {
   
   //GetAllWareHouse
   getAllWareHouse: async (pageSize: number, currentPage: number) => {
-    try{
+    try {
       const offsetValue = (currentPage - 1) * pageSize;
-      const countResult = await new Promise((resolve, reject) => {
-        db.get("SELECT COUNT(ID) as count FROM WareHouse WHERE is_receiving=0", (err, row:any) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(row?.count);
-          }
-        });
-      });
-      const selectQuery= "SELECT * FROM WareHouse WHERE is_receiving=0 LIMIT ? OFFSET ?";
-      const rows= await new Promise((resolve, reject) => {
-        db.all(
-          selectQuery,
-          [pageSize, offsetValue],
-          (err, rows) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(rows);
+      const selectQuery = "SELECT COUNT(*) OVER() AS count, * FROM WareHouse WHERE is_receiving=0 LIMIT ? OFFSET ?";
+      const rows: any = await new Promise((resolve, reject) => {
+          db.all(
+            selectQuery,
+            [pageSize, offsetValue],
+            (err, rows) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve(rows);
+                }
             }
-          });
-      });
-      return {rows, total: countResult };
-    }catch (err){
-      console.log(err);
+          );
+        });
+    const countResult = rows.length > 0 ? rows[0].total : 0;
+    return { rows, total: countResult };
+    } catch (err) {
+    console.log(err);
     }
   },
   //GetAllReceving
   getAllReceiving: async (pageSize: number, currentPage: number) => {
-    try{
+    try {
       const offsetValue = (currentPage - 1) * pageSize;
-      const countResult = await new Promise((resolve, reject) => {
-      db.get("SELECT COUNT(ID) as count FROM WareHouse WHERE is_receiving=1", (err, row:any) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row?.count);
-        }
-      });
-    });
-    const selectQuery= "SELECT * FROM WareHouse WHERE is_receiving=1 LIMIT ? OFFSET ?";
-    const rows= await new Promise((resolve, reject) => {
-      db.all(
-        selectQuery,
-        [pageSize, offsetValue],
-        (err, rows) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(rows);
-          }
+      const selectQuery = "SELECT COUNT(*) OVER() AS count, * FROM WareHouse WHERE is_receiving=1 LIMIT ? OFFSET ?";
+      const rows: any = await new Promise((resolve, reject) => {
+          db.all(
+            selectQuery,
+            [pageSize, offsetValue],
+            (err, rows) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve(rows);
+                }
+            }
+          );
         });
-    });
-    return {rows, total: countResult };
-    }catch(err){
-      console.log(err);
+    const countResult = rows.length > 0 ? rows[0].total : 0;
+    return { rows, total: countResult };
+    } catch (err) {
+    console.log(err);
     }
   },
 

@@ -32,38 +32,31 @@ const Source = {
       );
     });
   },
-
-  getAllItemSource: async(pageSize: number, currentPage: number) => {
-    try{
+  getAllItemSource: async (pageSize: number, currentPage: number) => {
+    try {
       const offsetValue = (currentPage - 1) * pageSize;
-      const countResult = await new Promise((resolve, reject) => {
-        db.get("SELECT COUNT(ID) as count FROM Source", (err, row: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(row?.cout);
-          }
-          });
-      });
-      const selectQuery= " SELECT * FROM Source LIMIT ? OFFSET ?";
-      const rows= await new Promise((resolve, reject) => {
-        db.all(
-          selectQuery,
-          [pageSize, offsetValue],
-          (err, rows) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(rows);
+      const selectQuery = "SELECT * ,COUNT(ID) OVER() AS total FROM Source ORDER BY ID LIMIT ? OFFSET ?";
+      const rows: any = await new Promise((resolve, reject) => {
+          db.all(
+            selectQuery,
+            [pageSize, offsetValue],
+            (err, rows) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve(rows);
+                }
             }
-          }
-        );
-      });
-      return {rows, total: countResult };
-    }catch(err){
-      console.log(err);
+          );
+        });
+    const countResult = rows.length > 0 ? rows[0].total : 0;
+    return { rows, total: countResult };
+    } catch (err) {
+    console.log(err);
     }
   },
+    
+
   //Update Source
   updateSource: (data: Source, id: number) => {
     return new Promise((resolve, reject) => {
