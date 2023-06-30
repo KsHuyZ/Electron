@@ -15,3 +15,15 @@ export type WarehouseItem = {
   status: number;
   note: string;
 };
+export type WarehouseReceiving = {
+  name: string;
+  description: string;
+  is_receiving: number;
+  phone: string;
+  address:string;
+};
+export type Source = {
+  name: string;
+  phone: string;
+  address: string;
+};
