@@ -13,36 +13,22 @@ interface TableWareHouseProps extends TableProps<any> {
 const TableWareHouse = (props : TableWareHouseProps) =>{
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const {isShowSelection = false, ...other} = props;
+
     const onSelectChange = (newSelectedRowKeys: any) => {
       console.log('selectedRowKeys changed: ', newSelectedRowKeys);
       setSelectedRowKeys(newSelectedRowKeys);
     };
 
     const rowSelection: TableRowSelection<DataType> = {
-        selectedRowKeys,
+      selectedRowKeys,
         columnWidth: 150,
         onChange: onSelectChange,
         selections: [
           {
-            key: 'select_all',
-            text: 'Chọn tất cả',
-            onSelect: (changeableRowKeys) => {
-              setSelectedRowKeys(changeableRowKeys);
-            },
-          },
-          {
-            key: 'remove_all',
-            text: 'Xóa tất cả',
-            onSelect: (changeableRowKeys) => {
-              setSelectedRowKeys([]);
-            },
-          },
-          {
             key: 'change_warehouse',
             text: 'Chuyển kho',
             onSelect: (changeableRowKeys) =>{
-                other.setRowSelected(changeableRowKeys);
-            //   console.log(changeableRowKeys);
+                other.setRowSelected(selectedRowKeys);
             }
           }
         ],

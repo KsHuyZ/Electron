@@ -34,6 +34,11 @@ export type OptionSelect = {
   value: any
 };
 
+export type WareHouse = {
+  ID: string;
+  name: string;
+}
+
 export const STATUS = {
   TEMPORARY_IMPORT: 1,
   TEMPORARY_EXPORT: 2,
