@@ -1,8 +1,8 @@
 import { UilMultiply } from '@iconscout/react-unicons'
 import { Button, Input, Form } from 'antd'
 import { ipcRenderer } from 'electron'
-import React, { useEffect, useState } from 'react'
-
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import toastify from '@/lib/toastify'
 
 type DataType = {
     ID: number;
@@ -13,17 +13,21 @@ type DataType = {
 
 interface ModalItemSourceProps {
     closeModal: () => void,
-    setLoading: () => void
-    data: DataType | null | undefined
+    setLoading: Dispatch<SetStateAction<boolean>>
+    data: DataType | null | undefined,
+    reload: () => void,
+    setAllItemSource: Dispatch<SetStateAction<DataType[]>>
 }
 
 
 
 
 const ModalItemSource = (props: ModalItemSourceProps) => {
-    const { closeModal, setLoading, data } = props
+    const { closeModal, setLoading, data, reload, setAllItemSource } = props
     const [isLoading, setIsLoading] = useState(false)
+    const [phone, setPhone] = useState<string>()
     const [form] = Form.useForm();
+    const { notifySuccess,notifyError } = toastify
 
     const handleCloseModal = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Escape") {
@@ -33,14 +37,42 @@ const ModalItemSource = (props: ModalItemSourceProps) => {
 
     const hanldeSubmit = async () => {
         await form.validateFields();
-        setLoading()
         setIsLoading(true)
+        setLoading(true)
         const { name, address, phone } = form.getFieldsValue();
         if (data) {
             const { ID } = data
-            return ipcRenderer.send("update-itemsource", { id: ID, name, address, phonenumber: phone })
+            const result = await ipcRenderer.invoke("update-itemSource", { name, address, phone }, ID)
+            if (result) {
+                setAllItemSource((prev: DataType[]) => {
+                    let oldItemSource = [...prev]
+                    const index = prev.findIndex(item => item.ID === result.ID)
+                    oldItemSource[index] = result
+                    return oldItemSource
+                })
+                notifySuccess("Cập nhật thành công")
+            } else {
+                notifyError("Cập nhật thất bại")
+            }
+        } else {
+            const result = await ipcRenderer.invoke("create-new-source", { name, address, phone })
+            if (result) {
+                reload()
+                notifySuccess("Thêm nguồn hàng thành công")
+            } else {
+                notifyError("Thêm nguồn hàng thất bại")
+            }
         }
-        ipcRenderer.send("create-new-nguonHang", { name, address, phonenumber: phone })
+        setIsLoading(false)
+        setLoading(false)
+        closeModal()
+    }
+
+    const handleInputPhone = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = e.target;
+        const numericValue = value.replace(/[^\d]/g, '');
+        setPhone(numericValue);
+        form.setFieldValue('phone', numericValue)
     }
 
     useEffect(() => {
@@ -88,7 +120,7 @@ const ModalItemSource = (props: ModalItemSourceProps) => {
                                 { required: true, message: 'Số điện thoại nguồn hàng không được để trống.' },
                             ]}
                         >
-                            <Input size="large" placeholder="Số điện thoại nguồn hàng" disabled={isLoading} />
+                            <Input size="large" placeholder="Số điện thoại nguồn hàng" disabled={isLoading} onChange={handleInputPhone} />
                         </Form.Item>
                     </Form>
                 </div>

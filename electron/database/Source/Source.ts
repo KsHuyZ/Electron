@@ -6,27 +6,20 @@ sqlite3.verbose();
 
 const Source = {
   //Insert Source
-  createItemSource: (data:Source) => {
-    return new Promise((resolve, reject)=>{
-      const{
-        name,
-        phone,
-        address,
-      }= data;
+  createItemSource: (data: Source) => {
+    return new Promise((resolve, reject) => {
+      const { name, phone, address } = data;
       db.run(
         "INSERT INTO Source (name,address,phone) VALUES (?,?,?)",
-        [name,
-        address, 
-        phone
-        ],
+        [name, address, phone],
         function (err) {
           if (err) {
             console.log(err.message);
             reject(err);
           } else {
             const ID = this.lastID;
-            const newData = { ID, name, address, phone};
-            resolve (newData);
+            const newData = { ID, name, address, phone };
+            resolve(newData);
           }
         }
       );
@@ -35,38 +28,31 @@ const Source = {
   getAllItemSource: async (pageSize: number, currentPage: number) => {
     try {
       const offsetValue = (currentPage - 1) * pageSize;
-      const selectQuery = "SELECT * ,COUNT(ID) OVER() AS total FROM Source ORDER BY ID LIMIT ? OFFSET ?";
+      const selectQuery =
+        "SELECT * ,COUNT(ID) OVER() AS total FROM Source ORDER BY ID LIMIT ? OFFSET ?";
       const rows: any = await new Promise((resolve, reject) => {
-          db.all(
-            selectQuery,
-            [pageSize, offsetValue],
-            (err, rows) => {
-                if (err) {
-                reject(err);
-                } else {
-                resolve(rows);
-                }
-            }
-          );
+        db.all(selectQuery, [pageSize, offsetValue], (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
         });
-    const countResult = rows.length > 0 ? rows[0].total : 0;
-    return { rows, total: countResult };
+      });
+      const countResult = rows.length > 0 ? rows[0].total : 0;
+      return { rows, total: countResult };
     } catch (err) {
-    console.log(err);
+      console.log(err);
     }
   },
-    
 
   //Update Source
-  updateSource: (data: Source, id: number) => {
+  updateSource: (data: Source, ID: number) => {
     return new Promise((resolve, reject) => {
-      const {
-        name, 
-        phone,
-        address} = data
+      const { name, phone, address } = data;
       db.run(
         "UPDATE WareHouse SET name = ?, phone = ?, address= ? WHERE is_receiving=0 AND ID = ?",
-        [name, phone,address, id],
+        [name, phone, address, ID],
         function (err) {
           if (err) {
             console.log(err.message);
@@ -76,7 +62,7 @@ const Source = {
               name,
               phone,
               address,
-              id,
+              ID,
             };
             resolve(newData);
           }
@@ -86,16 +72,22 @@ const Source = {
   },
 
   deleteItemSource: (id: number) => {
-    return new Promise((resolve, reject) =>{
-      db.run("DELETE FROM Source WHERE ID = ?", [id], function (err) {
-        if (err) {
-          console.log(err.message);
-          reject (err);
-        } else {
-          resolve (true);
-        }
+    try {
+      return new Promise((resolve, reject) => {
+        db.run("DELETE FROM Source WHERE ID = ?", [id], function (err) {
+          if (err) {
+            console.log(err.message);
+            reject(err);
+          } else {
+            resolve(true);
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+
   },
 };
 export default Source;
