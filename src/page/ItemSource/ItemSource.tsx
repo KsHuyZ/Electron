@@ -117,7 +117,7 @@ const ItemSource = () => {
     setCurrentItemSource(data)
   }
 
-  const { notifySuccess } = toastify
+  const { notifySuccess, notifyError } = toastify
 
   const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
     console.log('selectedRowKeys changed: ', newSelectedRowKeys);
@@ -169,70 +169,26 @@ const ItemSource = () => {
       ...prevPagination,
       ...pagination
     }));
-
-    const { current, pageSize } = pagination
-    handleGetAllItemSource(pageSize, current)
-    // `dataSource` is useless since `pageSize` changed
-    // if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-    //   setData([]);
-    // }
+    handleGetAllItemSource()
   };
 
   const handleShowAddModal = () => {
     setShowAddModal(true)
   }
 
-  const handleGetAllItemSource = (pageSize: number | undefined, current: number | undefined) => {
+  const handleGetAllItemSource = async () => {
+    const { pageSize, current } = pagination
     setLoading(true)
-    ipcRenderer.send("itemsource-request-read", { pageSize, currentPage: current })
-  }
-
-  const allItemSourceCallBack = (event: Electron.IpcRendererEvent, data: { rows: DataType[], total: number }) => {
-    const { rows, total } = data
-    setAllItemSource(rows)
-    setPagination(prevPagination => ({
-      ...prevPagination,
-      total // Sửa giá trị total thành tổng số dòng dữ liệu
-    }));
+    const result = await ipcRenderer.invoke("source-request-read", { pageSize, currentPage: current })
+    if (result) {
+      const { rows, total } = result
+      setAllItemSource(rows)
+      setPagination(prevPagination => ({
+        ...prevPagination,
+        total
+      }));
+    }
     setLoading(false)
-  }
-
-  const appendItemSourceCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
-    setAllItemSource((prev: DataType[]) => {
-      let copyData = prev.slice()
-      copyData.push(data)
-      return copyData
-    })
-    setShowAddModal(false)
-    setLoading(false)
-    notifySuccess("Thêm nguồn thành công")
-  }
-
-  const updateItemSourceCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
-    const { ID } = data
-    setAllItemSource(prev => {
-      let prevItemSource = [...prev]
-      const index = prevItemSource.findIndex(item => item.ID === ID)
-      if (index > -1) {
-        prevItemSource[index] = data
-      }
-      return prevItemSource
-    })
-    setLoading(false)
-    setShowAddModal(false)
-    notifySuccess("Cập nhật thành công!")
-  }
-
-  const deleteItemSourceCallBack = (event: Electron.IpcRendererEvent, id: number) => {
-    setAllItemSource(prev => {
-      let prevAllItemSource = [...prev]
-      const index = prevAllItemSource.findIndex(item => item.ID === id)
-      if (index > -1) {
-        prevAllItemSource.splice(index, 1)
-      }
-      return prevAllItemSource
-    })
-    notifySuccess("Xóa nguồn hàng thành công!")
   }
 
   const handleCloseModal = () => {
@@ -245,32 +201,23 @@ const ItemSource = () => {
     setCurrentItemSource(null)
   }
 
-  const handleDeleteItemSource = (id: number | undefined | null) => {
-    ipcRenderer.send("delete-itemsource", id)
-    setShowModalDelete(false)
+  const handleDeleteItemSource = async (id: number | undefined | null) => {
+    const isSuccess = await ipcRenderer.invoke("delete-itemsource", id)
+    if (isSuccess) {
+      notifySuccess("Xóa nguồn hàng thành công")
+      setShowModalDelete(false)
+     return handleGetAllItemSource()
+    }
+    notifyError("Xóa nguồn hàng thất bại")
   }
 
   useEffect(() => {
-    const { pageSize, current } = pagination
-    handleGetAllItemSource(pageSize, current)
-  }, [])
-
-  useEffect(() => {
-    ipcRenderer.on("all-itemsource", allItemSourceCallBack)
-    ipcRenderer.on("append-itemsource", appendItemSourceCallBack)
-    ipcRenderer.on("update-success", updateItemSourceCallBack)
-    ipcRenderer.on("delete-success", deleteItemSourceCallBack)
-    return () => {
-      ipcRenderer.removeListener("all-itemsource", allItemSourceCallBack)
-      ipcRenderer.removeListener("append-itemsource", appendItemSourceCallBack)
-      ipcRenderer.removeListener("update-success", updateItemSourceCallBack)
-      ipcRenderer.removeListener("delete-success", deleteItemSourceCallBack)
-    }
+    handleGetAllItemSource()
   }, [])
 
   return (
     <div className="form-table">
-      {showAddModal && <ModalItemSource closeModal={handleCloseModal} setLoading={() => setLoading(true)} data={currentItemSource} />}
+      {showAddModal && <ModalItemSource closeModal={handleCloseModal} setLoading={setLoading} data={currentItemSource} reload={handleGetAllItemSource} setAllItemSource={setAllItemSource} />}
       {showModalDelete && <ModalDelete data={currentItemSource} deleteFunc={handleDeleteItemSource} closeModal={handleCloseModalDelete} />}
       <div className="header">
         <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm nguồn hàng</Button></div>
@@ -280,12 +227,10 @@ const ItemSource = () => {
         columns={columns}
         dataSource={allItemSource.map(item => ({ ...item, key: item.ID }))}
         style={{ backgroundColor: "transparent" }}
-        // pagination={true}
         loading={loading}
         pagination={pagination}
         bordered
         onChange={handleTableChange}
-      // style={{ margin: 20 }}
       />
     </div>
   )
