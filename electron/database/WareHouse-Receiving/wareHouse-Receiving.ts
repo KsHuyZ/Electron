@@ -49,10 +49,12 @@ const WareHouse = {
             }
           );
         });
-    const countResult = rows.length > 0 ? rows[0].total : 0;
+        // console.log(rows.length);
+        
+    const countResult = rows.length ? rows[0].count : 0;
     return { rows, total: countResult };
     } catch (err) {
-    console.log(err);
+    console.log('error',err);
     }
   },
   //GetAllReceving
@@ -82,12 +84,12 @@ const WareHouse = {
 
 
   //UpdateWareHouse
-  updateWarehouse: (data: WarehouseReceiving, id: number) => {
+  updateWarehouse: (data: Pick<WarehouseReceiving,"name"| "id">) => {
     return new Promise((resolve, reject) => {
-      const { name, description } = data;
+      const { name, id } = data;
       db.run(
-        "UPDATE WareHouse SET name = ?, description = ? WHERE is_receiving = 0 AND ID = ?",
-        [name, description, id],
+        "UPDATE WareHouse SET name = ? WHERE is_receiving = 0 AND ID = ?",
+        [name, id],
         function (err) {
           if (err) {
             console.log(err.message);
@@ -95,7 +97,6 @@ const WareHouse = {
           } else {
             const newData = {
               name,
-              description,
               id,
             };
             resolve(newData);

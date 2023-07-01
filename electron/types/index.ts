@@ -25,7 +25,10 @@ export type Intermediary = {
   date: Moment | null;
   date_temp_export: Moment | null;
 
+}
+
 export type WarehouseReceiving = {
+  id?: number;
   name: string;
   description: string;
   is_receiving: number;

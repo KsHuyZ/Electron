@@ -66,9 +66,22 @@ const Warehouse = () => {
         setShowAddModal(true)
     }
 
-    const handleGetAllWarehouse = (pageSize: number, currentPage: number) => {
+    const handleGetAllWarehouse = async(pageSize: number, currentPage: number) => {
         setLoading(true);
-        ipcRenderer.send("warehouse-request-read", { pageSize, currentPage })
+        const result : ResponseCallBackWareHouse = await ipcRenderer.invoke("warehouse-request-read", { pageSize, currentPage });
+        if(result){
+            setLoading(false);
+            console.log(result);
+        setTableParams((prev) => ({
+            pagination: {
+                ...prev.pagination,
+            total: result.total
+            }
+        }))
+        setAllWareHouse(result.rows)
+            
+        }
+
     }
 
     const handleTableChange = (pagination: TablePaginationConfig) => {
@@ -80,51 +93,10 @@ const Warehouse = () => {
     };
 
     useEffect(() => {
-        handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
+       new Promise(async() =>{
+        await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
+       })
     }, [])
-
-    const allWareHouseCallBack = (event: Electron.IpcRendererEvent, data: ResponseCallBackWareHouse) => {
-        setLoading(false)
-        setTableParams((prev) => ({
-            ...prev,
-            total: data.total
-        }))
-        setAllWareHouse(data.rows)
-    }
-
-    const appendWarehouseCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
-        setAllWareHouse((prev: DataType[]) => [...prev, data]);
-        setShowAddModal(false)
-        setLoading(false)
-        message.success("Thêm kho hàng thành công")
-    }
-
-    const updateWarehouseCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
-        const { ID } = data
-        setAllWareHouse(prev => {
-            let prevItemSource = [...prev]
-            const index = prevItemSource.findIndex(item => item.ID === ID)
-            if (index > -1) {
-                prevItemSource[index] = data
-            }
-            return prevItemSource
-        })
-        setShowAddModal(false)
-        setLoading(false)
-        message.success("Thêm kho hàng thành công")
-    }
-
-    useEffect(() => {
-        ipcRenderer.on("all-warehouse", allWareHouseCallBack)
-        ipcRenderer.on("append-warehouse", appendWarehouseCallBack)
-        ipcRenderer.on("update-success", updateWarehouseCallBack)
-        setLoading(false);
-        return () => {
-            ipcRenderer.removeListener("all-warehouse", allWareHouseCallBack)
-            ipcRenderer.removeListener("append-warehouse", appendWarehouseCallBack)
-            ipcRenderer.removeListener("update-success", updateWarehouseCallBack)
-        }
-    }, []);
 
     const handleOpenEditModal = (id: string, name: string) => {
         setShowAddModal(true);
@@ -146,9 +118,10 @@ const Warehouse = () => {
         cleanFormEdit()
     }
 
-    const handleCloseModal = () => {
+    const handleCloseModal = async() => {
         setShowAddModal(false)
-        cleanFormEdit()
+        cleanFormEdit();
+        await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
     }
 
     return (

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { UilMultiply } from '@iconscout/react-unicons';
 import { Form, Input, Button } from 'antd';
 import { ipcRenderer } from 'electron';
+import { message } from "antd";
 
 type ModalProps = {
   closeModal: () => void;
@@ -32,11 +33,31 @@ const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean }: ModalProps)
       setIsLoading(true); // Set loading state to true
       const { name } = form.getFieldsValue(); // Get the value of the name field
       if(dataEdit?.idEdit){
-        ipcRenderer.send('update-warehouse', {name: name,description: '', id: dataEdit.idEdit});
+        const params = {
+          name: name,
+          address: '',
+          description: '',
+          is_receiving : 0,
+          phone: ''
+        }
+        const response = await ipcRenderer.invoke('update-warehouse', {...params, id: dataEdit.idEdit});
+        if(response){
+          console.log(response);
+          
+        }
       }else{
-        ipcRenderer.send('create-new-warehouse', name);
+        const params = {
+          name: name,
+          address: '',
+          description: '',
+          is_receiving : 0,
+          phone: ''
+        }
+        const response = await ipcRenderer.invoke('create-new-warehouse', JSON.stringify(params));
+        if(response){
+          message.success('Tạo kho hàng thành công');
+        }
       }
-
       // Simulating loading completion after 3 seconds
       clean();
       setIsLoading(false); // Set loading state to false
