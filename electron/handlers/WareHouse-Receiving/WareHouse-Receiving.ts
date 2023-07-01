@@ -51,8 +51,8 @@ const WareHouse = () => {
 
   //listen update WareHouse request
   ipcMain.handle(
-    "update-warehouse",async(event, data: WarehouseReceiving, id: number) => {
-      const response= await updateWarehouse(data, id);
+    "update-warehouse",async(event, data: Pick<WarehouseReceiving,"name">) => {
+      const response= await updateWarehouse(data);
       return response;
     }
   );
