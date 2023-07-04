@@ -13,9 +13,10 @@ type ModalProps = {
     idEdit: string;
     name: string;
   };
+  fetching: () => void;
 };
 
-const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean }: ModalProps) => {
+const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean,fetching }: ModalProps) => {
   const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -62,6 +63,7 @@ const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean }: ModalProps)
       clean();
       setIsLoading(false); // Set loading state to false
       closeModal();
+      fetching();
     } catch (error) {
       console.log('Form validation error:', error);
     }

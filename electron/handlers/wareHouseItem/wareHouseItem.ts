@@ -52,8 +52,9 @@ const wareHouseItem = () => {
   );
 
   // listen delete event
-  ipcMain.handle("delete-warehouseitem", async (event, id: number) => {
-    const isSuccess = await deleteWareHouseItemInWarehouse(id);
+  ipcMain.handle("delete-warehouseitem", async (event, id: number, id_wareHouse: number) => {
+    const isSuccess = await deleteWareHouseItem(id, id_wareHouse);
+    return isSuccess;
   });
   //Change warehouse
   ipcMain.handle(

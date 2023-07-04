@@ -21,7 +21,7 @@ const {confirm} = Modal;
 
 const defaultRows: DataType[] = [
   {
-    ID: '',
+    IDIntermediary: '',
     name: '',
     price: '',
     unit: '',
@@ -56,11 +56,12 @@ const WareHouseItem = () =>{
     const [itemEdit, setItemEdit] = useState<DataType>();
     const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
     const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>(defaultRows);
+    const [isListenChange, setIsListenChange] = useState(false);
 
     const columns: ColumnsType<DataType> = [
       {
         title: 'Mã mặt hàng',
-        dataIndex: 'ID',
+        dataIndex: 'IDIntermediary',
         width: 150,
         render: (record) => {
           return `MH${record < 10 ? "0" : ""}${record}`
@@ -92,7 +93,7 @@ const WareHouseItem = () =>{
             },
             {
               title: "Thực tế",
-              dataIndex: "quantity_real",
+              dataIndex: "quantity",
               width: 200,
               render: (record) => (
                 <span>{new Intl.NumberFormat().format(record)}</span>
@@ -103,6 +104,16 @@ const WareHouseItem = () =>{
         {
           title: 'Đơn vị tính',
           dataIndex: 'unit',
+          width: 200,
+        },
+        {
+          title: 'Thời gian hết hạn',
+          dataIndex: 'date_expried',
+          width: 200,
+        },
+        {
+          title: 'Thời gian nhập',
+          dataIndex: 'date',
           width: 200,
         },
         { 
@@ -141,25 +152,12 @@ const WareHouseItem = () =>{
 
 
     useEffect(() =>{
-      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-    },[ipcRenderer])
+      new Promise(async() =>{
+        await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+      })
+    },[])
 
-    useEffect(() => {
-      ipcRenderer.on("append-warehouse-item", allWareHouseCallItemBack)
-      ipcRenderer.on("append-warehouse-item-success", notifyAddCallBack)
-      ipcRenderer.on("delete-success", deleteWareHouseCallBack)
-      ipcRenderer.on("update-success", updateWareHouseCallBack)
-      ipcRenderer.on("change-warehouse-update-success", handleUpdateTransferCallback);
-      return () => {
-          ipcRenderer.removeListener("append-warehouse-item", allWareHouseCallItemBack)
-          ipcRenderer.removeListener("append-warehouse-item-success", notifyAddCallBack)
-          ipcRenderer.removeListener("delete-success", deleteWareHouseCallBack)
-          ipcRenderer.removeListener("update-success", updateWareHouseCallBack)
-          ipcRenderer.removeListener("change-warehouse-update-success", handleUpdateTransferCallback);
-      }
-  }, [ipcRenderer]);
-
-  const getListItem =(pageSize: number, currentPage: number, total: number) =>{
+  const getListItem =async(pageSize: number, currentPage: number, total: number) =>{
     setListData({
       ...listData,
       pagination:{
@@ -169,68 +167,25 @@ const WareHouseItem = () =>{
       },
       loading: true
     })
-    ipcRenderer.send("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idWareHouse });
-  }
-
-  const allWareHouseCallItemBack = (event: Electron.IpcRendererEvent, data: ResponseIpc<DataType>) => {
-    
-    setListData((prev) =>(
-      {
-        ...prev,
-        rows : data.rows as any,
-        pagination : {
-          ...prev.pagination,
-          total : data.total as any
-        },
-        loading: false
-      }
-    ))
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idWareHouse });
+    if(result){
       
-    
-  }
-
-  const updateWareHouseCallBack = (event: Electron.IpcRendererEvent, data: any) =>{
-
-    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-    message.success('Cập nhật sản phẩm thành công');
-  }
-
-  const handleUpdateTransferCallback = (
-    event: Electron.IpcRendererEvent,
-    idWareHouse: number[]
-  ) =>{
-    setListData(prev => {
-      const updatedRows = prev.rows.filter(item => idWareHouse.includes(+item.ID));
-      const updatedListData = { ...prev, rows: updatedRows };
-      return updatedListData;
-    });
-    message.success('Chuyển kho thành công');
-        getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-  }
-
-
-  const deleteWareHouseCallBack = (event: Electron.IpcRendererEvent, id: any) =>{
-    setListData(prev => {
-  const updatedRows = prev.rows.filter(item => item.ID !== id);
-  const updatedListData = { ...prev, rows: updatedRows };
-  return updatedListData;
-});
-    message.success('Xóa sản phẩm thành công');
-    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-  }
-
-  const notifyAddCallBack = (event: Electron.IpcRendererEvent, data: any) =>{
-    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-    message.success('Tạo sản phẩm thành công');
+      
+      setListData((prev) =>(
+        {
+          ...prev,
+          rows : result.rows as any,
+          pagination : {
+            ...prev.pagination,
+            total : result.total as any
+          },
+          loading: false
+        }
+      ))
+    }
   }
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
-
-    setListData({
-      ...listData,
-      loading: true
-    })
-
     getListItem(pagination.pageSize!, pagination.current!, pagination.total!)
 };
 
@@ -239,8 +194,8 @@ const WareHouseItem = () =>{
       // console.log(listData);
       // check nguon hang must be in the same place
 
-      const mergedList = listIdRow.map((id) => {
-        const foundItem = listData.rows.find((item) => Number(item.ID) === id);
+      const mergedList = listIdRow.map((id, index) => {
+        const foundItem = listData.rows.find((item) => Number(item.IDIntermediary) === id);
         return foundItem ? { ...foundItem } : null;
       });
 
@@ -265,39 +220,40 @@ const WareHouseItem = () =>{
         message.error(ERROR.ERROR_3);
         return;
       }
-      
-
-      
-      
     }
   
-    const getDifferentItems = (list: DataType[]) => {
-      const seenIds = new Set();
-      const differentItems = [];
-      for (const item of list) {
-        if (seenIds.has(item.id_nguonHang)) {
-          differentItems.push(item);
-        }
-        seenIds.add(item.id_nguonHang);
-      }
-      return differentItems;
-    }
+    // const getDifferentItems = (list: DataType[]) => {
+    //   const seenIds = new Set();
+    //   const differentItems = [];
+    //   for (const item of list) {
+    //     if (seenIds.has(item.id_nguonHang)) {
+    //       differentItems.push(item);
+    //     }
+    //     seenIds.add(item.id_nguonHang);
+    //   }
+    //   return differentItems;
+    // }
 
-    const removeItem = (idItem: number) =>{
-      ipcRenderer.send("delete-warehouseitem", idItem);
+    const removeItem = async(IDIntermediary: number, IDWarehouseItem: number) =>{
+      const result = await ipcRenderer.invoke("delete-warehouseitem", IDIntermediary, IDWarehouseItem);
+      if(result){
+        message.success('Xóa sản phẩm thành công');
+        await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
+
+      }
     }
 
     const handleRemoveItem = (data: DataType) =>{
       console.log(data);
       confirm({
         closable: true,
-        title: `Bạn chắc chắn sẽ xóa MH${data.ID} ?`,
+        title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,
         icon: <UilExclamationCircle />,
         okText: 'Đồng ý',
         okType: 'danger',
         cancelText: 'Từ chối',
         onOk() {
-          removeItem(Number(data.ID))
+          removeItem(Number(data.IDIntermediary), Number(data.IDWarehouseItem))
         },
         onCancel(){
 
@@ -308,6 +264,16 @@ const WareHouseItem = () =>{
     const handleShowTransferModal = () =>{
       setStatusModal(STATUS_MODAL.CLOSE);
     }
+
+    const removeItemList = (IDIntermediary: string) =>{
+      console.log('remove item list', IDIntermediary);
+      const filterNewList = listItemHasChoose.filter(item => item.IDIntermediary !== IDIntermediary);
+      setListItemHasChoose(filterNewList);
+      setIsListenChange(true);
+    }
+
+    console.log(listData);
+    
 
     return(
         <Row className="filter-bar">
@@ -339,10 +305,18 @@ const WareHouseItem = () =>{
               isShowSelection={true}
               columns={columns} 
               dataSource={listData.rows} 
-              pagination={listData.pagination}
+              pagination={
+                {
+                  ...listData.pagination,
+                showSizeChanger: true
+                }
+              }
               bordered
               loading={listData.loading}
               onChange={handleTableChange}
+              isListenChange={isListenChange}
+              setIsListenChange={(status: boolean) => setIsListenChange(status)}
+              listRowSelected={listItemHasChoose}
               />
             </div>
         </Col>
@@ -355,6 +329,7 @@ const WareHouseItem = () =>{
               isShowModal={isShowModal}
               idWareHouse={idWareHouse}
               onCloseModal={() => setIsShowModal(false)}
+              fetching={async() => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
             />
           )
         }
@@ -365,6 +340,7 @@ const WareHouseItem = () =>{
           idWareHouse={idWareHouse}
           setIsShow={handleShowTransferModal}
           listItem={listItemHasChoose}
+          removeItemList={removeItemList}
         />
           )
         }

@@ -129,6 +129,26 @@ const WareHouse = {
       );
     });
   },
+  getListWareHouseExceptId : async(idWareHouse : string) =>{
+    try {
+      const selectQuery = "SELECT * FROM WareHouse WHERE is_receiving = 0 AND ID NOT IN(?)";
+      return new Promise((resolve, reject) => {
+          db.all(
+            selectQuery,
+            [idWareHouse],
+            (err, rows) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve({rows});
+                }
+            }
+          );
+        });
+    } catch (err) {
+    console.log(err);
+    }
+  }
   
 };
 

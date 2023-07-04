@@ -61,13 +61,24 @@ export const createRegexValidator = (regex: RegExp, errorMessage: string) => {
     };
 };
 
-export const formatDate = (newDate: any) => {
+export const formatDate = (newDate: any , suffix: boolean = false) => {
 
     // Set the locale to Vietnamese
     dayjs.locale('vi');
 
     // Format the date in Vietnamese format
-    const formattedDate = dayjs(newDate).format('DD/MM/YYYY');
+    const formattedDate = dayjs(newDate).format(`${suffix ? 'HH:MM' : ''} DD/MM/YYYY`);
     return formattedDate;
 
 }
+
+export const convertPrice = (priceString: string) => {
+    // Remove all dots from the price string
+    const priceWithoutDots = priceString.replace(/\./g, '');
+  
+    // Parse the price string as an integer
+    const convertedPrice = parseInt(priceWithoutDots);
+  
+    return convertedPrice;
+  }
+  

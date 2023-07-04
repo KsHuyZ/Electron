@@ -121,13 +121,12 @@ const Warehouse = () => {
     const handleCloseModal = async() => {
         setShowAddModal(false)
         cleanFormEdit();
-        await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
     }
 
     return (
         <div className="form-table">
             {
-                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} />
+                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} fetching={async() => await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)} />
             }
             <div className="header">
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>
