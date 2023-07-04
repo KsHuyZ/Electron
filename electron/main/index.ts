@@ -5,8 +5,7 @@ import { update } from "./update";
 import sqlite3 from "sqlite3";
 sqlite3.verbose();
 import handlersRequest from "../handlers";
-import deleteDB from "../utils/deleteDB";
-
+import { phieuNhap } from "../utils/phieuNhapKho";
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -63,6 +62,11 @@ async function createWindow() {
   });
   win.maximize();
   win.setMenuBarVisibility(false);
+
+  ipcMain.handle("print", (event, html) => {
+    // win.webContents.print({ silent: true });
+  });
+
   handlersRequest();
 
   if (process.env.VITE_DEV_SERVER_URL) {

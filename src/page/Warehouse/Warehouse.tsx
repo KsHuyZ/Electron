@@ -2,11 +2,15 @@ import "./warehouse.scss"
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { Button, Space, Table, message } from 'antd';
 import { UilPen } from '@iconscout/react-unicons'
-import { useEffect, useState } from "react";
+import { createRef, useEffect, useRef, useState } from "react";
 import { ipcRenderer } from "electron";
 import { Link } from "react-router-dom";
 
 import ModalWareHouse from "./components/ModalWareHouse";
+import { PhieuNhapKho } from "@/components/PhieuNhapKho/PhieuNhapKho";
+import { useReactToPrint } from "react-to-print";
+import PhieuXuatKho from "@/components/PhieuXuatKho/PhieuXuatKho";
+
 
 type DataType = {
     ID: string;
@@ -36,6 +40,8 @@ const Warehouse = () => {
     });
     const [formEdit, setFormEdit] = useState<{ idEdit: string, name: string }>();
 
+    const recieptRef = useRef() as React.MutableRefObject<HTMLInputElement>;
+    const exportRef = useRef() as React.MutableRefObject<HTMLInputElement>;
     const columns: ColumnsType<DataType> = [
         {
             title: 'Mã kho hàng',
@@ -66,20 +72,20 @@ const Warehouse = () => {
         setShowAddModal(true)
     }
 
-    const handleGetAllWarehouse = async(pageSize: number, currentPage: number) => {
+    const handleGetAllWarehouse = async (pageSize: number, currentPage: number) => {
         setLoading(true);
-        const result : ResponseCallBackWareHouse = await ipcRenderer.invoke("warehouse-request-read", { pageSize, currentPage });
-        if(result){
+        const result: ResponseCallBackWareHouse = await ipcRenderer.invoke("warehouse-request-read", { pageSize, currentPage });
+        if (result) {
             setLoading(false);
             console.log(result);
-        setTableParams((prev) => ({
-            pagination: {
-                ...prev.pagination,
-            total: result.total
-            }
-        }))
-        setAllWareHouse(result.rows)
-            
+            setTableParams((prev) => ({
+                pagination: {
+                    ...prev.pagination,
+                    total: result.total
+                }
+            }))
+            setAllWareHouse(result.rows)
+
         }
 
     }
@@ -93,9 +99,9 @@ const Warehouse = () => {
     };
 
     useEffect(() => {
-       new Promise(async() =>{
-        await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
-       })
+        new Promise(async () => {
+            await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
+        })
     }, [])
 
     const handleOpenEditModal = (id: string, name: string) => {
@@ -118,11 +124,38 @@ const Warehouse = () => {
         cleanFormEdit()
     }
 
-    const handleCloseModal = async() => {
+    const handleCloseModal = async () => {
         setShowAddModal(false)
         cleanFormEdit();
         await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
     }
+
+    // const handlePrint = async function (target: any) {
+    //     return await new Promise(async () => {
+    //         console.log("forwarding print request to the main process...");
+
+    //         const data = target.contentWindow.document.documentElement.outerHTML;
+    //         //console.log(data);
+    //         const blob = new Blob([data], { type: "text/html" });
+    //         const url = URL.createObjectURL(blob);
+
+    //         await ipcRenderer.invoke("previewComponent", (url))
+    //         //console.log('Main: ', data);
+    //     });
+    // };
+
+    const handleBillPrint = useReactToPrint({
+        content: () => recieptRef.current,
+        documentTitle: "Phiếu nhập kho",
+        // print: printHandle,
+    });
+    const handleExportPrint = useReactToPrint({
+        content: () => exportRef.current,
+        documentTitle: "Phiếu xuất kho kho",
+        // print: printHandle,
+    });
+
+
 
     return (
         <div className="form-table">
@@ -130,7 +163,8 @@ const Warehouse = () => {
                 showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} />
             }
             <div className="header">
-                <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>
+                <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button>  <Button type="primary" onClick={handleBillPrint}>Test phiếu nhập</Button> <Button type="primary" onClick={handleExportPrint}>Test phiếu xuất</Button></div>
+
             </div>
             <Table
                 columns={columns}
@@ -141,6 +175,12 @@ const Warehouse = () => {
                 bordered
                 onChange={handleTableChange}
             />
+            <div className="" style={{ display: 'none' }}>
+                <PhieuNhapKho ref={recieptRef} />
+            </div>
+            <div className="" style={{ display: 'none' }} >
+                <PhieuXuatKho ref={exportRef} />
+            </div>
         </div>
     )
 }
