@@ -61,7 +61,7 @@ const WareHouseItem = () =>{
     const columns: ColumnsType<DataType> = [
       {
         title: 'Mã mặt hàng',
-        dataIndex: 'IDIntermediary',
+        dataIndex: 'IDWarehouseItem',
         width: 150,
         render: (record) => {
           return `MH${record < 10 ? "0" : ""}${record}`
@@ -170,6 +170,7 @@ const WareHouseItem = () =>{
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idWareHouse });
     if(result){
       
+      console.log('fetching', result);
       
       setListData((prev) =>(
         {
@@ -265,9 +266,9 @@ const WareHouseItem = () =>{
       setStatusModal(STATUS_MODAL.CLOSE);
     }
 
-    const removeItemList = (IDIntermediary: string) =>{
+    const removeItemList = (IDIntermediary: string[]) =>{
       console.log('remove item list', IDIntermediary);
-      const filterNewList = listItemHasChoose.filter(item => item.IDIntermediary !== IDIntermediary);
+      const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
       setListItemHasChoose(filterNewList);
       setIsListenChange(true);
     }
@@ -341,6 +342,7 @@ const WareHouseItem = () =>{
           setIsShow={handleShowTransferModal}
           listItem={listItemHasChoose}
           removeItemList={removeItemList}
+          fetching={async() => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
         />
           )
         }

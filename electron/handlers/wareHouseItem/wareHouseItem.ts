@@ -60,6 +60,8 @@ const wareHouseItem = () => {
   ipcMain.handle(
     "change-warehouse",
     async (event, id_newWareHouse: number, id_list: Intermediary[]) => {
+      console.log(id_newWareHouse, id_list);
+      
       const isSuccess = await changeWareHouse(id_newWareHouse, id_list);
       return isSuccess;
     }

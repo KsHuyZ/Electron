@@ -15,6 +15,7 @@ type DataType = {
     date_created_at: string;
     date_updated_at: string;
     id_Source?:string;
+    id_WareHouse?: number;
   } 
 
 type WarehouseItem = {

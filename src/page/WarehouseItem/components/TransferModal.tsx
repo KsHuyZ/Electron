@@ -11,13 +11,14 @@ import type { FormInstance } from 'antd/es/form';
 import "../styles/transferModal.scss"
 
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
-
+const CheckingErrorContext = React.createContext<any>(null);
 interface TransferModalProps {
   isShow: STATUS_MODAL;
   setIsShow: () => void;
   idWareHouse?: string;
   listItem: DataType[];
-  removeItemList: (IDIntermediary: string) => void;
+  removeItemList: (IDIntermediary: string[]) => void;
+  fetching: () => Promise<void>;
 }
 
 const { Title } = Typography;
@@ -61,6 +62,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
 }) => {
   const [editing, setEditing] = useState(false);
   const inputRef = useRef<InputRef>(null);
+  const {isError , setIsError} = useContext(CheckingErrorContext);
   const form = useContext(EditableContext)!;
 
   useEffect(() => {
@@ -89,10 +91,11 @@ const EditableCell: React.FC<EditableCellProps> = ({
     try {
       const values = await form.validateFields();
       console.log('value', values);
-
+      setIsError(false);
       toggleEdit();
       handleSave({ ...record, quantity: +values.quantity });
     } catch (errInfo) {
+      setIsError(true);
       console.log('Save failed:', errInfo);
     }
   };
@@ -106,13 +109,12 @@ const EditableCell: React.FC<EditableCellProps> = ({
           style={{ margin: 0 }}
           name={dataIndex}
           rules={[
-            {
-              required: true,
-              message: `${title} bắt buộc nhập.`,
-            },
             { validator: numberValidator },
             ({ getFieldValue }) => ({
               validator(_, value) {
+                if(!value){
+                  return Promise.reject(`${title} bắt buộc nhập.`);
+                }
                 if (value > record.quantity!) {
                   return Promise.reject(`Số lượng tối đa có thể chuyển là ${record.quantity}.`);
                 }
@@ -143,11 +145,11 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
   const refError = useRef<any>(null);
   const [item, setItem] = useState<number>();
   const [isError, setIsError] = useState(false);
-
+  const [isErrorSelect, setIsErrorSelect] = useState(false);
   const columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
       title: 'Mã mặt hàng',
-      dataIndex: 'IDIntermediary',
+      dataIndex: 'IDWarehouseItem',
       width: 150,
       render: (record) => {
         return `MH${record < 10 ? "0" : ""}${record}`
@@ -220,6 +222,15 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     }
   ];
 
+  const handleSetError = (params: boolean) =>{
+    setIsError(params)
+      }
+
+  const contextValue = {
+    isError,
+    setIsError: handleSetError
+  }
+
   useEffect(() => {
     if (idWareHouse) {
       new Promise(async () => {
@@ -247,28 +258,60 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     )
   }
 
-  const handleTransferWareHouse = () => {
+  const handleTransferWareHouse = async() => {
     if (!item) {
       refError.current.focus();
-      setIsError(true);
+      setIsErrorSelect(true);
       return;
     }
 
-    const newList = listItem.map((item: DataType) => item.IDIntermediary)
-    ipcRenderer.send("change-warehouse", item, newList);
-    setIsShow()
+    if(listItemTransfer.length < 1){
+      message.error('Không có sản phẩm cần chuyển')
+      return;
+    }
 
+    if(isError){
+      message.error('Vui lòng kiểm tra lại các số lượng cần chuyển')
+      return;
+    }
+
+    const newList = listItemTransfer.map((item: DataType) => ({
+      id_wareHouse_item: item.IDWarehouseItem,
+      quantity : item.quantity,
+      id_wareHouse: item.id_WareHouse,
+      status: item.status,
+      quality: item.quality,
+      idIntermediary: item.IDIntermediary
+
+    }))
+    
+    if(newList){
+      try {
+      
+        const result = await ipcRenderer.invoke("change-warehouse", item, newList);
+        if(result){
+          await props.fetching();
+          setIsShow();
+          props.removeItemList(newList.map(i => i.idIntermediary));
+          message.success('Chuyển kho thành công');
+        }
+        } catch (error) {
+          message.error('Loi server')
+          console.log(error);
+          
+        }
+    }
   }
 
   const handleChangeSelect = (idItem: number) => {
     setItem(idItem);
-    setIsError(false);
+    setIsErrorSelect(false);
   }
 
   const handleRemoveItem = (item: DataType) => {
     const filterItem = listItemTransfer.filter(cur => cur.IDIntermediary !== item.IDIntermediary);
     setListItemTransfer(filterItem);
-    props.removeItemList(item.IDIntermediary)
+    props.removeItemList([item.IDIntermediary])
 
   }
 
@@ -305,6 +348,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
 
 
   return (
+    <CheckingErrorContext.Provider value={contextValue}>
     <Modal
       title={'Chuyển kho hàng'}
       centered
@@ -320,7 +364,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
           <Select
             showSearch
             optionFilterProp="children"
-            className={isError ? 'error' : ''}
+            className={isErrorSelect ? 'error' : ''}
             ref={refError}
             filterOption={(input, option) =>
               (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -330,7 +374,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
             options={listWareHouse}
           />
           {
-            isError && <p className="text-error">Vui lòng không để trống ô này</p>
+            isErrorSelect && <p className="text-error">Vui lòng không để trống ô này</p>
           }
         </div>
 
@@ -354,6 +398,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
 
       </Space>
     </Modal>
+    </CheckingErrorContext.Provider>
   )
 }
 
