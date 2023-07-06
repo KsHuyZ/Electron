@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Table, TableProps } from "antd";
 import type { TableRowSelection } from 'antd/es/table/interface';
 
@@ -8,11 +8,24 @@ interface TableWareHouseProps extends TableProps<any> {
     isShowSelection?:Boolean;
     setIsShowPopUp: () => void;
     setRowSelected: (data: any) => void;
+    isListenChange?:Boolean;
+    setIsListenChange : (status: boolean) => void;
+    listRowSelected?: DataType[];
 }
 
 const TableWareHouse = (props : TableWareHouseProps) =>{
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const {isShowSelection = false, ...other} = props;
+
+    useEffect(() =>{
+      if(props.isListenChange && props.listRowSelected){
+        console.log('has call here');
+        console.log('list will converst' , props.listRowSelected);
+        
+        onSelectChange(props.listRowSelected.map(item => +item.IDIntermediary));
+        props.setIsListenChange(false);
+      }
+    },[props.isListenChange])
 
     const onSelectChange = (newSelectedRowKeys: any) => {
       console.log('selectedRowKeys changed: ', newSelectedRowKeys);
@@ -40,7 +53,7 @@ const TableWareHouse = (props : TableWareHouseProps) =>{
         scroll={{y: 500}}
 
         style={{maxWidth: '1200px'}}
-        rowKey={isShowSelection ? (record: DataType) => record.ID : undefined}
+        rowKey={isShowSelection ? (record: DataType) => record.IDIntermediary : undefined}
             {
                 ...other
             }

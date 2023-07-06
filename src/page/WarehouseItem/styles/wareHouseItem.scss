@@ -4,7 +4,7 @@
     align-items:flex-end;
     margin-bottom: 10px;
     // justify-content: space-around;
-    button{
+    button.button-bar{
         background-color: #00695c;
         display: flex;
         align-items: center;
@@ -14,6 +14,13 @@
             border: 1px solid #00695c;
             color: #00695c!important;
         }
+    }
+
+    button.default{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
     }
     
 }
@@ -41,5 +48,11 @@
 }
 
 .w-100{
+    width: 100%;
+}
+
+.col-item-filter{
+    display: flex;
+    align-items: end;
     width: 100%;
 }

@@ -3,7 +3,7 @@ import wareHouseDB from "../../database/WareHouse-Receiving/wareHouse-Receiving"
 import { WarehouseReceiving } from "../../types";
 
 const WareHouse = () => {
-  const { create_WareHouse_Receiving, getAllWareHouse, getAllReceiving, updateWarehouse, updateReceiving } = wareHouseDB;
+  const { create_WareHouse_Receiving, getAllWareHouse, getAllReceiving, updateWarehouse, updateReceiving, getListWareHouseExceptId } = wareHouseDB;
 
   //listen create warehouse request
   ipcMain.handle(
@@ -65,6 +65,14 @@ const WareHouse = () => {
 
     }
   );
+
+  ipcMain.handle("warehouse-list-except-id",async (
+    event,
+    idWareHouse: string
+  ) => {
+    const response =await getListWareHouseExceptId(idWareHouse);
+    return response
+  });
 
 };
 export default WareHouse;

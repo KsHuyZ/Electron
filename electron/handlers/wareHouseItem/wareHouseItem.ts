@@ -52,13 +52,16 @@ const wareHouseItem = () => {
   );
 
   // listen delete event
-  ipcMain.handle("delete-warehouseitem", async (event, id: number) => {
-    const isSuccess = await deleteWareHouseItemInWarehouse(id);
+  ipcMain.handle("delete-warehouseitem", async (event, id: number, id_wareHouse: number) => {
+    const isSuccess = await deleteWareHouseItem(id, id_wareHouse);
+    return isSuccess;
   });
   //Change warehouse
   ipcMain.handle(
     "change-warehouse",
     async (event, id_newWareHouse: number, id_list: Intermediary[]) => {
+      console.log(id_newWareHouse, id_list);
+      
       const isSuccess = await changeWareHouse(id_newWareHouse, id_list);
       return isSuccess;
     }

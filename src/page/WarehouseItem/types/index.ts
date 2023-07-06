@@ -1,5 +1,7 @@
 type DataType = {
-    ID: string;
+    key?:string;
+    IDIntermediary: string;
+    IDWarehouseItem?: string;
     name: string;
     price: string;
     unit: string;
@@ -7,15 +9,17 @@ type DataType = {
     note: string;
     quantity_plane: number | null;
     quantity_real: number | null;
+    quantity?:number|null;
     status: number | null;
     date_expried: string;
     date_created_at: string;
     date_updated_at: string;
-    id_nguonHang?:string;
+    id_Source?:string;
+    id_WareHouse?: number;
   } 
 
 type WarehouseItem = {
-    id_nguonHang: string;
+    idSource: string;
     name: string;
     price: string;
     unit: string;
@@ -31,6 +35,7 @@ type FormWareHouseItem = WarehouseItem & {
   status : number;
   date_created_at: any;
   date_updated_at:any;
+  date: any;
 }
 
 export enum STATUS_MODAL  {

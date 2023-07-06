@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { ipcRenderer } from "electron";
 import dayjs from 'dayjs';
 import React from "react";
+// import InputPrice from "@/components/InputPrice";
 
 
 interface PropsAddWareHouseItem {
@@ -17,6 +18,7 @@ interface PropsAddWareHouseItem {
     isEdit: boolean;
     itemEdit: Omit<DataType,'date_created_at'|'date_updated_at'|'status'> | undefined;
     setIsEdit: (status: boolean) => void;
+    fetching: () => Promise<void>;
 }
 
 const defaultQuality : OptionSelect[] = [
@@ -38,7 +40,7 @@ const defaultQuality : OptionSelect[] = [
     }
 ]
 
-const AddWareHouseItem = React.memo(({isShowModal = false,onCloseModal, idWareHouse, isEdit, itemEdit, setIsEdit}: PropsAddWareHouseItem) => {
+const AddWareHouseItem = React.memo(({isShowModal = false,onCloseModal, idWareHouse, isEdit, itemEdit, setIsEdit,fetching}: PropsAddWareHouseItem) => {
     const [formWareHouseItem] = Form.useForm();
     const [price, setPrice] = useState<any>();
     const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>();
@@ -47,23 +49,29 @@ const AddWareHouseItem = React.memo(({isShowModal = false,onCloseModal, idWareHo
     useEffect(() =>{
         if(isEdit){
             console.log(itemEdit);
-const parsedDate = dayjs(itemEdit?.date_expried, 'DD/MM/YYYY'); 
+const parsedDate = dayjs(itemEdit?.date_expried, 'HH:MM DD/MM/YYYY'); 
             // formWareHouseItem.setFieldsValue(itemEdit);
             formWareHouseItem.setFieldsValue({
                 name: itemEdit?.name,
-                price: itemEdit?.price,
+                price: itemEdit?.price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') || '',
                 unit: itemEdit?.unit,
                 quality: itemEdit?.quality,
                 note: itemEdit?.note,
                 quantity_plane: itemEdit?.quantity_plane,
                 quantity_real: itemEdit?.quantity_real,
                 date_expried: parsedDate,
-                id_nguonHang: itemEdit?.id_nguonHang
+                idSource: itemEdit?.id_Source
             })
         }
-    },[isEdit])
+    },[isEdit]);
 
-    const onFinishFormManagement = (values: WarehouseItem) =>{
+    useEffect(() =>{
+        new Promise(async() =>{
+            await getAllItemSource();
+        })
+    },[])
+
+    const onFinishFormManagement = async(values: WarehouseItem) =>{
         const {date_expried} = values;
         const dateFormat = formatDate(date_expried);
         
@@ -78,17 +86,33 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'DD/MM/YYYY');
                 id_wareHouse : Number(idWareHouse),
                 date_expried: dateFormat,
                 status: STATUS.TEMPORARY_IMPORT,
-                date_created_at: formatDate(new Date()),
-                date_updated_at: formatDate(new Date())
+                date: formatDate(new Date(), true),
+                date_created_at: new Date(),
+                date_updated_at: new Date()
             }
             
             if(isEdit){
-                ipcRenderer.send('update-warehouseitem', params, itemEdit?.ID);
+                const paramsEdit = {
+                    ...params,
+                    idIntermediary: itemEdit?.IDIntermediary,
+                    idWarehouseItem: itemEdit?.IDWarehouseItem,
+                    quantity: itemEdit?.quantity
+
+                }
+                const response = await ipcRenderer.invoke('update-warehouseitem', paramsEdit);
+                if(response){
+                    console.log(response);
+                    message.success('Cập nhật sản phẩm thành công');
+                }
             }else{
-                ipcRenderer.send('create-product-item', JSON.stringify(params));
+                const response = await ipcRenderer.invoke('create-product-item', JSON.stringify(params));
+                if(response){
+                    message.success('Tạo sản phẩm thành công');
+                }
             }
             setLoadingButton(false);
             handleClean();
+            await fetching();
         
 
     }
@@ -100,23 +124,23 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'DD/MM/YYYY');
         setPrice(formattedNumericValue);
         formWareHouseItem.setFieldValue('price', formattedNumericValue)
       }  
-      const ListSourceCallBack = (event: Electron.IpcRendererEvent, data: { rows: ItemSource[], total: number }) =>{
-        const customOption : OptionSelect[] = data?.rows?.map((e) => ({
-            label: e.name,
-            value: e.ID
-        }));
 
-        setListOptionSource(customOption);
+      const getAllItemSource = async () =>{
+        try {
+            const response : { rows: ItemSource[], total: number } = await ipcRenderer.invoke('source-request-read');
+            if(response){
+                const customOption : OptionSelect[] = response?.rows?.map((e) => ({
+                    label: e.name,
+                    value: e.ID
+                }));
+        
+                setListOptionSource(customOption);
+                
+            }
+        } catch (error) {
+            message.error('Lỗi item-source')
+        }
       }
-
-      useEffect(() => {
-        ipcRenderer.send("itemsource-request-read", { pageSize: 10, currentPage: 1 });
-        ipcRenderer.on("all-itemsource", ListSourceCallBack);
-    
-        return () => {
-          ipcRenderer.removeListener("all-itemsource", ListSourceCallBack);
-        };
-      }, []);
 
     const Footer = () => {
         return (
@@ -176,6 +200,7 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'DD/MM/YYYY');
                             addonAfter="vnđ"
                             />
                         </Form.Item>
+                        {/* <InputPrice name="price" label="Gias"/> */}
                     </Col>
                     <Col span={8}>
                         <Form.Item
@@ -217,7 +242,7 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'DD/MM/YYYY');
                     <Col span={8}>
                         <Form.Item
                             label="Nguồn hàng"
-                            name="id_nguonHang"
+                            name="idSource"
                             rules={[{ required: true, message: getMessage(ERROR.ERROR_1, 'Nguồn hàng') }]}
                         >
                             <Select

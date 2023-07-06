@@ -2,6 +2,19 @@ import { BrowserWindow, IpcMainEvent } from "electron";
 import db from "../../utils/connectDB";
 import { Intermediary, WarehouseItem } from "../../types";
 
+const runQuery = (query, params) => {
+  return new Promise((resolve, reject) => {
+    db.run(query, params, function (err) {
+      if (err) {
+        console.log(err);
+        reject(err);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
+
 const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
     id: number,
@@ -10,11 +23,14 @@ const wareHouseItem = {
   ) => {
     try {
       const offsetValue = (currentPage - 1) * pageSize;
-      const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,wi.id_Source,wi.date_expried,wi.note,wi.quantity_plane,wi.quantity_real,i.ID as IDIntermediary,i.id_WareHouse,i.status,i.quality,i.quantity,I.date,COUNT(ID) OVER() AS total,
+      const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
+       wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+        i.ID as IDIntermediary, i.id_WareHouse, i.status, i.quality, i.quantity,
+         i.date, COUNT(i.ID) OVER() AS total 
         FROM warehouseItem wi
         JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
-        WHERE i.idWarehouse = ? and status IN (1,3) ORDER BY ID DESC LIMIT ? OFFSET ?`;
-      const rows = await new Promise((resolve, reject) => {
+        WHERE i.id_WareHouse = ? ORDER BY i.ID DESC LIMIT ? OFFSET ?`;
+      const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, [id, pageSize, offsetValue], (err, rows) => {
           if (err) {
             reject(err);
@@ -23,12 +39,13 @@ const wareHouseItem = {
           }
         });
       });
-      const countResult = rows[0].length > 0 ? rows[0].total : 0;
+      const countResult = rows.length > 0 ? rows[0].total : 0;
       return { rows, total: countResult };
     } catch (err) {
       console.log(err);
       return null;
     }
+    
   },
   createWareHouseItem: async (data: WarehouseItem & Intermediary) => {
     const {
@@ -47,33 +64,57 @@ const wareHouseItem = {
       id_wareHouse,
     } = data;
     const status = 1;
+    console.log(data);
+    
     try {
-      const createItemQuery = `INSERT INTO warehouseItem (name, price, unit,  id_Source, date_expried, date_create_at, date_updated_at, note, quantity_plane, quantity_real) VALUES (${name},${price},${unit},${idSource},${date_expried},${date_created_at},${date_updated_at},${note},${quantity_plane},${quantity_real})`;
+      const createItemQuery = `INSERT INTO warehouseItem (id_Source, name, price, unit, date_expried, 
+        date_create_at, date_updated_at, note, quantity_plane, quantity_real) VALUES 
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const idWarehouseItem = await new Promise((resolve, reject) => {
-        db.run(createItemQuery, function (err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(this.lastID);
+        db.run(
+          createItemQuery,
+          [
+            idSource,
+            name,
+            price,
+            unit,
+            date_expried,
+            date_created_at,
+            date_updated_at,
+            note,
+            quantity_plane,
+            quantity_real
+          ],
+          function (err) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(this.lastID);
+            }
           }
-        });
+        );
       });
-      const createIntermediary = `INSERT INTO Intermediary(id_WareHouse,id_WareHouseItem,status,quality,quantity,date) VALUES (${id_wareHouse}, ${idWarehouseItem},${status},${quality},${quantity_real}, ${date})`;
-      const idIntermedirary = await new Promise((resolve, reject) => {
-        db.run(createIntermediary, function (err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(this.lastID);
+      const createIntermediary = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status
+        , quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`;
+      const idIntermediary = await new Promise((resolve, reject) => {
+        db.run(
+          createIntermediary,
+          [id_wareHouse, idWarehouseItem, status, quality, quantity_real, date],
+          function (err) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(this.lastID);
+            }
           }
-        });
+        );
       });
       return true;
     } catch (error) {
       console.log(error);
       return false;
     }
-  },
+  },  
   updateWareHouseItem: async (data: WarehouseItem & Intermediary) => {
     const {
       name,
@@ -93,27 +134,43 @@ const wareHouseItem = {
       idWarehouseItem,
       idIntermediary,
     } = data;
-
-    const intermediary = await new Promise((resolve, reject) => {
-      db.run(
-        `SELECT * FROM Intermediary WHERE ID = ${idIntermediary} AND status= 1`,
-        function (err) {
+  
+    console.log(data);
+  
+    const intermediaryExists = await new Promise((resolve, reject) => {
+      db.get(
+        `SELECT COUNT(ID) AS count FROM Intermediary WHERE ID = ?`,
+        [idIntermediary],
+        function (err, row: any) {
           if (err) {
             console.log(err);
             reject(err);
           } else {
-            resolve(true);
+            resolve(row.count > 0);
           }
         }
       );
     });
-    if (!intermediary) {
-      return "Warehouse item not exist or is importing";
+  
+    if (!intermediaryExists) {
+      return "Warehouse item does not exist or is being imported";
     }
-
+  
     await new Promise((resolve, reject) => {
       db.run(
-        `UPDATE warehouseItem SET name = ${name}, price = ${price}, unit = ${unit}, id_Source = ${idSource}, date_expried = ${date_expried}, date_create_at = ${date_created_at}, date_updated_at = ${date_updated_at}, note = ${note}, quantity_plane = ${quantity_plane}, quantity_real = ${quantity_real} WHERE ID = ${idWarehouseItem}`,
+        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, date_create_at = ?, date_updated_at = ?, note = ?, quantity_plane = ? WHERE ID = ?`,
+        [
+          name,
+          price,
+          unit,
+          idSource,
+          date_expried,
+          date_created_at,
+          date_updated_at,
+          note,
+          quantity_plane,
+          idWarehouseItem,
+        ],
         function (err) {
           if (err) {
             console.log(err);
@@ -124,9 +181,11 @@ const wareHouseItem = {
         }
       );
     });
+  
     await new Promise((resolve, reject) => {
       db.run(
-        `UPDATE Intermediary SET quality = ${quality}, quantity = ${quantity} WHERE ID = ${idIntermediary}`,
+        `UPDATE Intermediary SET quality = ?, quantity = ? WHERE ID = ?`,
+        [quality, quantity_real, idIntermediary],
         function (err) {
           if (err) {
             console.log(err);
@@ -137,9 +196,8 @@ const wareHouseItem = {
         }
       );
     });
-
+  
     return {
-      idWarehouseItem,
       idIntermediary,
       name,
       price,
@@ -161,7 +219,7 @@ const wareHouseItem = {
     try {
       const intermediary = await new Promise((resolve, reject) => {
         db.run(
-          `SELECT * FROM Intermediary WHERE ID = ${ID} AND status= 1`,
+          `SELECT * FROM Intermediary WHERE ID = ${ID}`,
           function (err) {
             if (err) {
               console.log(err);
@@ -194,11 +252,11 @@ const wareHouseItem = {
       return false;
     }
   },
-  deleteWareHouseItem: async (ID: number) => {
+  deleteWareHouseItem: async (ID: number, ID_warehouse: number) => {
     try {
       const intermediary = await new Promise((resolve, reject) => {
         db.run(
-          `SELECT * FROM Intermediary WHERE ID = ${ID} AND status= 1`,
+          `SELECT * FROM Intermediary WHERE ID = ${ID}`,
           function (err) {
             if (err) {
               console.log(err);
@@ -214,7 +272,7 @@ const wareHouseItem = {
       }
       await new Promise((resolve, reject) => {
         db.run(
-          `DELETE FROM Intermediary WHERE id_WareHouseItem = ${ID}`,
+          `DELETE FROM Intermediary WHERE ID = ${ID}`,
           function (err) {
             if (err) {
               console.log(err.message);
@@ -226,7 +284,7 @@ const wareHouseItem = {
         );
       });
       await new Promise((resolve, reject) => {
-        db.run(`DELETE FROM WareHouseItem WHERE ID = ${ID}`, function (err) {
+        db.run(`DELETE FROM WareHouseItem WHERE ID = ${ID_warehouse}`, function (err) {
           if (err) {
             console.log(err.message);
             reject(err.message);
@@ -243,123 +301,147 @@ const wareHouseItem = {
   },
 
   //ChangeWareHouse
-  changeWareHouse: async (
-    id_newWareHouse: number,
-    intermediary: Intermediary[]
-  ) => {
+  changeWareHouse: async (id_newWareHouse: number, intermediary: Intermediary[]) => {
     try {
-      intermediary.forEach(async (item) => {
+      const promises = intermediary.map(async (item) => {
+        console.log('item', item);
+        
         const ID = await new Promise((resolve, reject) => {
-          db.run(
-            `SELECT ID from Intermediary WHERE id_WareHouse = ${id_newWareHouse} and id_WareHouseItem = ${item.id_wareHouse_item}`,
-            function (err, row) {
-              if (err) {
-                console.log(err);
-                reject(err)
-              } else {
+          const query = `SELECT ID from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ?`;
+          db.get(query, [id_newWareHouse, item.id_wareHouse_item], function (err, row:any) {
+            if (err) {
+              console.log(err);
+              reject(err);
+            } else {
+              if(row){
                 resolve(row.ID);
+              }else{
+                resolve('NOT_EXITS');
               }
             }
-          );
-        });
-        if (ID) {
-          const quantity = await new Promise((resolve, reject) => {
-            db.run(
-              `SELECT quantity from Intermediary WHERE ID = ${ID}`,
-              function (err, row) {
-                if (err) {
-                  console.log(err);
-                  reject(err)
-                } else {
-                  resolve(row.quantity);
-                }
-              }
-            );
           });
+        });
+
+        console.log('checking id', ID);
+        
+  
+        if (ID !== 'NOT_EXITS') {
+          const quantity = await new Promise((resolve, reject) => {
+            const query = `SELECT quantity from Intermediary WHERE ID = ?`;
+            db.get(query, [item.idIntermediary], function (err, row:any) {
+              if (err) {
+                console.log('bugs',err);
+                reject(err);
+              } else {
+                resolve(row.quantity);
+              }
+            });
+          });
+
           if (Number(quantity) < item.quantity) {
-            throw new Error(
-              "Can't change warehouseitem to new warehouse. Is to large"
-            );
-          } else if (Number(quantity) < item.quantity) {
-            const changeWareHouseQuery = `UPDATE Intermediary SET  quantity = quantity + ${item.quantity} WHERE ID = ${ID}
-            UPDATE Intermediary SET quantity = quantity - ${item.quantity} WHERE id_WareHouseItem = ${item.id_wareHouse_item} AND id_WareHouse= ${item.id_wareHouse}`;
-            await new Promise((resolve, reject) => {
-              db.run(changeWareHouseQuery, function (err, row) {
-                if (err) {
-                  console.log(err);
-                  reject(err)
-                } else {
-                  resolve(true);
-                }
-              });
-            });
+            throw new Error("Can't change warehouseitem to new warehouse. Is too large");
+          } else if (Number(quantity) > item.quantity) {
+            const updateQuery1 = `UPDATE Intermediary SET  quantity = quantity + ? WHERE ID = ?`;
+            const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
+
+            await runQuery(updateQuery1, [
+              item.quantity,
+              ID
+            ]);
+
+            await runQuery(updateQuery2, [
+              item.quantity, 
+              item.id_wareHouse_item, 
+              item.id_wareHouse
+            ]);
           } else {
-            const changeWareHouseQuery = `UPDATE Intermediary SET quantity = quantity + ${item.quantity} WHERE ${ID}
-            DELETE Intermediary WHERE id_WareHouseItem = ${item.id_wareHouse_item} AND id_WareHouse= ${item.id_wareHouse}`;
-            const isSuccess = await new Promise((resolve, reject) => {
-              db.run(changeWareHouseQuery, function (err, row) {
-                if (err) {
-                  console.log(err);
-                  reject(err)
-                } else {
-                  resolve(true);
-                }
-              });
-            });
+
+            console.log('case3');
+            
+
+            const changeWareHouseQuery = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
+            const deleteWareHouseQuery = `DELETE FROM Intermediary WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
+            
+            await runQuery(changeWareHouseQuery, [
+              item.quantity,
+              ID
+            ]);
+            
+            await runQuery(deleteWareHouseQuery, [
+              item.id_wareHouse_item, 
+              item.id_wareHouse
+            ]);            
           }
         } else {
-          const changeWareHouseQuery = `INSERT INTO Intermediary(id_WareHouse,id_WareHouseItem,status,quality,quantity) VALUES (${id_newWareHouse}, ${item.id_wareHouse_item},${item.status},${item.quality},${item.quantity})
-          UPDATE Intermediary SET quantity = quantity - ${item.quantity} WHERE id_WareHouseItem = ${item.id_wareHouse_item} AND id_WareHouse= ${item.id_wareHouse}`;
+          console.log('worker here');
+          
+          const changeWareHouseQuery = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`;
+          const updateWareHouseQuery = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? AND id_WareHouse = ?`;
           const quantity = await new Promise((resolve, reject) => {
-            db.run(
-              `SELECT quantity from Intermediary WHERE id_WareHouse = ${item.id_wareHouse} AND id_WareHouseItem = ${item.id_wareHouse_item}`,
-              function (err, row) {
-                if (err) {
-                  console.log(err);
-                  reject(err)
-                } else {
-                  resolve(row.quantity);
-                }
+            const query = `SELECT quantity from Intermediary WHERE id_WareHouse = ? AND id_WareHouseItem = ?`;
+            db.get(query, [item.id_wareHouse, item.id_wareHouse_item], function (err, row:any) {
+              if (err) {
+                console.log(err);
+                reject(err);
+              } else {
+                resolve(row.quantity);
               }
-            );
+            });
           });
+
+          console.log('quantity', quantity);
+          
+  
           if (Number(quantity) < item.quantity) {
-            throw new Error(
-              "Can't change warehouseitem to new warehouse. Is to large"
-            );
+            throw new Error("Can't change warehouseitem to new warehouse. Is too large");
           } else if (Number(quantity) > item.quantity) {
-            await new Promise((resolve, reject) => {
-              db.run(changeWareHouseQuery, function (err, row) {
-                if (err) {
-                  console.log(err);
-                  reject(err)
-                } else {
-                  resolve(true);
-                }
-              });
-            });
+            await runQuery(changeWareHouseQuery, [
+              id_newWareHouse,
+               item.id_wareHouse_item,
+                item.status,
+                 item.quality,
+                  item.quantity,
+                  new Date(),
+            ]);
+            await runQuery(updateWareHouseQuery, [item.quantity, item.idIntermediary, item.id_wareHouse])
           } else {
-            const changeWareHouseQuery = `INSERT INTO Intermediary(id_WareHouse,id_WareHouseItem,status,quality,quantity) VALUES (${id_newWareHouse}, ${item.id_wareHouse_item},${item.status},${item.quality},${item.quantity})
-            DELETE Intermediary WHERE id_WareHouseItem = ${item.id_wareHouse_item} AND id_WareHouse= ${item.id_wareHouse}`;
-            const isSuccess = await new Promise((resolve, reject) => {
-              db.run(changeWareHouseQuery, function (err, row) {
-                if (err) {
-                  console.log(err);
-                  reject(err)
-                } else {
-                  resolve(true);
-                }
-              });
-            });
+            const insertQuery = `
+          INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, quality, quantity, date)
+          VALUES (?, ?, ?, ?, ?, ?)`;
+
+        const deleteQuery = `
+          DELETE FROM Intermediary WHERE ID = ?`;
+
+        try {
+          await runQuery(insertQuery, [
+            id_newWareHouse,
+            item.id_wareHouse_item,
+            item.status,
+            item.quality,
+            item.quantity,
+            new Date(),
+          ]);
+
+          await runQuery(deleteQuery, [item.idIntermediary]);
+          console.log('Transaction committed successfully');
+        } catch (err) {
+          console.log('Transaction rolled back:', err);
+          // Handle error
+        }
+
           }
         }
       });
+      
+      await Promise.all(promises);
+  
       return true;
     } catch (error) {
       console.log(error);
       return false;
     }
   },
+  
 };
 
 export default wareHouseItem;

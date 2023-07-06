@@ -18,12 +18,12 @@ const config: any = {
   // '@table-header-bg': '#f0f2f5', // Customize the table header background color
   // '@table-header-color': '#333', // Customize the table header text color
   // '@table-font-size': '32px',
-  button: {
-    hover: {
-      color: '#00695c',
-      borderColor: '#00695c',
-    },
-  },
+  // button: {
+  //   hover: {
+  //     color: '#00695c',
+  //     borderColor: '#00695c',
+  //   },
+  // },
 };
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
