@@ -1,6 +1,6 @@
-import { Row, Col, Table, Select, Button, Space, Tag, Modal, message } from "antd";
+import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
 import "./styles/wareHouseItem.scss";
-import { UilPlus } from '@iconscout/react-unicons'
+import { UilPlus,UilImport,UilFileExport,UilSearch } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
 import { useCallback, useEffect, useState } from "react";
@@ -278,24 +278,54 @@ const WareHouseItem = () =>{
 
     return(
         <Row className="filter-bar">
-        
+        <Row style={{width: '100%'}} align="middle">
+        <Col span={12}>
+          <h2>Kho 1</h2>
+        </Col>
+        <Col span={12}>
+          <Button className="button-bar" onClick={() => setIsShowModal(true)} icon={<UilPlus/>} type="primary">Them San Pham</Button>
+        </Col>
+        </Row>
         <Col span={24}>
         <div>
-      <div style={{ marginBottom: 16 }}>
+      <div>
+        
+        <Card style={{ margin: '16px 0' }}>
         <Row className="filter-bar">
-        <Col span={6}>
+        <Col span={12} className="col-item-filter">
+        <div className="form-item" style={{ width: '60%'}}>
+            <label htmlFor="">Tên mặt hàng</label>
+        <Input/>
+        </div>
+        <Button type="primary"><UilSearch/></Button>
+        </Col>
+        <Col span={12}>
+          <Space direction="horizontal" size={24}>
+            <Button className="default" icon={<UilImport/>}>Tạm nhập</Button>
+            <Button className="default" icon={<UilFileExport/>}>Tạm Xuất</Button>
+          </Space>
+        </Col>
+        {/* <Col span={6}>
         <div className="form-item">
-            <label htmlFor="">Lọc</label>
+            <label htmlFor="">Nguồn Hàng</label>
         <Select>
           <Select.Option value="demo">Demo</Select.Option>
         </Select>
         </div>
         </Col>
-        
         <Col span={6}>
-            <Button onClick={() => setIsShowModal(true)} icon={<UilPlus/>} type="primary">Them San Pham</Button>
-        </Col>
+        <div className="form-item">
+            <label htmlFor="">Trạng Thái</label>
+        <Select>
+          <Select.Option value="demo">Demo</Select.Option>
+        </Select>
+        </div>
+        </Col> */}
+        
+        
         </Row>
+
+        </Card>
         {/* <span style={{ marginLeft: 8 }}>
           {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}
         </span> */}
