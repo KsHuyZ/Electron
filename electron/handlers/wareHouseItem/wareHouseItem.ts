@@ -10,6 +10,8 @@ const wareHouseItem = () => {
     updateWareHouseItem,
     deleteWareHouseItemInWarehouse,
     changeWareHouse,
+    getAllWarehouseItem,
+    exportWareHouse
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -43,6 +45,12 @@ const wareHouseItem = () => {
     }
   );
 
+  ipcMain.handle("get-all-warehouse-item", async (event, data) => {
+    const { pageSize, currentPage } = data;
+    const response = await getAllWarehouseItem(pageSize, currentPage);
+    return response;
+  });
+
   ipcMain.handle(
     "update-warehouseitem",
     async (event, data: WarehouseItem & Intermediary) => {
@@ -52,17 +60,26 @@ const wareHouseItem = () => {
   );
 
   // listen delete event
-  ipcMain.handle("delete-warehouseitem", async (event, id: number, id_wareHouse: number) => {
-    const isSuccess = await deleteWareHouseItem(id, id_wareHouse);
-    return isSuccess;
-  });
+  ipcMain.handle(
+    "delete-warehouseitem",
+    async (event, id: number, id_wareHouse: number) => {
+      const isSuccess = await deleteWareHouseItem(id, id_wareHouse);
+      return isSuccess;
+    }
+  );
   //Change warehouse
   ipcMain.handle(
     "change-warehouse",
     async (event, id_newWareHouse: number, id_list: Intermediary[]) => {
-      console.log(id_newWareHouse, id_list);
-      
       const isSuccess = await changeWareHouse(id_newWareHouse, id_list);
+      return isSuccess;
+    }
+  );
+
+  ipcMain.handle(
+    "export-warehouse",
+    async (event, id_receiving: number, id_list: Intermediary[]) => {
+      const isSuccess = await exportWareHouse(id_receiving, id_list);
       return isSuccess;
     }
   );

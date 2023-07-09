@@ -1,7 +1,8 @@
+import toastify from '@/lib/toastify'
 import { UilMultiply } from '@iconscout/react-unicons'
 import { Button, Input, Form } from 'antd'
 import { ipcRenderer } from 'electron'
-import React, { useEffect, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 
 
 type DataType = {
@@ -13,15 +14,17 @@ type DataType = {
 
 interface ModalRecipientProps {
     closeModal: () => void,
-    setLoading: () => void
-    data: DataType | null | undefined
+    data: DataType | null | undefined,
+    reload: () => void,
+    setAllRecipient: Dispatch<SetStateAction<DataType[]>>
 }
 
 
 const ModalRecipient = (props: ModalRecipientProps) => {
-    const { closeModal, setLoading, data } = props
+    const { closeModal, data, reload, setAllRecipient } = props
     const [isLoading, setIsLoading] = useState(false)
     const [form] = Form.useForm();
+    const { notifySuccess, notifyError } = toastify
 
     const handleCloseModal = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Escape") {
@@ -31,15 +34,42 @@ const ModalRecipient = (props: ModalRecipientProps) => {
 
     const hanldeSubmit = async () => {
         await form.validateFields();
-        setLoading()
         setIsLoading(true)
         const { name, address, phone } = form.getFieldsValue();
         if (data) {
             const { ID } = data
-            return ipcRenderer.send("update-recipient", { id: ID, name, address, phonenumber: phone })
+            const success = await ipcRenderer.invoke("update-receiving", { name, address, phone }, ID)
+            if (success) {
+                setAllRecipient(prev => {
+                    let prevAllRecipient = [...prev]
+                    const index = prev.findIndex((item) => item.ID === ID)
+                    prevAllRecipient[index] = { ID, name, address, phone }
+                    return prevAllRecipient
+                })
+                closeModal()
+                return notifySuccess("Cập nhật thành công!")
+            } else {
+                return notifyError("Cập nhật thất bại!")
+            }
         }
-        ipcRenderer.send("create-new-donViNhan", { name, address, phonenumber: phone })
+        const receivingString = JSON.stringify({ name, address, phone, is_receiving: 1 })
+        const success = await ipcRenderer.invoke("create-new-receiving", receivingString)
+        if (success.ID) {
+            reload()
+            closeModal()
+            return notifySuccess("Thêm đơn vị nhận thành công!")
+        } else {
+            notifyError("Thêm đơn vị nhận thất bại")
+        }
+        
     }
+
+    const handleInputPhone = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = e.target;
+        const numericValue = value.replace(/[^\d]/g, '');
+        form.setFieldValue('phone', numericValue)
+    }
+
 
     useEffect(() => {
         if (data) {
@@ -47,7 +77,6 @@ const ModalRecipient = (props: ModalRecipientProps) => {
             form.setFieldValue('name', name);
             form.setFieldValue('address', address);
             form.setFieldValue('phone', phone);
-            // setValue({ name, phonenumber: phone, address })
         }
     }, [])
 
@@ -86,7 +115,7 @@ const ModalRecipient = (props: ModalRecipientProps) => {
                                 { required: true, message: 'Số điện thoại đơn vị nhận không được để trống.' },
                             ]}
                         >
-                            <Input size="large" type='number' placeholder="Số điện thoại đơn vị nhận" disabled={isLoading} />
+                            <Input size="large" placeholder="Số điện thoại đơn vị nhận" disabled={isLoading} onChange={handleInputPhone} />
                         </Form.Item>
                     </Form>
                 </div>
