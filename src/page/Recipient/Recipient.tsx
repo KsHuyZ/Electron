@@ -2,11 +2,12 @@ import { UilMultiply, UilPen } from '@iconscout/react-unicons';
 import { Table, Space, Button } from 'antd';
 import { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useState } from 'react'
-// import ModalItemSource from './components/ModalItemSource';
+import { useParams } from "react-router-dom";
 import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
 import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 import ModalRecipient from './components/ModalRecipient';
+import { Link } from 'react-router-dom';
 
 
 type DataType = {
@@ -66,6 +67,8 @@ const Recipient = () => {
     });
     const [showModalDelete, setShowModalDelete] = useState(false)
 
+    const { idRecipient } = useParams();
+
     const columns: ColumnsType<DataType> = [
         {
             title: 'Mã đơn vị nhận',
@@ -77,6 +80,9 @@ const Recipient = () => {
         {
             title: 'Tên đơn vị nhận',
             dataIndex: 'name',
+            render: (_, record) => {
+                return <Link to={`/recipient/${record.ID}`}>{record.name}</Link>
+            }
         },
         {
             title: 'Địa chỉ',
@@ -92,7 +98,7 @@ const Recipient = () => {
             render: (_, data) => (
                 <Space size="middle">
                     <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
-                    <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} onClick={() => handleSelectRowDelete(data)} />
+                    {/* <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} onClick={() => handleSelectRowDelete(data)} /> */}
                 </Space>
             ),
         }
@@ -159,58 +165,24 @@ const Recipient = () => {
             ...prevPagination,
             ...pagination
         }));
-
-        const { current, pageSize } = pagination
-        handleGetAllRecipient(pageSize, current)
-        // `dataSource` is useless since `pageSize` changed
-        // if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-        //   setData([]);
-        // }
+        handleGetAllRecipient()
     };
 
     const handleShowAddModal = () => {
         setShowAddModal(true)
     }
 
-    const handleGetAllRecipient = (pageSize: number | undefined, current: number | undefined) => {
+    const handleGetAllRecipient = async () => {
+        const { pageSize, current } = pagination
         setLoading(true)
-        ipcRenderer.send("donViNhan-request-read", { pageSize, currentPage: current })
-    }
-
-    const allRecipientCallBack = (event: Electron.IpcRendererEvent, data: { rows: DataType[], total: number }) => {
-        const { rows, total } = data
+        const result = await ipcRenderer.invoke("receiving-request-read", { pageSize, currentPage: current })
+        const { rows, total } = result
         setAllRecipient(rows)
         setPagination(prevPagination => ({
             ...prevPagination,
             total // Sửa giá trị total thành tổng số dòng dữ liệu
         }));
         setLoading(false)
-    }
-
-    const appendRecipientCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
-        setAllRecipient((prev: DataType[]) => {
-            let copyData = prev.slice()
-            copyData.push(data)
-            return copyData
-        })
-        setShowAddModal(false)
-        setLoading(false)
-        notifySuccess("Thêm đơn vị nhận thành công")
-    }
-
-    const updateRecipientCallBack = (event: Electron.IpcRendererEvent, data: DataType) => {
-        const { ID } = data
-        setAllRecipient(prev => {
-            let prevRecipient = [...prev]
-            const index = prevRecipient.findIndex(item => item.ID === ID)
-            if (index > -1) {
-                prevRecipient[index] = data
-            }
-            return prevRecipient
-        })
-        setLoading(false)
-        setShowAddModal(false)
-        notifySuccess("Cập nhật thành công!")
     }
 
     const deleteRecipientCallBack = (event: Electron.IpcRendererEvent, id: number) => {
@@ -236,32 +208,25 @@ const Recipient = () => {
     }
 
 
-    const handleDeleteRecipient = (id: number | undefined | null) => {
-        ipcRenderer.send("delete-recipient", id)
+    const handleDeleteRecipient = async (id: number | undefined | null) => {
+        await ipcRenderer.invoke("delete-recipient", id)
         setShowModalDelete(false)
     }
 
     useEffect(() => {
-        const { pageSize, current } = pagination
-        handleGetAllRecipient(pageSize, current)
+        handleGetAllRecipient()
     }, [])
 
     useEffect(() => {
-        ipcRenderer.on("all-donViNhan", allRecipientCallBack)
-        ipcRenderer.on("append-donViNhan", appendRecipientCallBack)
-        ipcRenderer.on("update-success", updateRecipientCallBack)
         ipcRenderer.on("delete-success", deleteRecipientCallBack)
         return () => {
-            ipcRenderer.removeListener("all-donViNhan", allRecipientCallBack)
-            ipcRenderer.removeListener("append-donViNhan", appendRecipientCallBack)
-              ipcRenderer.removeListener("update-success", updateRecipientCallBack)
-              ipcRenderer.removeListener("delete-success", deleteRecipientCallBack)
+            ipcRenderer.removeListener("delete-success", deleteRecipientCallBack)
         }
     }, [])
 
     return (
         <div className="form-table">
-            {showAddModal && <ModalRecipient closeModal={handleCloseModal} setLoading={() => setLoading(true)} data={currentRecipient} />}
+            {showAddModal && <ModalRecipient closeModal={handleCloseModal} data={currentRecipient} reload={handleGetAllRecipient} setAllRecipient={setAllRecipient} />}
             {showModalDelete && <ModalDelete data={currentRecipient} deleteFunc={handleDeleteRecipient} closeModal={handleCloseModalDelete} />}
             <div className="header">
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm đơn vị nhận</Button></div>

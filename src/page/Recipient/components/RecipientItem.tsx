@@ -1,17 +1,19 @@
 import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
+// import "./styles/wareHouseItem.scss";
 import { UilPlus, UilImport, UilFileExport, UilSearch } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UilMultiply, UilPen, UilExclamationCircle } from '@iconscout/react-unicons';
 import { renderTextStatus, formatNumberWithCommas } from "@/utils";
-import { DataType, FormWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
-import TableWareHouse from "../WarehouseItem/components/TableWareHouse";
+import { DataType, FormWareHouseItem, STATUS_MODAL } from "../../WarehouseItem/types/index";
+import TableWareHouse from "../../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import { ItemSource, ResponseIpc, TableData } from "@/types";
+import { useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
-import TransferModal from "../WarehouseItem/components/TransferModal";
-import { ERROR } from "../WarehouseItem/constants/messValidate";
+// import TransferModal from "./components/TransferModal";
+import { ERROR } from "../../WarehouseItem/constants/messValidate";
 
 const { confirm } = Modal;
 
@@ -29,25 +31,25 @@ const defaultRows: DataType[] = [
     date_expried: '',
     date_created_at: '',
     date_updated_at: '',
-    warehouseName: ''
   }
 ];
 
 const defaultTable: TableData<DataType[]> = {
   pagination: {
     current: 1,
-    pageSize: 2,
+    pageSize: 10,
     total: 0,
   },
   loading: false,
   rows: defaultRows,
 };
 
-const Product = () => {
+const RecipientItem = () => {
   const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
   const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
-  const [dataRowSelected, setDataRowSelected] = useState<DataType[]>([]);
+  const [dataRowSelected, setDataRowSelected] = useState<any>();
   const [isShowModal, setIsShowModal] = useState<boolean>(false);
+  const { idRecipient } = useParams();
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [itemEdit, setItemEdit] = useState<DataType>();
   const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
@@ -76,12 +78,6 @@ const Product = () => {
         <span style={{ fontWeight: 'bold' }}>{formatNumberWithCommas(record)}</span>
       )
     },
-    {
-      title: 'Thuộc',
-      dataIndex: 'warehouseName',
-      width: 200,
-    },
-
     {
       title: "Số lượng",
       children: [
@@ -153,8 +149,10 @@ const Product = () => {
       },
       loading: true
     })
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("get-all-warehouse-item", { pageSize: pageSize, currentPage: currentPage });
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idRecipient });
     if (result) {
+
+      console.log('fetching', result);
 
       setListData((prev) => (
         {
@@ -176,6 +174,8 @@ const Product = () => {
 
   const handleDataRowSelected = (listIdRow: number[]) => {
     console.log(listIdRow);
+    // console.log(listData);
+    // check nguon hang must be in the same place
 
     const mergedList = listIdRow.map((id, index) => {
       const foundItem = listData.rows.find((item) => Number(item.IDIntermediary) === id);
@@ -202,26 +202,49 @@ const Product = () => {
     }
   }
 
+  const handleRemoveItem = (data: DataType) => {
+    console.log(data);
+    confirm({
+      closable: true,
+      title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,
+      icon: <UilExclamationCircle />,
+      okText: 'Đồng ý',
+      okType: 'danger',
+      cancelText: 'Từ chối',
+      onOk() {
+        removeItem(Number(data.IDIntermediary), Number(data.IDWarehouseItem))
+      },
+      onCancel() {
+
+      }
+    });
+  };
+
   const handleShowTransferModal = () => {
     setStatusModal(STATUS_MODAL.CLOSE);
   }
 
   const removeItemList = (IDIntermediary: string[]) => {
+    console.log('remove item list', IDIntermediary);
     const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
-    setDataRowSelected(filterNewList)
+    setListItemHasChoose(filterNewList);
     setIsListenChange(true);
   }
+
+  console.log(listData);
+
 
   return (
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
         <Col span={12}>
-          <Button className="button-bar" onClick={() => setStatusModal(STATUS_MODAL.RECEIPT)} icon={<UilFileExport />} type="primary" disabled={dataRowSelected!?.length > 0 ? false : true}>Xuất kho</Button>
+          <h2>Kho 1</h2>
         </Col>
       </Row>
       <Col span={24}>
         <div>
           <div>
+
             <Card style={{ margin: '16px 0' }}>
               <Row className="filter-bar">
                 <Col span={12} className="col-item-filter">
@@ -233,7 +256,8 @@ const Product = () => {
                 </Col>
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
-                    <Button className="default" icon={<UilImport />}>Đã nhập</Button>
+                    <Button className="default" icon={<UilImport />}>Đã xuất</Button>
+                    <Button className="default" icon={<UilImport />}>Tạm Xuất(Tạm nhập)</Button>
                     <Button className="default" icon={<UilFileExport />}>Tạm Xuất</Button>
                   </Space>
                 </Col>
@@ -258,25 +282,26 @@ const Product = () => {
             onChange={handleTableChange}
             isListenChange={isListenChange}
             setIsListenChange={(status: boolean) => setIsListenChange(status)}
-            listRowSelected={dataRowSelected}
-            setRowsSelect={setDataRowSelected}
+            listRowSelected={listItemHasChoose}
           />
         </div>
       </Col>
-      {
-        statusModal === STATUS_MODAL.RECEIPT && (
+
+      {/* {
+        statusModal === STATUS_MODAL.TRANSFER && (
           <TransferModal
             isShow={statusModal}
+            idWareHouse={idWareHouse}
             setIsShow={handleShowTransferModal}
-            listItem={dataRowSelected}
+            listItem={listItemHasChoose}
             removeItemList={removeItemList}
             fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
           />
         )
-      }
+      } */}
     </Row>
 
   )
 }
 
-export default Product
+export default RecipientItem

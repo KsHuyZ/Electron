@@ -3,12 +3,10 @@ export type ModalProps = {
   setLoading: () => void;
 };
 
-export type ResponseIpc<T> = 
-  {
-    rows: T;
-    total?: number;
-  }
-;
+export type ResponseIpc<T> = {
+  rows: T;
+  total?: number;
+};
 
 export type Pagination = {
   pagination: {
@@ -21,43 +19,44 @@ export type Pagination = {
 
 export type TableData<T> = Pagination & ResponseIpc<T>;
 
-export type ItemSource= {
+export type ItemSource = {
   ID: number;
   name: string;
   address: string;
   phone: string;
-}
-
+};
 
 export type OptionSelect = {
-  label: string,
-  value: any
+  label: string;
+  value: any;
 };
 
 export type WareHouse = {
   ID: string;
   name: string;
-}
+};
 
 export const STATUS = {
   TEMPORARY_IMPORT: 1,
   TEMPORARY_EXPORT: 2,
   IMPORT: 3,
   EXPORT: 4,
-}
+  TEMPORARY_EXPORT_TEMPORARY_IMPORT: 5,
+};
 
 export const COLOR_STATUS = {
-  TEMPORARY_IMPORT: '#ffa940',
-  TEMPORARY_EXPORT: '#00695c',
-  IMPORT: '#ffec3d',
-  EXPORT: '#9254de',
-}
+  TEMPORARY_IMPORT: "#ffa940",
+  TEMPORARY_EXPORT: "#00695c",
+  IMPORT: "#ffec3d",
+  EXPORT: "#9254de",
+  TEMPORARY_EXPORT_TEMPORARY_IMPORT: "#468B97",
+};
 
 export const QUALITY = {
-  QUALITY_1 : '1',
-  QUALITY_2 : '2',
-  QUALITY_3 : '3',
-  QUALITY_4 : '4',
+  QUALITY_1: "1",
+  QUALITY_2: "2",
+  QUALITY_3: "3",
+  QUALITY_4: "4",
 };
 
 export const priceRegex = /^[^a-zA-Z\W]*\.?\d*$/;

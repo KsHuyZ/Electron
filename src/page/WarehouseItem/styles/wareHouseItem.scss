@@ -1,58 +1,57 @@
-.filter-bar{
-    // background-color: aquamarine;
+.filter-bar {
+  // background-color: aquamarine;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 10px;
+  // justify-content: space-around;
+  button.button-bar {
+    background-color: #00695c;
     display: flex;
-    align-items:flex-end;
-    margin-bottom: 10px;
-    // justify-content: space-around;
-    button.button-bar{
-        background-color: #00695c;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        &:hover{
-            background-color: #fff!important;
-            border: 1px solid #00695c;
-            color: #00695c!important;
-        }
+    align-items: center;
+    justify-content: center;
+    &:hover {
+      background-color: #fff !important;
+      border: 1px solid #00695c;
+      color: #00695c !important;
     }
+  }
 
-    button.default{
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-    
-}
-
-.form-item{
+  button.default {
     display: flex;
-    flex-direction: column;
-    margin-right: 10px;
-    label{
-        font-weight: bold;
-        padding: 10px 0 5px 0;
-        text-transform: uppercase;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+  label {
+    font-weight: bold;
+    padding: 10px 0 5px 0;
+    text-transform: uppercase;
+  }
+}
+
+.modal-item {
+  button {
+    background-color: #00695c;
+    &:hover {
+      background-color: #fff;
+      border: 1px solid #00695c;
+      color: #00695c;
     }
+  }
 }
 
-.modal-item{
-    button{
-        background-color: #00695c;
-        &:hover{
-            background-color: #fff!important;
-            border: 1px solid #00695c;
-            color: #00695c!important;
-        }
-    }
+.w-100 {
+  width: 100%;
 }
 
-.w-100{
-    width: 100%;
-}
-
-.col-item-filter{
-    display: flex;
-    align-items: end;
-    width: 100%;
+.col-item-filter {
+  display: flex;
+  align-items: end;
+  width: 100%;
 }
