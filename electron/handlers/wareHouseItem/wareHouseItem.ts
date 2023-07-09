@@ -10,6 +10,7 @@ const wareHouseItem = () => {
     updateWareHouseItem,
     deleteWareHouseItemInWarehouse,
     changeWareHouse,
+    getWareHouseItemBySource
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -66,5 +67,15 @@ const wareHouseItem = () => {
       return isSuccess;
     }
   );
-};
+  //Filter warehouseItem by Source
+  ipcMain.handle('filterWarehouseItemsBySource', async (event, Source_name) => {
+    try {
+      const newData = await getWareHouseItemBySource(Source_name);
+      return newData;
+    } catch (err) {
+      console.log(err);
+      return null;
+    }
+  });
+}  
 export default wareHouseItem;
