@@ -1,4 +1,4 @@
-import { Dispatch, Key, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, Key, SetStateAction, useEffect, useState, memo } from "react";
 import { Table, TableProps } from "antd";
 import type { TableRowSelection } from 'antd/es/table/interface';
 
@@ -50,6 +50,9 @@ const TableWareHouse = (props: TableWareHouseProps) => {
       }
     ],
   };
+
+  console.log('table render');
+  
 
   return (
     <Table

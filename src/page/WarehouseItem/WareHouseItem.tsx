@@ -1,13 +1,13 @@
-import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
+import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input, DatePicker } from "antd";
 import "./styles/wareHouseItem.scss";
-import { UilPlus,UilImport,UilFileExport,UilSearch } from '@iconscout/react-unicons'
+import { UilPlus,UilImport,UilFilter,UilSearch } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
 import { useCallback, useEffect, useState } from "react";
 import { UilMultiply, UilPen,UilExclamationCircle } from '@iconscout/react-unicons';
 import { fakeData } from "./constants/test";
 import { renderTextStatus, formatNumberWithCommas } from "@/utils";
-import { DataType,FormWareHouseItem,STATUS_MODAL } from "./types";
+import { DataType,ISearchWareHouseItem,STATUS_MODAL } from "./types";
 import TableWareHouse from "./components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import AddWareHouseItem from "./components/AddWareHouseItem";
@@ -16,8 +16,11 @@ import { useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "./components/TransferModal";
 import { ERROR } from "./constants/messValidate";
+import FilterWareHouseItem from "./components/FilterWareHouseItem";
+import { useSearchParams } from "react-router-dom";
 
 const {confirm} = Modal;
+const { RangePicker } = DatePicker;
 
 const defaultRows: DataType[] = [
   {
@@ -39,7 +42,7 @@ const defaultRows: DataType[] = [
 const defaultTable: TableData<DataType[]> = {
   pagination: {
     current: 1,
-    pageSize: 10,
+    pageSize: 3,
     total: 0,
   },
   loading: false,
@@ -49,7 +52,6 @@ const defaultTable: TableData<DataType[]> = {
 const WareHouseItem = () =>{
     const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
     const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
-    const [dataRowSelected, setDataRowSelected] = useState<any>();
     const [isShowModal, setIsShowModal] = useState<boolean>(false);
     const {idWareHouse} = useParams();
     const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -57,6 +59,10 @@ const WareHouseItem = () =>{
     const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
     const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>(defaultRows);
     const [isListenChange, setIsListenChange] = useState(false);
+    const [isShowSearch, setIsShowSearch] = useState(false);
+    const [searchParams, setSearchParams] =  useSearchParams();
+    const [nameSearch, setNameSearch] = useState('');
+    const [isSearch, setIsSearch] = useState<Boolean>(false);
 
     const columns: ColumnsType<DataType> = [
       {
@@ -155,23 +161,38 @@ const WareHouseItem = () =>{
       new Promise(async() =>{
         await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
       })
-    },[])
+    },[]);
+
+    useEffect(() =>{
+      if(isSearch){
+        new Promise(async() =>{
+          await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+        })
+      }
+    },[isSearch]);
 
   const getListItem =async(pageSize: number, currentPage: number, total: number) =>{
+    const parsedSearchParams = Object.fromEntries(searchParams);
     setListData({
       ...listData,
       pagination:{
-        current: currentPage,
+        current: isSearch ? 1 : currentPage,
         pageSize: pageSize,
         total: total
       },
       loading: true
-    })
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idWareHouse });
+    });
+
+    const paramsSearch : ISearchWareHouseItem = {
+      name : encodeURIComponent(parsedSearchParams.name || nameSearch),
+      idSource : Number(parsedSearchParams.idSource)|| null,
+      startDate : parsedSearchParams.startDate || '',
+      endDate : parsedSearchParams.endDate || '',
+      status : Number(parsedSearchParams.status) || null
+    };
+
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idWareHouse, paramsSearch: paramsSearch });
     if(result){
-      
-      console.log('fetching', result);
-      
       setListData((prev) =>(
         {
           ...prev,
@@ -182,8 +203,13 @@ const WareHouseItem = () =>{
           },
           loading: false
         }
-      ))
+      ));
+      if(isSearch){
+        setIsSearch(false);
+      }
     }
+
+
   }
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
@@ -273,17 +299,15 @@ const WareHouseItem = () =>{
       setIsListenChange(true);
     }
 
-    console.log(listData);
-    
+    const handleSearchName = () =>{
+      setIsSearch(true);
+    }
 
     return(
         <Row className="filter-bar">
         <Row style={{width: '100%'}} align="middle">
         <Col span={12}>
           <h2>Kho 1</h2>
-        </Col>
-        <Col span={12}>
-          <Button className="button-bar" onClick={() => setIsShowModal(true)} icon={<UilPlus/>} type="primary">Them San Pham</Button>
         </Col>
         </Row>
         <Col span={24}>
@@ -295,36 +319,25 @@ const WareHouseItem = () =>{
         <Col span={12} className="col-item-filter">
         <div className="form-item" style={{ width: '60%'}}>
             <label htmlFor="">Tên mặt hàng</label>
-        <Input/>
+        <Input value={nameSearch} onChange={(event) => setNameSearch(event.target.value)}/>
         </div>
-        <Button type="primary"><UilSearch/></Button>
+        <Button type="primary" disabled={nameSearch ? false : true} onClick={handleSearchName}><UilSearch/></Button>
         </Col>
         <Col span={12}>
           <Space direction="horizontal" size={24}>
-            <Button className="default" icon={<UilImport/>}>Tạm nhập</Button>
-            <Button className="default" icon={<UilFileExport/>}>Tạm Xuất</Button>
+            <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter/>} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
+            <Button className="active-border" disabled>Chuyển Kho</Button>
+            <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Them San Pham</Button>
           </Space>
-        </Col>
-        {/* <Col span={6}>
-        <div className="form-item">
-            <label htmlFor="">Nguồn Hàng</label>
-        <Select>
-          <Select.Option value="demo">Demo</Select.Option>
-        </Select>
-        </div>
-        </Col>
-        <Col span={6}>
-        <div className="form-item">
-            <label htmlFor="">Trạng Thái</label>
-        <Select>
-          <Select.Option value="demo">Demo</Select.Option>
-        </Select>
-        </div>
-        </Col> */}
-        
-        
+        </Col>  
         </Row>
-
+        {isShowSearch && (
+        <FilterWareHouseItem
+          name={nameSearch}
+          isSearch={isSearch}
+          handleIsSearch={(envSearch) => setIsSearch(envSearch)}
+          handleChangeName={(value) => setNameSearch(value)}
+        />)}
         </Card>
         {/* <span style={{ marginLeft: 8 }}>
           {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}

@@ -2,6 +2,7 @@ import { STATUS, COLOR_STATUS } from "@/types";
 import { RuleObject } from "antd/lib/form";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
+import queryString from "query-string";
 
 export const renderTextStatus = (idStatus: number) => {
   let response = {
@@ -68,16 +69,22 @@ export const createRegexValidator = (regex: RegExp, errorMessage: string) => {
   };
 };
 
-export const formatDate = (newDate: any, suffix: boolean = false) => {
-  // Set the locale to Vietnamese
-  dayjs.locale("vi");
+export const formatDate = (newDate: any , suffix: boolean = false, type: string = 'date_First') => {
 
-  // Format the date in Vietnamese format
-  const formattedDate = dayjs(newDate).format(
-    `${suffix ? "HH:MM" : ""} DD/MM/YYYY`
-  );
-  return formattedDate;
-};
+    // Set the locale to Vietnamese
+    dayjs.locale('vi');
+    let formattedDate = '';
+    // Format the date in Vietnamese format
+    if(type === 'date_First') {
+         formattedDate = dayjs(newDate).format(`${suffix ? 'HH:MM' : ''} DD/MM/YYYY`);
+    }else if(type === 'after_Date'){
+         formattedDate = dayjs(newDate).format(`YYYY/MM/DD ${suffix ? 'HH:MM' : ''}`);
+        }else{
+        formattedDate = dayjs(newDate).format(`YYYY/MM/DD`);
+    }
+    return formattedDate;
+
+}
 
 export const convertPrice = (priceString: string) => {
   // Remove all dots from the price string
@@ -87,4 +94,15 @@ export const convertPrice = (priceString: string) => {
   const convertedPrice = parseInt(priceWithoutDots);
 
   return convertedPrice;
+};
+
+export const stringifyParams = (data: any) => {
+  const { params, option } = data;
+  return queryString.stringify(params, {
+    arrayFormat: 'comma',
+    encode: false,
+    skipNull: true,
+    skipEmptyString: true,
+    ...option,
+  });
 };

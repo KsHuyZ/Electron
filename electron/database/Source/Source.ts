@@ -89,5 +89,24 @@ const Source = {
     }
 
   },
+
+  getAllItemSourceNoPagination: async () => {
+    try {
+      const selectQuery =
+        "SELECT * FROM Source";
+      const rows: any = await new Promise((resolve, reject) => {
+        db.all(selectQuery, (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+      });
+      return { rows};
+    } catch (err) {
+      console.log(err);
+    }
+  },
 };
 export default Source;

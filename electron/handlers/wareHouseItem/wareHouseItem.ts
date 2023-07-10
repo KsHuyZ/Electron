@@ -31,16 +31,17 @@ const wareHouseItem = () => {
     "warehouseitem-request-read",
     async (
       event,
-      data: { pageSize: number; currentPage: number; id?: number } = {
+      data: { pageSize: number; currentPage: number; id?: number; paramsSearch?: any; } = {
         pageSize: 10,
         currentPage: 1,
       }
     ) => {
-      const { pageSize, currentPage } = data;
+      const { pageSize, currentPage, paramsSearch } = data;
       const response = await getAllWarehouseItembyWareHouseId(
         data.id,
         pageSize,
-        currentPage
+        currentPage,
+        paramsSearch
       );
       return response;
     }

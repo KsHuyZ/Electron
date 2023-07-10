@@ -41,3 +41,11 @@ export type Source = {
   address: string;
 
 };
+
+export type ISearchWareHouseItem = {
+  name: string;
+  startDate: string;
+  endDate: string;
+  idSource: number | null;
+  status: number | null;
+}
