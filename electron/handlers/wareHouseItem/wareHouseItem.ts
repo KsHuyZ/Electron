@@ -10,6 +10,7 @@ const wareHouseItem = () => {
     updateWareHouseItem,
     deleteWareHouseItemInWarehouse,
     changeWareHouse,
+    getWareHouseItemBySource
     getAllWarehouseItem,
     exportWareHouse
   } = wareHouseItemDB;
@@ -76,6 +77,18 @@ const wareHouseItem = () => {
     }
   );
 
+  //Filter warehouseItem by Source
+  ipcMain.handle('filterWarehouseItemsBySource', async (event, Source_name) => {
+    try {
+      const newData = await getWareHouseItemBySource(Source_name);
+      return newData;
+    } catch (err) {
+      console.log(err);
+      return null;
+    }
+  });
+}  
+
   ipcMain.handle(
     "export-warehouse",
     async (event, id_receiving: number, id_list: Intermediary[]) => {
@@ -84,4 +97,5 @@ const wareHouseItem = () => {
     }
   );
 };
+
 export default wareHouseItem;

@@ -3,6 +3,7 @@ import db from "../../utils/connectDB";
 import { Intermediary, WarehouseItem } from "../../types";
 import { runQuery } from "../../utils";
 
+
 const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
     id: number,
@@ -592,6 +593,54 @@ const wareHouseItem = {
       return false;
     }
   },
+  //Filter WareHouseItem By Source
+  getWareHouseItemBySource: async (Source_name: string) => {
+    try {
+      const query= `SELECT WareHouseItem.*, Intermediary.* FROM WareHouseItem JOIN Source ON WareHouseItem.id_Source = Source.ID JOIN Intermediary ON WareHouseItem.ID = Intermediary.id_WareHouseItem WHERE Source.name = ?`
+      const rows: any[]= await new Promise((resolve, reject) => {
+        db.all(query,[Source_name], (err, row)=>{
+          if(err){
+            reject(err);
+          }
+          else{
+            resolve(rows);
+          }
+        });
+      });
+      const warehouseItems: WarehouseItem[] = rows.map(row => ({
+        idWarehouseItem: row.ID,
+        idSource: row.id_Source,
+        name: row.name,
+        price: row.price,
+        unit: row.unit,
+        date_expried: row.date_expried,
+        date_created_at: row.date_create_at,
+        date_updated_at: row.date_updated_at,
+        quantity_plane: row.quantity_plane,
+        quantity_real: row.quantity_real,
+        note: row.note
+      }));  
+      const intermediaries: Intermediary[] = rows.map(row => ({
+        idIntermediary: row.IDIntermediary,
+        id_wareHouse: row.id_WareHouse,
+        id_wareHouse_item: row.IDWarehouseItem,
+        status: row.status,
+        quality: row.quality,
+        quantity: row.quantity,
+        date: row.date,
+        date_temp_export: row.date_temp_export
+      }));
+      const newData={
+        warehouseItems,
+        intermediaries,
+      };
+      return newData;
+    } catch (error) {
+      return null;
+    }
+  },
+
 };
 
 export default wareHouseItem;
+
