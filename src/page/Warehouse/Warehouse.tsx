@@ -66,20 +66,20 @@ const Warehouse = () => {
         setShowAddModal(true)
     }
 
-    const handleGetAllWarehouse = async(pageSize: number, currentPage: number) => {
+    const handleGetAllWarehouse = async (pageSize: number, currentPage: number) => {
         setLoading(true);
-        const result : ResponseCallBackWareHouse = await ipcRenderer.invoke("warehouse-request-read", { pageSize, currentPage });
-        if(result){
+        const result: ResponseCallBackWareHouse = await ipcRenderer.invoke("warehouse-request-read", { pageSize, currentPage });
+        if (result) {
             setLoading(false);
             console.log(result);
-        setTableParams((prev) => ({
-            pagination: {
-                ...prev.pagination,
-            total: result.total
-            }
-        }))
-        setAllWareHouse(result.rows)
-            
+            setTableParams((prev) => ({
+                pagination: {
+                    ...prev.pagination,
+                    total: result.total
+                }
+            }))
+            setAllWareHouse(result.rows)
+
         }
 
     }
@@ -93,9 +93,9 @@ const Warehouse = () => {
     };
 
     useEffect(() => {
-       new Promise(async() =>{
-        await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
-       })
+        new Promise(async () => {
+            await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
+        })
     }, [])
 
     const handleOpenEditModal = (id: string, name: string) => {
@@ -118,18 +118,23 @@ const Warehouse = () => {
         cleanFormEdit()
     }
 
-    const handleCloseModal = async() => {
+    const handleCloseModal = async () => {
         setShowAddModal(false)
         cleanFormEdit();
+    }
+
+    const handlePrint = async () => {
+        const result = await ipcRenderer.invoke("print-form")
     }
 
     return (
         <div className="form-table">
             {
-                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} fetching={async() => await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)} />
+                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} fetching={async () => await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)} />
             }
             <div className="header">
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>
+                <div className="add-data"> <Button type="primary" onClick={handlePrint}>Test </Button></div>
             </div>
             <Table
                 columns={columns}

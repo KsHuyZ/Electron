@@ -1,6 +1,7 @@
 import { IpcMainEvent, ipcMain } from "electron";
 import wareHouseItemDB from "../../database/wareHouseItem/wareHouseItem";
 import { Intermediary, WarehouseItem } from "../../types";
+import { startPrint } from "../../module/print";
 
 const wareHouseItem = () => {
   const {
@@ -52,19 +53,32 @@ const wareHouseItem = () => {
   );
 
   // listen delete event
-  ipcMain.handle("delete-warehouseitem", async (event, id: number, id_wareHouse: number) => {
-    const isSuccess = await deleteWareHouseItem(id, id_wareHouse);
-    return isSuccess;
-  });
+  ipcMain.handle(
+    "delete-warehouseitem",
+    async (event, id: number, id_wareHouse: number) => {
+      const isSuccess = await deleteWareHouseItem(id, id_wareHouse);
+      return isSuccess;
+    }
+  );
   //Change warehouse
   ipcMain.handle(
     "change-warehouse",
     async (event, id_newWareHouse: number, id_list: Intermediary[]) => {
       console.log(id_newWareHouse, id_list);
-      
+
       const isSuccess = await changeWareHouse(id_newWareHouse, id_list);
       return isSuccess;
     }
   );
+
+  ipcMain.handle("print-form", () => {
+    startPrint(
+      {
+        htmlString: `<style>h1{color: #42b983}</style> <h1>hello world !</h1>`,
+      },
+      undefined
+    );
+    return null
+  });
 };
 export default wareHouseItem;

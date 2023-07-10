@@ -1,4 +1,4 @@
-import { Route, useLocation, Router, Outlet, createBrowserRouter } from "react-router-dom";
+import { Route, useLocation, Router, Outlet, createBrowserRouter, HashRouter, Routes, Navigate } from "react-router-dom";
 import Login from "@/page/Login";
 import Sidebar from "@/components/SideBar/Sidebar";
 import { FC } from "react";
@@ -24,39 +24,20 @@ const MainLayout: FC = () => {
   );
 };
 
-export default createBrowserRouter([
-  {
-    element: <Login />,
-    path: "/"
-  },
-  {
-    element: <MainLayout />,
-    children: [
-      {
-        element: <Warehouse />,
-        path: "/home",
-      },
-      // {
-      //   element: <Product />,
-      //   path: "/home/:id"
-      // },
-      {
-        element: <WareHouseItem/>,
-        path: "/home/:idWareHouse"
-      },
-      {
-        element: <ItemSource />,
-        path: "/item-source"
-      },
-      {
-        element: <Recipient />,
-        path: "/recipient"
-      },
-      {
-        element: <ItemSource />,
-        path: "/item-source/:id"
-      },
-
-    ]
-  }
-])
+const Routers = () => {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route element={<MainLayout />}>
+          <Route path='/home' element={<Warehouse />} />
+          <Route path='/home/:idWareHouse' element={<WareHouseItem />} />
+          <Route path='/recipient' element={<Recipient />} />
+          <Route path='/item-source' element={<ItemSource />} />
+          <Route path='/warehouse-item' element={<WareHouseItem />} />
+        </Route>
+        <Route path='/' element={<Login />} />
+      </Routes>
+    </HashRouter>
+  )
+}
+export default Routers
