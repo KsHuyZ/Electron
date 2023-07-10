@@ -11,6 +11,7 @@ import ItemSource from "@/page/ItemSource/ItemSource";
 import Product from "@/page/Product/Product";
 import WareHouseItem from "@/page/WarehouseItem/WareHouseItem";
 import Recipient from "@/page/Recipient/Recipient";
+import RecipientItem from "@/page/Recipient/components/RecipientItem";
 
 
 const MainLayout: FC = () => {
@@ -36,12 +37,12 @@ export default createBrowserRouter([
         element: <Warehouse />,
         path: "/home",
       },
-      // {
-      //   element: <Product />,
-      //   path: "/home/:id"
-      // },
       {
-        element: <WareHouseItem/>,
+        element: <Product />,
+        path: "/products"
+      },
+      {
+        element: <WareHouseItem />,
         path: "/home/:idWareHouse"
       },
       {
@@ -51,6 +52,10 @@ export default createBrowserRouter([
       {
         element: <Recipient />,
         path: "/recipient"
+      },
+      {
+        element: <RecipientItem />,
+        path: "/recipient/:idRecipient"
       },
       {
         element: <ItemSource />,

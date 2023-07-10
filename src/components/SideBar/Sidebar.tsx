@@ -41,7 +41,6 @@ const Sidebar = () => {
                             <NavLink to={item.url}
                                 className={(navActive) => `menuItem ${navActive.isActive ? "active" : ""}`}
                                 key={index}
-                            // onClick={() => setSelected(index)}
                             >
                                 <item.icon />
                                 <span>{item.heading}</span>

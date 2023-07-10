@@ -2,89 +2,82 @@ import { BrowserWindow } from "electron";
 import db from "../../utils/connectDB";
 import { WarehouseReceiving } from "../../types";
 
-
 const WareHouse = {
   //Insert warehouse and Receiving
   create_WareHouse_Receiving: (data: WarehouseReceiving) => {
     return new Promise((resolve, reject) => {
-      const {
-        name,
-        address,
-        description,
-        is_receiving,
-        phone
-      } = data;
+      const { name, address, description, is_receiving, phone } = data;
       db.run(
         "INSERT INTO WareHouse (name, description, is_receiving, phone, address) VALUES (?,?,?,?,?)",
         [name, description, is_receiving, phone, address],
         function (err) {
           if (err) {
             console.log(err.message);
-            reject(err); 
+            reject(err);
           } else {
             const ID = this.lastID;
-            const newData = { ID, name, description, is_receiving, phone, address };
+            const newData = {
+              ID,
+              name,
+              description,
+              is_receiving,
+              phone,
+              address,
+            };
             resolve(newData);
           }
         }
       );
     });
   },
-  
+
   //GetAllWareHouse
   getAllWareHouse: async (pageSize: number, currentPage: number) => {
     try {
       const offsetValue = (currentPage - 1) * pageSize;
-      const selectQuery = "SELECT COUNT(*) OVER() AS count, * FROM WareHouse WHERE is_receiving=0 LIMIT ? OFFSET ?";
+      const selectQuery =
+        "SELECT COUNT(*) OVER() AS count, * FROM WareHouse WHERE is_receiving=0 LIMIT ? OFFSET ?";
       const rows: any = await new Promise((resolve, reject) => {
-          db.all(
-            selectQuery,
-            [pageSize, offsetValue],
-            (err, rows) => {
-                if (err) {
-                reject(err);
-                } else {
-                resolve(rows);
-                }
-            }
-          );
+        db.all(selectQuery, [pageSize, offsetValue], (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
         });
-        // console.log(rows.length);
-        
-    const countResult = rows.length ? rows[0].count : 0;
-    return { rows, total: countResult };
+      });
+      // console.log(rows.length);
+
+      const countResult = rows.length ? rows[0].count : 0;
+      return { rows, total: countResult };
     } catch (err) {
-    console.log('error',err);
+      console.log("error", err);
     }
   },
   //GetAllReceving
   getAllReceiving: async (pageSize: number, currentPage: number) => {
     try {
       const offsetValue = (currentPage - 1) * pageSize;
-      const selectQuery = "SELECT COUNT(*) OVER() AS count, * FROM WareHouse WHERE is_receiving=1 LIMIT ? OFFSET ?";
+      const selectQuery =
+        "SELECT COUNT(*) OVER() AS count, * FROM WareHouse WHERE is_receiving=1 ORDER BY ID DESC LIMIT ? OFFSET ? ";
       const rows: any = await new Promise((resolve, reject) => {
-          db.all(
-            selectQuery,
-            [pageSize, offsetValue],
-            (err, rows) => {
-                if (err) {
-                reject(err);
-                } else {
-                resolve(rows);
-                }
-            }
-          );
+        db.all(selectQuery, [pageSize, offsetValue], (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
         });
-    const countResult = rows.length > 0 ? rows[0].total : 0;
-    return { rows, total: countResult };
+      });
+      const countResult = rows.length > 0 ? rows[0].total : 0;
+      return { rows, total: countResult };
     } catch (err) {
-    console.log(err);
+      console.log(err);
     }
   },
 
-
   //UpdateWareHouse
-  updateWarehouse: (data: Pick<WarehouseReceiving,"name"| "id">) => {
+  updateWarehouse: (data: Pick<WarehouseReceiving, "name" | "id">) => {
     return new Promise((resolve, reject) => {
       const { name, id } = data;
       db.run(
@@ -93,7 +86,7 @@ const WareHouse = {
         function (err) {
           if (err) {
             console.log(err.message);
-            reject(err); 
+            reject(err);
           } else {
             const newData = {
               name,
@@ -105,51 +98,58 @@ const WareHouse = {
       );
     });
   },
-  
+
   //UpdateReceiving
   updateReceiving: (data: WarehouseReceiving, id: number) => {
     return new Promise((resolve, reject) => {
-      const { name, description } = data;
+      const { name, description, address } = data;
       db.run(
-        "UPDATE WareHouse SET name = ?, description = ? WHERE is_receiving = 1 AND ID = ?",
-        [name, description, id],
+        "UPDATE WareHouse SET name = ?, address = ?, description = ? WHERE is_receiving = 1 AND ID = ?",
+        [name, address, description, id],
         function (err) {
           if (err) {
             console.log(err.message);
-            reject(err); 
+            reject(err);
           } else {
-            const newData = {
-              name,
-              description,
-              id,
-            };
-            resolve(newData);
+            resolve(true);
           }
         }
       );
     });
   },
-  getListWareHouseExceptId : async(idWareHouse : string) =>{
+  getListWareHouseExceptId: async (idWareHouse: string) => {
     try {
-      const selectQuery = "SELECT * FROM WareHouse WHERE is_receiving = 0 AND ID NOT IN(?)";
+      const selectQuery =
+        "SELECT * FROM WareHouse WHERE is_receiving = 0 AND ID NOT IN(?)";
       return new Promise((resolve, reject) => {
-          db.all(
-            selectQuery,
-            [idWareHouse],
-            (err, rows) => {
-                if (err) {
-                reject(err);
-                } else {
-                resolve({rows});
-                }
-            }
-          );
+        db.all(selectQuery, [idWareHouse], (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ rows });
+          }
         });
+      });
     } catch (err) {
-    console.log(err);
+      console.log(err);
     }
-  }
-  
+  },
+  getListReceiving: async () => {
+    try {
+      const selectQuery = "SELECT * FROM WareHouse WHERE is_receiving = 1";
+      return new Promise((resolve, reject) => {
+        db.all(selectQuery, (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ rows });
+          }
+        });
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  },
 };
 
 export default WareHouse;

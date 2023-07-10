@@ -3,7 +3,6 @@ import { STATUS_MODAL } from "../types";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { ipcRenderer } from "electron";
 import { OptionSelect, WareHouse } from "@/types";
-import type { ColumnsType } from 'antd/es/table';
 import { DataType } from "../types";
 import { UilMultiply } from "@iconscout/react-unicons";
 import { formatNumberWithCommas, renderTextStatus } from "@/utils";
@@ -62,7 +61,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
 }) => {
   const [editing, setEditing] = useState(false);
   const inputRef = useRef<InputRef>(null);
-  const {isError , setIsError} = useContext(CheckingErrorContext);
+  const { isError, setIsError } = useContext(CheckingErrorContext);
   const form = useContext(EditableContext)!;
 
   useEffect(() => {
@@ -112,7 +111,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
             { validator: numberValidator },
             ({ getFieldValue }) => ({
               validator(_, value) {
-                if(!value){
+                if (!value) {
                   return Promise.reject(`${title} bắt buộc nhập.`);
                 }
                 if (value > record.quantity!) {
@@ -222,30 +221,32 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     }
   ];
 
-  const handleSetError = (params: boolean) =>{
+  const handleSetError = (params: boolean) => {
     setIsError(params)
-      }
+  }
 
   const contextValue = {
     isError,
     setIsError: handleSetError
   }
 
-  useEffect(() => {
-    if (idWareHouse) {
-      new Promise(async () => {
-        const response = await ipcRenderer.invoke("warehouse-list-except-id", idWareHouse);
-        if (response) {
-          const data: WareHouse[] = response.rows;
-          const newListWareHouse = data.map((item) => ({
-            label: item.name,
-            value: item.ID
-          }));
-          setListWareHouse(newListWareHouse);
-        }
-      })
-    }
+  const handleGetWarehouseOrReceiving = (idWareHouse?: string) => {
+    const eventRequest = isShow === STATUS_MODAL.TRANSFER ? "warehouse-list-except-id" : "receiving-list"
+    new Promise(async () => {
+      const response = await ipcRenderer.invoke(eventRequest, idWareHouse);
+      if (response) {
+        const data: WareHouse[] = response.rows;
+        const newListWareHouse = data.map((item) => ({
+          label: item.name,
+          value: item.ID
+        }));
+        setListWareHouse(newListWareHouse);
+      }
+    })
+  }
 
+  useEffect(() => {
+    handleGetWarehouseOrReceiving()
   }, [idWareHouse]);
 
 
@@ -258,48 +259,47 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     )
   }
 
-  const handleTransferWareHouse = async() => {
+  const handleTransferWareHouse = async () => {
     if (!item) {
       refError.current.focus();
       setIsErrorSelect(true);
       return;
     }
 
-    if(listItemTransfer.length < 1){
+    if (listItemTransfer.length < 1) {
       message.error('Không có sản phẩm cần chuyển')
       return;
     }
 
-    if(isError){
+    if (isError) {
       message.error('Vui lòng kiểm tra lại các số lượng cần chuyển')
       return;
     }
 
     const newList = listItemTransfer.map((item: DataType) => ({
       id_wareHouse_item: item.IDWarehouseItem,
-      quantity : item.quantity,
+      quantity: item.quantity,
       id_wareHouse: item.id_WareHouse,
       status: item.status,
       quality: item.quality,
-      idIntermediary: item.IDIntermediary
+      idIntermediary: item?.IDIntermediary
 
     }))
-    
-    if(newList){
+
+    if (newList) {
       try {
-      
-        const result = await ipcRenderer.invoke("change-warehouse", item, newList);
-        if(result){
+        const result = await ipcRenderer.invoke(`${isShow === STATUS_MODAL.TRANSFER ? "change-warehouse" : "export-warehouse"}`, item, newList);
+        if (result) {
           await props.fetching();
           setIsShow();
           props.removeItemList(newList.map(i => i.idIntermediary));
           message.success('Chuyển kho thành công');
         }
-        } catch (error) {
-          message.error('Loi server')
-          console.log(error);
-          
-        }
+      } catch (error) {
+        message.error('Loi server')
+        console.log(error);
+
+      }
     }
   }
 
@@ -344,60 +344,57 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     };
   });
 
-  console.log('modal trans');
-
-
   return (
     <CheckingErrorContext.Provider value={contextValue}>
-    <Modal
-      title={'Chuyển kho hàng'}
-      centered
-      open={isShow === STATUS_MODAL.TRANSFER}
-      onCancel={setIsShow}
-      style={{ margin: '50px' }}
-      width={'90%'}
-      footer={<Footer />}
-    >
-      <Space className="modal-item" direction="vertical" size={32} align="center" style={{ justifyContent: 'center', width: '100%' }}>
-        <div className="form-item">
-          <label htmlFor="">Chọn kho hàng cần chuyển</label>
-          <Select
-            showSearch
-            optionFilterProp="children"
-            className={isErrorSelect ? 'error' : ''}
-            ref={refError}
-            filterOption={(input, option) =>
-              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+      <Modal
+        title={isShow === STATUS_MODAL.TRANSFER ? 'Chuyển kho hàng' : 'Xuất kho'}
+        centered
+        open={isShow === STATUS_MODAL.TRANSFER || isShow === STATUS_MODAL.RECEIPT}
+        onCancel={setIsShow}
+        style={{ margin: '50px' }}
+        width={'90%'}
+        footer={<Footer />}
+      >
+        <Space className="modal-item" direction="vertical" size={32} align="center" style={{ justifyContent: 'center', width: '100%' }}>
+          <div className="form-item">
+            <label htmlFor="">Chọn {isShow === STATUS_MODAL.TRANSFER ? 'kho hàng cần chuyển' : 'đơn vị nhận'}</label>
+            <Select
+              showSearch
+              optionFilterProp="children"
+              className={isErrorSelect ? 'error' : ''}
+              ref={refError}
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              value={item}
+              onChange={(e) => handleChangeSelect(e)}
+              options={listWareHouse}
+            />
+            {
+              isErrorSelect && <p className="text-error">Vui lòng không để trống ô này</p>
             }
-            value={item}
-            onChange={(e) => handleChangeSelect(e)}
-            options={listWareHouse}
-          />
-          {
-            isErrorSelect && <p className="text-error">Vui lòng không để trống ô này</p>
-          }
-        </div>
+          </div>
 
-        <div style={{ marginBottom: 32 }}>
-          <Title level={5}>Sản Phẩm Đã Chọn</Title>
-          <Table
-            bordered
-            style={{ width: '1200px' }}
-            scroll={{ y: 300 }}
-            components={components}
-            rowClassName={() => 'editable-row'}
-            pagination={false}
-            dataSource={listItemTransfer}
-            rowKey={(record: DataType) => record.IDIntermediary}
-            columns={newColumn as any}
-          />
-        </div>
-        <Button size="large" type="primary" onClick={handleTransferWareHouse}>
-          Chuyển kho
-        </Button>
+          <div style={{ marginBottom: 32 }}>
+            <Title level={5}>Sản Phẩm Đã Chọn</Title>
+            <Table
+              bordered
+              style={{ width: '1200px' }}
+              scroll={{ y: 300 }}
+              components={components}
+              rowClassName={() => 'editable-row'}
+              pagination={false}
+              dataSource={listItemTransfer}
+              rowKey={(record: DataType) => record.IDIntermediary}
+              columns={newColumn as any}
+            />
+          </div>
+          <Button size="large" type="primary" onClick={handleTransferWareHouse}>
+            {isShow === STATUS_MODAL.TRANSFER ? 'Chuyển kho' : 'Xuất kho'}
+          </Button>
 
-      </Space>
-    </Modal>
+        </Space>
+      </Modal>
     </CheckingErrorContext.Provider>
   )
 }
