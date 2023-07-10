@@ -10,7 +10,7 @@ const wareHouseItem = () => {
     updateWareHouseItem,
     deleteWareHouseItemInWarehouse,
     changeWareHouse,
-    getWareHouseItemBySource
+    getWareHouseItemBySource,
     getAllWarehouseItem,
     exportWareHouse
   } = wareHouseItemDB;
@@ -87,7 +87,6 @@ const wareHouseItem = () => {
       return null;
     }
   });
-}  
 
   ipcMain.handle(
     "export-warehouse",
@@ -96,6 +95,7 @@ const wareHouseItem = () => {
       return isSuccess;
     }
   );
-};
+}  
+
 
 export default wareHouseItem;
