@@ -235,6 +235,8 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     new Promise(async () => {
       const response = await ipcRenderer.invoke(eventRequest, idWareHouse);
       if (response) {
+        console.log('data', response);
+        
         const data: WareHouse[] = response.rows;
         const newListWareHouse = data.map((item) => ({
           label: item.name,
@@ -246,7 +248,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
   }
 
   useEffect(() => {
-    handleGetWarehouseOrReceiving()
+    handleGetWarehouseOrReceiving(idWareHouse)
   }, [idWareHouse]);
 
 
@@ -369,6 +371,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
               value={item}
               onChange={(e) => handleChangeSelect(e)}
               options={listWareHouse}
+              style={{width : '200px'}}
             />
             {
               isErrorSelect && <p className="text-error">Vui lòng không để trống ô này</p>

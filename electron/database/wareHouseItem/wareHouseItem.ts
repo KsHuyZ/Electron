@@ -1,6 +1,6 @@
 import { BrowserWindow, IpcMainEvent } from "electron";
 import db from "../../utils/connectDB";
-import { Intermediary, WarehouseItem } from "../../types";
+import { Intermediary, WarehouseItem, ISearchWareHouseItem } from "../../types";
 import { runQuery } from "../../utils";
 
 
@@ -8,19 +8,63 @@ const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
     id: number,
     pageSize: number,
-    currentPage: number
+    currentPage: number,
+    paramsSearch: ISearchWareHouseItem
   ) => {
+    const {
+      name,
+      idSource,
+      startDate,
+      endDate,
+      status
+    } = paramsSearch;
+  
     try {
       const offsetValue = (currentPage - 1) * pageSize;
+      const whereConditions: string[] = [];
+      const queryParams: any[] = [id, pageSize, offsetValue];
+  
+      // Add query conditions based on the provided search parameters
+      if (name) {
+        whereConditions.unshift(`wi.name LIKE ?`);
+        queryParams.unshift(`%${name}%`);
+      }
+      if (idSource) {
+        whereConditions.unshift(`wi.id_Source = ?`);
+        queryParams.unshift(idSource);
+      }
+      if (startDate) {
+        whereConditions.unshift(`wi.date_expried >= ?`);
+        queryParams.unshift(startDate);
+      }
+      if (endDate) {
+        whereConditions.unshift(`wi.date_expried <= ?`);
+        queryParams.unshift(endDate);
+      }
+      if (status) {
+        whereConditions.unshift(`i.status = ?`);
+        queryParams.unshift(status);
+      }
+
+      console.log(queryParams);
+      
+  
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')} AND i.id_WareHouse = ?` : 'WHERE i.id_WareHouse = ?';
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
-       wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+        wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.quality, i.quantity,
-         i.date, COUNT(i.ID) OVER() AS total 
+        i.date, COUNT(i.ID) OVER() AS total 
         FROM warehouseItem wi
         JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
-        WHERE i.id_WareHouse = ? ORDER BY i.ID DESC LIMIT ? OFFSET ?`;
+        ${whereClause}
+        ORDER BY i.ID DESC
+        LIMIT ? OFFSET ?`;
+
+        console.log(selectQuery);
+        
+  
       const rows: any = await new Promise((resolve, reject) => {
-        db.all(selectQuery, [id, pageSize, offsetValue], (err, rows) => {
+        db.all(selectQuery, ...queryParams, (err, rows) => {
           if (err) {
             reject(err);
           } else {
@@ -28,6 +72,7 @@ const wareHouseItem = {
           }
         });
       });
+  
       const countResult = rows.length > 0 ? rows[0].total : 0;
       return { rows, total: countResult };
     } catch (err) {
