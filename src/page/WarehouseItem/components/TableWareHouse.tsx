@@ -7,22 +7,19 @@ import { DataType } from "../types";
 interface TableWareHouseProps extends TableProps<any> {
   isShowSelection?: Boolean;
   setIsShowPopUp: () => void;
-  setRowSelected: (data: any) => void;
+  setRowSelected?: (data: any) => void;
   isListenChange?: Boolean;
   setIsListenChange: (status: boolean) => void;
   listRowSelected?: DataType[];
   setRowsSelect?: Dispatch<SetStateAction<DataType[]>>
 }
 
-const TableWareHouse = (props: TableWareHouseProps) => {
+function TableWareHouse(props: TableWareHouseProps){
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const { isShowSelection = false, ...other } = props;
 
   useEffect(() => {
     if (props.isListenChange && props.listRowSelected) {
-      console.log('has call here');
-      console.log('list will converst', props.listRowSelected);
-
       onSelectChange(props.listRowSelected.map(item => +item.IDIntermediary));
       props.setIsListenChange(false);
     }
@@ -40,20 +37,7 @@ const TableWareHouse = (props: TableWareHouseProps) => {
     columnWidth: 150,
     preserveSelectedRowKeys: true,
     onChange: onSelectChange,
-    selections: [
-      {
-        key: 'change_warehouse',
-        text: 'Chuyển kho',
-        onSelect: (changeableRowKeys) => {
-          other.setRowSelected(selectedRowKeys);
-        }
-      }
-    ],
   };
-
-  console.log('table render');
-  
-
   return (
     <Table
       rowSelection={isShowSelection ? rowSelection : undefined}
@@ -68,4 +52,4 @@ const TableWareHouse = (props: TableWareHouseProps) => {
   )
 }
 
-export default TableWareHouse
+export default memo(TableWareHouse)
