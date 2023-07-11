@@ -1,6 +1,7 @@
 import { IpcMainEvent, ipcMain } from "electron";
 import wareHouseItemDB from "../../database/wareHouseItem/wareHouseItem";
 import { Intermediary, WarehouseItem } from "../../types";
+import { startPrint } from "../../module/print";
 
 const wareHouseItem = () => {
   const {
@@ -77,6 +78,16 @@ const wareHouseItem = () => {
     }
   );
 
+  ipcMain.handle("print-form", () => {
+    startPrint(
+      {
+        htmlString: `<style>h1{color: #42b983}</style> <h1>hello world !</h1>`,
+      },
+      undefined
+    );
+    return null
+  });
+
   ipcMain.handle(
     "export-warehouse",
     async (event, id_receiving: number, id_list: Intermediary[]) => {
@@ -84,7 +95,6 @@ const wareHouseItem = () => {
       return isSuccess;
     }
   );
-}  
-
+};
 
 export default wareHouseItem;

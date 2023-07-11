@@ -7,8 +7,9 @@ import router from "./router"
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import type { ThemeConfig } from 'antd';
-import {ConfigProvider} from 'antd';
+import { ConfigProvider } from 'antd';
 import vi_VN from 'antd/locale/vi_VN';
+import Routers from './router'
 
 const config: any = {
   token: {
@@ -27,13 +28,13 @@ const config: any = {
 };
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-    <ConfigProvider locale={vi_VN} theme={config}>
-      <ToastContainer />
-      <div className="App">
-        <RouterProvider router={router} />
-      </div>
-      </ConfigProvider>
-,
+  <ConfigProvider locale={vi_VN} theme={config}>
+    <ToastContainer />
+    <div className="App">
+      <Routers />
+    </div>
+  </ConfigProvider>
+  ,
 )
 
 postMessage({ payload: 'removeLoading' }, '*')
