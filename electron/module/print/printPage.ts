@@ -290,13 +290,14 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
                                         disabled="false" />
                                 </div>
                                 <div class="sys-print">
-                                    <button onclick="printTwo(false)" disabled="false">
+                                    <button onclick="printTwo(false)">
                                     In bằng hộp thoại hệ thống
                                     </button>
                                 </div>
                             </div>
                             <div class="btn">
                                 <button class="print" onclick="printTwo(true)">In</button>
+                                <button class="print" onclick="saveFile()">Lưu</button>
                                 <button class="cancel" onclick="cancel()">Quay lại</button>
                             </div>
                         </div>
@@ -456,6 +457,21 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
                     }
                     await ipcRenderer.invoke("print", {
                         silent: silent,
+                        deviceName: proxy.selectedPrintDevices,
+                        pageSize: proxy.selectedPageSize,
+                        printBackground: proxy.selectedBackColor,
+                        margin: proxy.selectedMargin,
+                        landscape: proxy.selectedLayout === "landscape" ? true : false,
+                        scaleFactor: proxy.selectedScaleFactor
+                    });
+                }
+                async function saveFile () {
+                    if (!proxy.selectedPrintDevices) {
+                        alert('Please select a printer !')
+                        return
+                    }
+                    await ipcRenderer.invoke("save-pdf", {
+                        silent: true,
                         deviceName: proxy.selectedPrintDevices,
                         pageSize: proxy.selectedPageSize,
                         printBackground: proxy.selectedBackColor,

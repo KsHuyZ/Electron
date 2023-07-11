@@ -21,7 +21,8 @@ import {
 } from "./utils";
 import { HtmlConstruct, PdfCreateOptions, PdfReloadOptions } from "./type";
 import configInitPage from "./printPage";
-
+import fs from "fs";
+import path from "path";
 import { writeDataToHtml, print_page } from "./utils";
 
 class _Pdf {
@@ -145,6 +146,15 @@ class _Pdf {
     this.pdfWin.once("ready-to-show", () => {
       this.pdfWin.show();
     });
+    this.pdfWin.webContents.on(
+      "did-fail-print",
+      (event, errorCode, errorDescription) => {
+        console.log("Quá trình in thất bại");
+        console.log("Mã lỗi:", errorCode);
+        console.log("Mô tả lỗi:", errorDescription);
+        // Xử lý lỗi in ở đây
+      }
+    );
     this.pdfWin.webContents.once("dom-ready", async () => {
       await this.handleWin.loadURL(BLANK_PAGE);
     });
@@ -229,6 +239,50 @@ class _Pdf {
       if (!this.pdfWin) {
         this.handleWin.close();
       }
+    }
+  };
+
+  saveFilePdf = async () => {
+    let errMessage = "pdf transform failed, please restart app !";
+    let url = "";
+    try {
+      this.isPrintingToPdf = true;
+      const pdfPath = await generatePdfFile(
+        this.handleWin.webContents,
+        this.getPrintToPdfOptions()
+      );
+      this.isPrintingToPdf = false;
+      url = getPdfPreviewUrl(pdfPath);
+      console.log(pdfPath);
+      dialog
+        .showSaveDialog({
+          title: "Lựa chọn thư mục để lưu",
+          defaultPath: path.join(__dirname, pdfPath),
+          buttonLabel: "Lưu",
+          filters: [
+            { name: "Tệp tin PDF", extensions: ["pdf"] }, // Chỉ cho phép lưu tệp tin PDF
+            { name: "Tất cả các tệp", extensions: ["*"] },
+          ],
+          properties: [],
+        })
+        .then((file) => {
+          if (!file.canceled) {
+            fs.copyFile(pdfPath, file.filePath, (err) => {
+              if (err) {
+                console.log("Lỗi khi sao chép tệp tin:", err);
+              } else {
+                console.log("Đã lưu tệp tin:", file.filePath);
+              }
+            });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      errMessage = "";
+    } catch (e) {
+      console.error(e);
+      dialog.showMessageBox(null, { message: errMessage });
     }
   };
 }

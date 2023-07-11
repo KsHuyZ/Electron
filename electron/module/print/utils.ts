@@ -112,6 +112,7 @@ export const generatePdfFile = async (
   return pdfPath;
 };
 
+
 export const webContentsPrint = async (
   webContens: WebContents,
   options: WebContentsPrintOptions
@@ -119,7 +120,6 @@ export const webContentsPrint = async (
   return await new Promise((res, rej) => {
     try {
       if (!webContens) {
-        console.log("none web content");
         return res(false);
       }
       webContens.print(options, (success: boolean, failureReason: any) => {
@@ -135,8 +135,8 @@ export const webContentsPrint = async (
         }
       });
     } catch (error) {
-      console.log("error in catch case:", error)
-      rej(error)
+      console.log("error in catch case:", error);
+      rej(error);
     }
   });
 };
