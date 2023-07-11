@@ -1,26 +1,23 @@
-import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input, DatePicker } from "antd";
+import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
 import "./styles/wareHouseItem.scss";
-import { UilPlus,UilImport,UilFilter,UilSearch } from '@iconscout/react-unicons'
+import { UilFilter,UilSearch } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { UilMultiply, UilPen,UilExclamationCircle } from '@iconscout/react-unicons';
-import { fakeData } from "./constants/test";
 import { renderTextStatus, formatNumberWithCommas } from "@/utils";
 import { DataType,ISearchWareHouseItem,STATUS_MODAL } from "./types";
 import TableWareHouse from "./components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import AddWareHouseItem from "./components/AddWareHouseItem";
-import { ItemSource,ResponseIpc,TableData } from "@/types";
+import { ResponseIpc,TableData } from "@/types";
 import { useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "./components/TransferModal";
-import { ERROR } from "./constants/messValidate";
 import FilterWareHouseItem from "./components/FilterWareHouseItem";
 import { useSearchParams } from "react-router-dom";
 
 const {confirm} = Modal;
-const { RangePicker } = DatePicker;
 
 const defaultRows: DataType[] = [
   {
@@ -57,7 +54,7 @@ const WareHouseItem = () =>{
     const [isEdit, setIsEdit] = useState<boolean>(false);
     const [itemEdit, setItemEdit] = useState<DataType>();
     const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
-    const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>(defaultRows);
+    const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
     const [isListenChange, setIsListenChange] = useState(false);
     const [isShowSearch, setIsShowSearch] = useState(false);
     const [searchParams, setSearchParams] =  useSearchParams();
@@ -216,37 +213,8 @@ const WareHouseItem = () =>{
     getListItem(pagination.pageSize!, pagination.current!, pagination.total!)
 };
 
-    const handleDataRowSelected = (listIdRow: number[]) =>{
-      console.log(listIdRow);
-      // console.log(listData);
-      // check nguon hang must be in the same place
-
-      const mergedList = listIdRow.map((id, index) => {
-        const foundItem = listData.rows.find((item) => Number(item.IDIntermediary) === id);
-        return foundItem ? { ...foundItem } : null;
-      });
-
-      // const differentItems = getDifferentItems(mergedList as DataType[]);
-      // if(differentItems.length > 0){
-      //     message.open({
-      //       type: 'error',
-      //       content:`Sản phẩm ${differentItems.map((item) => `MH${item.ID}`).toString()} không cùng nguồn hàng cùng các sản phẩm còn lại`,
-      //       duration: 4
-      //     });
-      //     return;
-      // }
-
-      // handle choose WareHouse
-
-      console.log(mergedList);
-      if(mergedList.length > 0){
-        setStatusModal(STATUS_MODAL.TRANSFER);
-        setListItemHasChoose(mergedList as DataType[]);
-
-      }else{
-        message.error(ERROR.ERROR_3);
-        return;
-      }
+    const handleDataRowSelected = (listRows: DataType[]) =>{
+      setListItemHasChoose(listRows);
     }
   
     // const getDifferentItems = (list: DataType[]) => {
@@ -307,7 +275,7 @@ const WareHouseItem = () =>{
         <Row className="filter-bar">
         <Row style={{width: '100%'}} align="middle">
         <Col span={12}>
-          <h2>Kho 1</h2>
+          <h2>Kho {idWareHouse ?? ''}</h2>
         </Col>
         </Row>
         <Col span={24}>
@@ -321,13 +289,13 @@ const WareHouseItem = () =>{
             <label htmlFor="">Tên mặt hàng</label>
         <Input value={nameSearch} onChange={(event) => setNameSearch(event.target.value)}/>
         </div>
-        <Button type="primary" disabled={nameSearch ? false : true} onClick={handleSearchName}><UilSearch/></Button>
+        <Button type="primary" onClick={handleSearchName}><UilSearch/></Button>
         </Col>
         <Col span={12}>
           <Space direction="horizontal" size={24}>
             <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter/>} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
-            <Button className="active-border" disabled>Chuyển Kho</Button>
-            <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Them San Pham</Button>
+            <Button className={listItemHasChoose.length > 0  ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={()=> setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
+            <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
           </Space>
         </Col>  
         </Row>
@@ -339,13 +307,13 @@ const WareHouseItem = () =>{
           handleChangeName={(value) => setNameSearch(value)}
         />)}
         </Card>
-        {/* <span style={{ marginLeft: 8 }}>
-          {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}
-        </span> */}
+        <span style={{ marginLeft: 8, paddingBottom: 8 }}>
+          {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : ''}
+        </span>
       </div>
             <TableWareHouse 
               setIsShowPopUp ={()=>setIsShowPopUp(true)}
-              setRowSelected={handleDataRowSelected}
+              setRowsSelect={handleDataRowSelected as any}
               isShowSelection={true}
               columns={columns} 
               dataSource={listData.rows} 
