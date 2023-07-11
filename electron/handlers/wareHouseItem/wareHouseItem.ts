@@ -87,7 +87,6 @@ const wareHouseItem = () => {
     );
     return null
   });
-};
 
   ipcMain.handle(
     "export-warehouse",
@@ -96,6 +95,6 @@ const wareHouseItem = () => {
       return isSuccess;
     }
   );
-}  
+};
 
 export default wareHouseItem;
