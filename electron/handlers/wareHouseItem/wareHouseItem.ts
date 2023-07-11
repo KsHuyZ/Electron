@@ -11,6 +11,8 @@ const wareHouseItem = () => {
     updateWareHouseItem,
     deleteWareHouseItemInWarehouse,
     changeWareHouse,
+    getAllWarehouseItem,
+    exportWareHouse
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -29,20 +31,27 @@ const wareHouseItem = () => {
     "warehouseitem-request-read",
     async (
       event,
-      data: { pageSize: number; currentPage: number; id?: number } = {
+      data: { pageSize: number; currentPage: number; id?: number; paramsSearch?: any; } = {
         pageSize: 10,
         currentPage: 1,
       }
     ) => {
-      const { pageSize, currentPage } = data;
+      const { pageSize, currentPage, paramsSearch } = data;
       const response = await getAllWarehouseItembyWareHouseId(
         data.id,
         pageSize,
-        currentPage
+        currentPage,
+        paramsSearch
       );
       return response;
     }
   );
+
+  ipcMain.handle("get-all-warehouse-item", async (event, data) => {
+    const { pageSize, currentPage } = data;
+    const response = await getAllWarehouseItem(pageSize, currentPage);
+    return response;
+  });
 
   ipcMain.handle(
     "update-warehouseitem",
@@ -64,8 +73,6 @@ const wareHouseItem = () => {
   ipcMain.handle(
     "change-warehouse",
     async (event, id_newWareHouse: number, id_list: Intermediary[]) => {
-      console.log(id_newWareHouse, id_list);
-
       const isSuccess = await changeWareHouse(id_newWareHouse, id_list);
       return isSuccess;
     }
@@ -81,4 +88,14 @@ const wareHouseItem = () => {
     return null
   });
 };
+
+  ipcMain.handle(
+    "export-warehouse",
+    async (event, id_receiving: number, id_list: Intermediary[]) => {
+      const isSuccess = await exportWareHouse(id_receiving, id_list);
+      return isSuccess;
+    }
+  );
+}  
+
 export default wareHouseItem;

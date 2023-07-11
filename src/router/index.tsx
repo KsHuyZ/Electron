@@ -11,6 +11,7 @@ import ItemSource from "@/page/ItemSource/ItemSource";
 import Product from "@/page/Product/Product";
 import WareHouseItem from "@/page/WarehouseItem/WareHouseItem";
 import Recipient from "@/page/Recipient/Recipient";
+import RecipientItem from "@/page/Recipient/components/RecipientItem";
 
 
 const MainLayout: FC = () => {
@@ -32,7 +33,9 @@ const Routers = () => {
           <Route path='/home' element={<Warehouse />} />
           <Route path='/home/:idWareHouse' element={<WareHouseItem />} />
           <Route path='/recipient' element={<Recipient />} />
+          <Route path='/recipient/:idRecipient' element={<RecipientItem />} />
           <Route path='/item-source' element={<ItemSource />} />
+          <Route path='/item-source/:id' element={<ItemSource />} />
           <Route path='/warehouse-item' element={<WareHouseItem />} />
         </Route>
         <Route path='/' element={<Login />} />
@@ -41,3 +44,4 @@ const Routers = () => {
   )
 }
 export default Routers
+

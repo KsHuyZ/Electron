@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import SourceDB from "../../database/Source/Source";
 import { Source } from "../../types";
 const Source = () => {
-  const { createItemSource, getAllItemSource, updateSource, deleteItemSource } =
+  const { createItemSource, getAllItemSource, updateSource, deleteItemSource,getAllItemSourceNoPagination } =
     SourceDB;
 
   // listen create Source request
@@ -10,6 +10,11 @@ const Source = () => {
     const response = await createItemSource(data);
     return response;
   });
+
+  ipcMain.handle("get-all-no-pagination", async(event) =>{
+    const response = await getAllItemSourceNoPagination();
+    return response;
+  })
 
   // listen get all Source request
   ipcMain.handle(

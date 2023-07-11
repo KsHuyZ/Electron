@@ -49,7 +49,7 @@ const AddWareHouseItem = React.memo(({isShowModal = false,onCloseModal, idWareHo
     useEffect(() =>{
         if(isEdit){
             console.log(itemEdit);
-const parsedDate = dayjs(itemEdit?.date_expried, 'HH:MM DD/MM/YYYY'); 
+const parsedDate = dayjs(itemEdit?.date_expried); 
             // formWareHouseItem.setFieldsValue(itemEdit);
             formWareHouseItem.setFieldsValue({
                 name: itemEdit?.name,
@@ -58,7 +58,7 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'HH:MM DD/MM/YYYY');
                 quality: itemEdit?.quality,
                 note: itemEdit?.note,
                 quantity_plane: itemEdit?.quantity_plane,
-                quantity_real: itemEdit?.quantity_real,
+                quantity_real: itemEdit?.quantity,
                 date_expried: parsedDate,
                 idSource: itemEdit?.id_Source
             })
@@ -73,7 +73,7 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'HH:MM DD/MM/YYYY');
 
     const onFinishFormManagement = async(values: WarehouseItem) =>{
         const {date_expried} = values;
-        const dateFormat = formatDate(date_expried);
+        const dateFormat = formatDate(date_expried, false, 'no_date');
         
         if(idWareHouse === undefined){
             message.error(ERROR_SERVER.ERROR_1);
@@ -86,9 +86,9 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'HH:MM DD/MM/YYYY');
                 id_wareHouse : Number(idWareHouse),
                 date_expried: dateFormat,
                 status: STATUS.TEMPORARY_IMPORT,
-                date: formatDate(new Date(), true),
-                date_created_at: new Date(),
-                date_updated_at: new Date()
+                date: formatDate(new Date(), true, 'date_First'),
+                date_created_at: formatDate(new Date(), true, 'date_First'),
+                date_updated_at: formatDate(new Date(), true, 'date_First')
             }
             
             if(isEdit){
@@ -105,6 +105,8 @@ const parsedDate = dayjs(itemEdit?.date_expried, 'HH:MM DD/MM/YYYY');
                     message.success('Cập nhật sản phẩm thành công');
                 }
             }else{
+                console.log('add',params);
+                
                 const response = await ipcRenderer.invoke('create-product-item', JSON.stringify(params));
                 if(response){
                     message.success('Tạo sản phẩm thành công');
