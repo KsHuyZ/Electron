@@ -48,4 +48,6 @@ export type ISearchWareHouseItem = {
   endDate: string;
   idSource: number | null;
   status: number | null;
+  now_date_ex : string;
+  after_date_ex: string;
 }

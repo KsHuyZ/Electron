@@ -10,7 +10,7 @@ const wareHouseItem = {
     currentPage: number,
     paramsSearch: ISearchWareHouseItem
   ) => {
-    const { name, idSource, startDate, endDate, status } = paramsSearch;
+    const { name, idSource, startDate, endDate, status, now_date_ex, after_date_ex } = paramsSearch;
 
     try {
       const offsetValue = (currentPage - 1) * pageSize;
@@ -27,17 +27,28 @@ const wareHouseItem = {
         queryParams.unshift(idSource);
       }
       if (startDate) {
-        whereConditions.unshift(`wi.date_expried >= ?`);
+        whereConditions.unshift(`wi.date_created_at >= ?`);
         queryParams.unshift(startDate);
       }
       if (endDate) {
-        whereConditions.unshift(`wi.date_expried <= ?`);
+        whereConditions.unshift(`wi.date_created_at <= ?`);
         queryParams.unshift(endDate);
       }
       if (status) {
         whereConditions.unshift(`i.status = ?`);
         queryParams.unshift(status);
       }
+
+      if(now_date_ex){
+        whereConditions.unshift(`wi.date_expried >= ?`);
+        queryParams.unshift(now_date_ex);
+      }
+
+      if(after_date_ex){
+        whereConditions.unshift(`wi.date_expried <= ?`);
+        queryParams.unshift(after_date_ex);
+      }
+
 
       const whereClause =
         whereConditions.length > 0
@@ -118,7 +129,7 @@ const wareHouseItem = {
 
     try {
       const createItemQuery = `INSERT INTO warehouseItem (id_Source, name, price, unit, date_expried, 
-        date_create_at, date_updated_at, note, quantity_plane, quantity_real) VALUES 
+        date_created_at, date_updated_at, note, quantity_plane, quantity_real) VALUES 
         (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const idWarehouseItem = await new Promise((resolve, reject) => {
         db.run(
@@ -371,7 +382,7 @@ const wareHouseItem = {
           );
         });
 
-        console.log("checking id", ID);
+        console.log("checking id", item);
 
         if (ID !== "NOT_EXITS") {
           const quantity = await new Promise((resolve, reject) => {
@@ -448,7 +459,7 @@ const wareHouseItem = {
               item.status,
               item.quality,
               item.quantity,
-              new Date(),
+              item.date,
             ]);
             await runQuery(updateWareHouseQuery, [
               item.quantity,
@@ -470,7 +481,7 @@ const wareHouseItem = {
                 item.status,
                 item.quality,
                 item.quantity,
-                new Date(),
+                item.date,
               ]);
 
               await runQuery(deleteQuery, [item.idIntermediary]);
@@ -585,7 +596,7 @@ const wareHouseItem = {
               item.status === 1 ? 5 : 2,
               item.quality,
               item.quantity,
-              new Date(),
+              item.date,
             ]);
             await runQuery(updateWareHouseQuery, [
               item.quantity,
@@ -607,7 +618,7 @@ const wareHouseItem = {
                 item.status === 1 ? 5 : 2,
                 item.quality,
                 item.quantity,
-                new Date(),
+                item.date,
               ]);
 
               await runQuery(deleteQuery, [item.idIntermediary]);

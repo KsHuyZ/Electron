@@ -37,7 +37,8 @@ button:focus {
   overflow: hidden;
   .MainDash{
     margin: 10px;
-    width: 90%;
+    height: 100%;
+    overflow: scroll;
   }
 }
 

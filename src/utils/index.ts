@@ -69,22 +69,35 @@ export const createRegexValidator = (regex: RegExp, errorMessage: string) => {
   };
 };
 
-export const formatDate = (newDate: any , suffix: boolean = false, type: string = 'date_First') => {
+export const formatDate = (newDate: any, suffix: boolean = false, type: string = 'date_First') => {
+  // Set the locale to Vietnamese
+  dayjs.locale('vi');
 
-    // Set the locale to Vietnamese
-    dayjs.locale('vi');
-    let formattedDate = '';
-    // Format the date in Vietnamese format
-    if(type === 'date_First') {
-         formattedDate = dayjs(newDate).format(`${suffix ? 'HH:MM' : ''} DD/MM/YYYY`);
-    }else if(type === 'after_Date'){
-         formattedDate = dayjs(newDate).format(`YYYY/MM/DD ${suffix ? 'HH:MM' : ''}`);
-        }else{
-        formattedDate = dayjs(newDate).format(`YYYY/MM/DD`);
-    }
-    return formattedDate;
+  let formattedDate = '';
 
-}
+  // Format the date based on the type
+  switch (type) {
+    case 'date_First':
+      formattedDate = dayjs(newDate).format(`${suffix ? 'HH:MM' : ''} DD/MM/YYYY`);
+      break;
+    case 'after_Date':
+      formattedDate = dayjs(newDate).format(`YYYY/MM/DD ${suffix ? 'HH:MM' : ''}`);
+      break;
+    case 'after_7day':
+      const before7Days = dayjs(newDate).add(7, 'day');
+      formattedDate = dayjs(before7Days).format(`YYYY/MM/DD`);
+      break;
+      case 'after_month':
+        const month = dayjs(newDate).add(1, 'month');
+        formattedDate = dayjs(month).format(`YYYY/MM/DD`);
+        break;
+    default:
+      formattedDate = dayjs(newDate).format(`YYYY/MM/DD`);
+      break;
+  }
+
+  return formattedDate;
+};
 
 export const convertPrice = (priceString: string) => {
   // Remove all dots from the price string
@@ -106,3 +119,27 @@ export const stringifyParams = (data: any) => {
     ...option,
   });
 };
+
+export const getDateExpried = (date: string) =>{
+  dayjs.locale('vi')
+
+  const currentDate = dayjs();
+  const specificDate = dayjs(date);
+
+// Chênh lệch thời gian giữa hai ngày
+const timeDiff = specificDate.diff(currentDate, 'day');
+let days = '';
+if(timeDiff > 0){
+  const daysRemaining = timeDiff > 0 ? timeDiff : 0;
+  days =  `Còn ${daysRemaining} ngày nữa là đến ngày ${date}.`;
+
+}else{
+  const daysPassed = timeDiff < 0 ? Math.abs(timeDiff) : 0;
+  if( daysPassed < 0){
+    days = `Đã hết hạn từ ngày ${date}.`
+  }else{
+    days = `Đây là ngày cuối từ ngày ${date}.`
+  }
+}
+return days;
+}

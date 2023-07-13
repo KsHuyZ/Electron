@@ -85,7 +85,12 @@
 }
 
 .label-custom-input-filter {
+  margin-bottom: 0px!important;
+}
+
+.label-custom-input-filter label {
   font-weight: bold;
   padding: 10px 0 5px 0;
   text-transform: uppercase;
+  margin-bottom: 0px!important;
 }
