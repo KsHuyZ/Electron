@@ -282,7 +282,7 @@ const WareHouseItem = () => {
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
         <Col span={12}>
-          <h2>Kho {idWareHouse ?? ''}</h2>
+          <h2 style={{margin : 0}}>Kho {idWareHouse ?? ''}</h2>
         </Col>
       </Row>
       <Col span={24}>

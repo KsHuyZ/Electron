@@ -1,0 +1,31 @@
+.content-wrapper{
+    .content-header{
+        .nav-tabs{
+            display: flex;
+            align-items: center;
+            margin: 0;
+            gap: 10px;
+            padding-inline-start: 0 ;
+            &__item{
+                list-style: none;
+                font-size: 14px;
+                width: fit-content;
+                padding: 10px 5px;
+                border-radius: 5px;
+                text-transform: uppercase;
+                color: #00695c;
+                cursor: pointer;
+                font-weight: 600;
+            }
+            &__item.actives {
+                color: #00695c;
+                border: 1px solid #00695c;
+                background-color: #fff;
+            }
+
+            .nav-item {
+                background-color: initial;
+            }
+        }
+    }
+}

@@ -6,6 +6,7 @@ import ModalItemSource from './components/ModalItemSource';
 import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
 import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
+import { Link } from 'react-router-dom';
 
 type DataType = {
   ID: number;
@@ -86,6 +87,9 @@ const ItemSource = () => {
     {
       title: 'Tên nguồn hàng',
       dataIndex: 'name',
+      render: (_,record) =>{
+        return <Link to={`/item-source/${record.ID}`}>{record.name}</Link>
+      }
     },
     {
       title: 'Địa chỉ',

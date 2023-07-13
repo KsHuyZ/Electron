@@ -12,6 +12,7 @@ import Product from "@/page/Product/Product";
 import WareHouseItem from "@/page/WarehouseItem/WareHouseItem";
 import Recipient from "@/page/Recipient/Recipient";
 import RecipientItem from "@/page/Recipient/components/RecipientItem";
+import EntryForm from "@/page/EntryForm/EntryForm";
 
 
 const MainLayout: FC = () => {
@@ -36,8 +37,9 @@ const Routers = () => {
           <Route path='/recipient' element={<Recipient />} />
           <Route path='/recipient/:idRecipient' element={<RecipientItem />} />
           <Route path='/item-source' element={<ItemSource />} />
-          <Route path='/item-source/:id' element={<ItemSource />} />
+          <Route path='/item-source/:id' element={<EntryForm />} />
           <Route path='/warehouse-item' element={<WareHouseItem />} />
+          {/* <Route path='/entry-form/:id' element={<EntryForm />} /> */}
         </Route>
         <Route path='/' element={<Login />} />
       </Routes>
