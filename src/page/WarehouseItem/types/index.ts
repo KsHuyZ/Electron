@@ -12,7 +12,7 @@ type DataType = {
   quantity?: number | null;
   status: number | null;
   date_expried: string;
-  date: string;
+  date?: string;
   date_created_at: string;
   date_updated_at: string;
   id_Source?: string;

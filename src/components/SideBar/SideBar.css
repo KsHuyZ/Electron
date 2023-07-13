@@ -4,6 +4,7 @@
   position: relative;
   padding-top: 4rem;
   transition: all 300ms ease;
+  background-color: #fff;
 }
 /* logo */
 .bars {
@@ -34,7 +35,7 @@
   margin-top: 4rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
 }
 .menuItem {
   display: flex;
@@ -44,8 +45,10 @@
   margin-left: 2rem;
   position: relative;
   transition: all 300ms ease;
-  border-radius: 0.7rem;
+  /* border-radius: 0.7rem; */
   font-size: 14px;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 
 .menuItem:hover {

@@ -60,3 +60,13 @@ export const QUALITY = {
 };
 
 export const priceRegex = /^[^a-zA-Z\W]*\.?\d*$/;
+
+export type TabMenu = {
+  tabName: string;
+  name: string;
+  hash : string[],
+  navLink : string,
+  url : string,
+  component: any
+
+}
