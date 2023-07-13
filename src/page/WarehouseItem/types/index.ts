@@ -12,6 +12,7 @@ type DataType = {
   quantity?: number | null;
   status: number | null;
   date_expried: string;
+  date: string;
   date_created_at: string;
   date_updated_at: string;
   id_Source?: string;
@@ -45,6 +46,8 @@ type ISearchWareHouseItem = {
   endDate: string;
   idSource: number | null;
   status: number | null;
+  now_date_ex: string;
+after_date_ex: string;
 }
 
 export enum STATUS_MODAL {

@@ -15,7 +15,7 @@ db.run(
   "CREATE TABLE IF NOT EXISTS Source (ID INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(100) NOT NULL, address VARCHAR(255), phone VARCHAR(20))"
 );
 db.run(
-  "CREATE TABLE IF NOT EXISTS WareHouseItem (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Source INTEGER NOT NULL, name VARCHAR (255), price REAL, unit VARCHAR(10) NOT NULL, date_expried DATE, date_create_at DATE, date_updated_at DATE, note VARCHAR(255), quantity_plane INTEGER, quantity_real INTEGER, FOREIGN KEY (id_Source) REFERENCES Source(ID))"
+  "CREATE TABLE IF NOT EXISTS WareHouseItem (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Source INTEGER NOT NULL, name VARCHAR (255), price REAL, unit VARCHAR(10) NOT NULL, date_expried DATE, date_created_at DATE, date_updated_at DATE, note VARCHAR(255), quantity_plane INTEGER, quantity_real INTEGER, FOREIGN KEY (id_Source) REFERENCES Source(ID))"
 );
 db.run(
   "CREATE TABLE IF NOT EXISTS Intermediary (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_WareHouse INTEGER NOT NULL, prev_idwarehouse INTEGER, id_WareHouseItem INTEGER NOT NULL, status INTEGER, quantity INTEGER, quality INTEGER ,date_temp_export DATE, date DATE, FOREIGN KEY (id_WareHouse) REFERENCES WareHouse(ID),  FOREIGN KEY (id_WareHouseItem) REFERENCES WareHouseItem(ID))"

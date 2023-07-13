@@ -5,7 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 
 import { useEffect, useState } from "react";
 import { UilMultiply, UilPen, UilExclamationCircle } from '@iconscout/react-unicons';
-import { renderTextStatus, formatNumberWithCommas } from "@/utils";
+import { renderTextStatus, formatNumberWithCommas, getDateExpried } from "@/utils";
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "./types";
 import TableWareHouse from "./components/TableWareHouse";
 import { ipcRenderer } from "electron";
@@ -39,7 +39,7 @@ const defaultRows: DataType[] = [
 const defaultTable: TableData<DataType[]> = {
   pagination: {
     current: 1,
-    pageSize: 3,
+    pageSize: 10,
     total: 0,
   },
   loading: false,
@@ -112,6 +112,9 @@ const WareHouseItem = () => {
     {
       title: 'Thời gian hết hạn',
       dataIndex: 'date_expried',
+      render : (record) =>(
+        <span>{getDateExpried(record)}</span>
+      ),
       width: 200,
     },
     {
@@ -180,12 +183,17 @@ const WareHouseItem = () => {
       loading: true
     });
 
+    console.log(parsedSearchParams);
+    
+
     const paramsSearch: ISearchWareHouseItem = {
       name: parsedSearchParams.name || nameSearch,
       idSource: Number(parsedSearchParams.idSource) || null,
       startDate: parsedSearchParams.startDate || '',
       endDate: parsedSearchParams.endDate || '',
-      status: Number(parsedSearchParams.status) || null
+      status: Number(parsedSearchParams.status) || null,
+      now_date_ex : parsedSearchParams.now_date_ex || '' ,
+      after_date_ex : parsedSearchParams.after_date_ex || ''
     };
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idWareHouse, paramsSearch: paramsSearch });
     if (result) {

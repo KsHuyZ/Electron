@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { ipcRenderer } from 'electron';
 import { useSearchParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { stringifyParams } from "@/utils";
+import { stringifyParams, formatDate } from "@/utils";
 
 const { RangePicker } = DatePicker;
 
@@ -21,6 +21,7 @@ type ISearch = {
   idSource: string;
   date: any;
   status: number | null;
+  date_expried: string;
 };
 
 const listOptionStatus: OptionSelect[] = [
@@ -28,7 +29,20 @@ const listOptionStatus: OptionSelect[] = [
     label: 'Tạm nhập',
     value: STATUS.TEMPORARY_IMPORT
   },
-]
+];
+
+const listTimeExpried: OptionSelect[] = [
+  {
+    label: '1 tuần',
+    value: '7_days'
+  },
+  {
+    label: '1 tháng',
+    value:  '1_month'
+  },
+];
+
+
 
 
 const FilterWareHouseItem = (props: PropsFilter) => {
@@ -61,12 +75,24 @@ const FilterWareHouseItem = (props: PropsFilter) => {
   }
 
   const onFinish = (value: ISearch) => {
+
+    const nowDate = formatDate(Date.now(), false , 'no_date');
+    const after_Date = formatDate(Date.now(), false , 'after_7day');
+    const after_Month = formatDate(Date.now(), false , 'after_month');
+
+    const checkDate = () =>{
+      if(!value.date_expried) return ''
+      return value.date_expried === '7_days' ? after_Date : after_Month
+    }
+    
     const objSearch = {
       name: name ?? '',
       status: value.status ?? '',
       startDate: value.date && value.date[0] ? dayjs(value.date[0]).format('YYYY/MM/DD') : undefined,
       endDate: value.date && value.date[1] ? dayjs(value.date[1]).format('YYYY/MM/DD') : undefined,
-      idSource: value.idSource ?? ''
+      idSource: value.idSource ?? '',
+      now_date_ex : value.date_expried ? nowDate : '',
+      after_date_ex : checkDate()
     }
     other.handleIsSearch(true);
     setSearchParams(stringifyParams({ params: { ...objSearch } }));
@@ -127,6 +153,22 @@ const FilterWareHouseItem = (props: PropsFilter) => {
             </Form.Item>
 
           </Col>
+          <Col span={8}>
+
+<Form.Item
+  name={'date_expried'}
+  label={'Sắp hết hạn'}
+  className="label-custom-input-filter"
+>
+  <Select
+
+    style={{ width: '100%' }}
+    options={listTimeExpried}
+
+  />
+</Form.Item>
+
+</Col>
         </Row>
         <Row align={'bottom'} style={{ float: 'right', marginTop: '20px' }}>
           <Space>

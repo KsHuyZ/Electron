@@ -87,8 +87,8 @@ const parsedDate = dayjs(itemEdit?.date_expried);
                 date_expried: dateFormat,
                 status: STATUS.TEMPORARY_IMPORT,
                 date: formatDate(new Date(), true, 'date_First'),
-                date_created_at: formatDate(new Date(), true, 'date_First'),
-                date_updated_at: formatDate(new Date(), true, 'date_First')
+                date_created_at: formatDate(new Date(), true, 'no_date'),
+                date_updated_at: formatDate(new Date(), true, 'no_date')
             }
             
             if(isEdit){
