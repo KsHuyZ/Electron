@@ -3,7 +3,6 @@ import db from "../../utils/connectDB";
 import { Intermediary, WarehouseItem, ISearchWareHouseItem } from "../../types";
 import { runQuery } from "../../utils";
 
-
 const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
     id: number,
@@ -11,19 +10,13 @@ const wareHouseItem = {
     currentPage: number,
     paramsSearch: ISearchWareHouseItem
   ) => {
-    const {
-      name,
-      idSource,
-      startDate,
-      endDate,
-      status
-    } = paramsSearch;
-  
+    const { name, idSource, startDate, endDate, status } = paramsSearch;
+
     try {
       const offsetValue = (currentPage - 1) * pageSize;
       const whereConditions: string[] = [];
       const queryParams: any[] = [id, pageSize, offsetValue];
-  
+
       // Add query conditions based on the provided search parameters
       if (name) {
         whereConditions.unshift(`wi.name LIKE ?`);
@@ -45,8 +38,11 @@ const wareHouseItem = {
         whereConditions.unshift(`i.status = ?`);
         queryParams.unshift(status);
       }
-  
-      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')} AND i.id_WareHouse = ?` : 'WHERE i.id_WareHouse = ?';
+
+      const whereClause =
+        whereConditions.length > 0
+          ? `WHERE ${whereConditions.join(" AND ")} AND i.id_WareHouse = ?`
+          : "WHERE i.id_WareHouse = ?";
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.quality, i.quantity,
@@ -56,7 +52,7 @@ const wareHouseItem = {
         ${whereClause}
         ORDER BY i.ID DESC
         LIMIT ? OFFSET ?`;
-  
+
       const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, ...queryParams, (err, rows) => {
           if (err) {
@@ -66,7 +62,7 @@ const wareHouseItem = {
           }
         });
       });
-  
+
       const countResult = rows.length > 0 ? rows[0].total : 0;
       return { rows, total: countResult };
     } catch (err) {
@@ -635,4 +631,3 @@ const wareHouseItem = {
 };
 
 export default wareHouseItem;
-

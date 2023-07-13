@@ -1,12 +1,12 @@
 import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
 // import "./styles/wareHouseItem.scss";
-import { UilPlus, UilImport, UilFileExport, UilSearch } from '@iconscout/react-unicons'
+import { UilPlus, UilImport, UilFileExport, UilSearch, UilFilter } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
 import { useCallback, useEffect, useState } from "react";
 import { UilMultiply, UilPen, UilExclamationCircle } from '@iconscout/react-unicons';
 import { renderTextStatus, formatNumberWithCommas } from "@/utils";
-import { DataType, FormWareHouseItem, STATUS_MODAL } from "../../WarehouseItem/types/index";
+import { DataType, FormWareHouseItem, ISearchWareHouseItem, STATUS_MODAL } from "../../WarehouseItem/types/index";
 import TableWareHouse from "../../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import { ItemSource, ResponseIpc, TableData } from "@/types";
@@ -14,6 +14,9 @@ import { useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
 // import TransferModal from "./components/TransferModal";
 import { ERROR } from "../../WarehouseItem/constants/messValidate";
+import { useSearchParams } from "react-router-dom";
+import FilterWareHouseItem from "@/page/WarehouseItem/components/FilterWareHouseItem";
+import TransferModal from "@/page/WarehouseItem/components/TransferModal";
 
 const { confirm } = Modal;
 
@@ -37,7 +40,7 @@ const defaultRows: DataType[] = [
 const defaultTable: TableData<DataType[]> = {
   pagination: {
     current: 1,
-    pageSize: 10,
+    pageSize: 3,
     total: 0,
   },
   loading: false,
@@ -47,14 +50,17 @@ const defaultTable: TableData<DataType[]> = {
 const RecipientItem = () => {
   const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
   const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
-  const [dataRowSelected, setDataRowSelected] = useState<any>();
   const [isShowModal, setIsShowModal] = useState<boolean>(false);
   const { idRecipient } = useParams();
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [itemEdit, setItemEdit] = useState<DataType>();
   const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
-  const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>(defaultRows);
+  const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
   const [isListenChange, setIsListenChange] = useState(false);
+  const [isShowSearch, setIsShowSearch] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [nameSearch, setNameSearch] = useState('');
+  const [isSearch, setIsSearch] = useState<Boolean>(false);
 
   const columns: ColumnsType<DataType> = [
     {
@@ -130,6 +136,22 @@ const RecipientItem = () => {
         )
       }
     },
+    {
+      title: "Hành động",
+      dataIndex: "action",
+      fixed: "right",
+      width: 150,
+      render: (_, record: DataType) => (
+        <Space size="middle">
+          <UilPen style={{ cursor: "pointer" }} onClick={() => {
+            setIsEdit(true);
+            setItemEdit(record)
+            setIsShowModal(true)
+          }} />
+          <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />
+        </Space>
+      ),
+    }
   ];
 
 
@@ -137,23 +159,38 @@ const RecipientItem = () => {
     new Promise(async () => {
       await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
     })
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    if (isSearch) {
+      new Promise(async () => {
+        await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+      })
+    }
+  }, [isSearch]);
+
 
   const getListItem = async (pageSize: number, currentPage: number, total: number) => {
+    const parsedSearchParams = Object.fromEntries(searchParams);
     setListData({
       ...listData,
       pagination: {
-        current: currentPage,
+        current: isSearch ? 1 : currentPage,
         pageSize: pageSize,
         total: total
       },
       loading: true
-    })
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idRecipient });
+    });
+
+    const paramsSearch: ISearchWareHouseItem = {
+      name: parsedSearchParams.name || nameSearch,
+      idSource: Number(parsedSearchParams.idSource) || null,
+      startDate: parsedSearchParams.startDate || '',
+      endDate: parsedSearchParams.endDate || '',
+      status: Number(parsedSearchParams.status) || null
+    };
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idRecipient, paramsSearch: paramsSearch });
     if (result) {
-
-      console.log('fetching', result);
-
       setListData((prev) => (
         {
           ...prev,
@@ -164,33 +201,21 @@ const RecipientItem = () => {
           },
           loading: false
         }
-      ))
+      ));
+      if (isSearch) {
+        setIsSearch(false);
+      }
     }
+
+
   }
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
     getListItem(pagination.pageSize!, pagination.current!, pagination.total!)
   };
 
-  const handleDataRowSelected = (listIdRow: number[]) => {
-    console.log(listIdRow);
-    // console.log(listData);
-    // check nguon hang must be in the same place
-
-    const mergedList = listIdRow.map((id, index) => {
-      const foundItem = listData.rows.find((item) => Number(item.IDIntermediary) === id);
-      return foundItem ? { ...foundItem } : null;
-    });
-
-    console.log(mergedList);
-    if (mergedList.length > 0) {
-      setStatusModal(STATUS_MODAL.TRANSFER);
-      setListItemHasChoose(mergedList as DataType[]);
-
-    } else {
-      message.error(ERROR.ERROR_3);
-      return;
-    }
+  const handleDataRowSelected = (listRows: DataType[]) => {
+    setListItemHasChoose(listRows);
   }
 
   const removeItem = async (IDIntermediary: number, IDWarehouseItem: number) => {
@@ -231,8 +256,11 @@ const RecipientItem = () => {
     setIsListenChange(true);
   }
 
-  console.log(listData);
+  const handleSearchName = () => {
+    setIsSearch(true);
+  }
 
+  console.log(listItemHasChoose)
 
   return (
     <Row className="filter-bar">
@@ -250,24 +278,33 @@ const RecipientItem = () => {
                 <Col span={12} className="col-item-filter">
                   <div className="form-item" style={{ width: '60%' }}>
                     <label htmlFor="">Tên mặt hàng</label>
-                    <Input />
+                    <Input value={nameSearch} onChange={(event) => setNameSearch(event.target.value)} />
                   </div>
-                  <Button type="primary"><UilSearch /></Button>
+                  <Button type="primary" onClick={handleSearchName}><UilSearch /></Button>
                 </Col>
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
-                    <Button className="default" icon={<UilImport />}>Đã xuất</Button>
-                    <Button className="default" icon={<UilImport />}>Tạm Xuất(Tạm nhập)</Button>
-                    <Button className="default" icon={<UilFileExport />}>Tạm Xuất</Button>
+                    <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
+                    <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
+                    <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
                   </Space>
                 </Col>
               </Row>
-
+              {isShowSearch && (
+                <FilterWareHouseItem
+                  name={nameSearch}
+                  isSearch={isSearch}
+                  handleIsSearch={(envSearch) => setIsSearch(envSearch)}
+                  handleChangeName={(value) => setNameSearch(value)}
+                />)}
             </Card>
+            <span style={{ marginLeft: 8, paddingBottom: 8 }}>
+              {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : ''}
+            </span>
           </div>
           <TableWareHouse
             setIsShowPopUp={() => setIsShowPopUp(true)}
-            setRowSelected={handleDataRowSelected}
+            setRowsSelect={handleDataRowSelected as any}
             isShowSelection={true}
             columns={columns}
             dataSource={listData.rows}
@@ -288,10 +325,10 @@ const RecipientItem = () => {
       </Col>
 
       {/* {
-        statusModal === STATUS_MODAL.TRANSFER && (
+        statusModal === STATUS_MODAL.RECEIPT && (
           <TransferModal
             isShow={statusModal}
-            idWareHouse={idWareHouse}
+            idWareHouse={idRecipient}
             setIsShow={handleShowTransferModal}
             listItem={listItemHasChoose}
             removeItemList={removeItemList}
