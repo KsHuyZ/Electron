@@ -97,9 +97,8 @@ class _Pdf {
 
   async print(options: WebContentsPrintOptions) {
     this.isPrinting = true;
-    const result = await webContentsPrint(this.handleWin.webContents, options);
     this.pdfWin.close();
-    console.log("result: ", result);
+    const result = await webContentsPrint(this.handleWin.webContents, options);
     this.isPrinting = false;
     this.handleWin.close();
   }
@@ -243,17 +242,18 @@ class _Pdf {
   };
 
   saveFilePdf = async () => {
+  
     let errMessage = "pdf transform failed, please restart app !";
     let url = "";
     try {
       this.isPrintingToPdf = true;
+      this.pdfWin.close();
       const pdfPath = await generatePdfFile(
         this.handleWin.webContents,
         this.getPrintToPdfOptions()
       );
       this.isPrintingToPdf = false;
       url = getPdfPreviewUrl(pdfPath);
-      console.log(pdfPath);
       dialog
         .showSaveDialog({
           title: "Lựa chọn thư mục để lưu",
@@ -280,9 +280,12 @@ class _Pdf {
           console.log(err);
         });
       errMessage = "";
+      this.handleWin.close();
+      return true;
     } catch (e) {
       console.error(e);
       dialog.showMessageBox(null, { message: errMessage });
+      return false;
     }
   };
 }

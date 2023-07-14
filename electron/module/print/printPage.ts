@@ -470,7 +470,7 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
                         alert('Please select a printer !')
                         return
                     }
-                    await ipcRenderer.invoke("save-pdf", {
+                    await ipcRenderer.send("save-pdf", {
                         silent: true,
                         deviceName: proxy.selectedPrintDevices,
                         pageSize: proxy.selectedPageSize,

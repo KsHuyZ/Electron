@@ -82,9 +82,7 @@ ipcMain.on(
   }
 );
 
-ipcMain.handle("save-pdf", async () => {
-  await printPreview.saveFilePdf();
-});
+
 
 const startPrint: (
   pdfOptions: PdfCreateOptions,

@@ -1,7 +1,17 @@
-import { IpcMainEvent, ipcMain } from "electron";
+import { BrowserWindow, IpcMainEvent, ipcMain } from "electron";
 import wareHouseItemDB from "../../database/wareHouseItem/wareHouseItem";
-import { Intermediary, WarehouseItem } from "../../types";
+import { DataType, Intermediary, WarehouseItem } from "../../types";
 import { startPrint } from "../../module/print";
+import { formExportBill } from "../../utils/formExportBill";
+import moment, { Moment } from "moment";
+import printPreview from "../../module/print/printPreview";
+
+let currentName = "";
+let currentNote = "";
+let currentNature = "";
+let currentTotal = 0;
+let currentDate = moment.now();
+let currentItems = [];
 
 const wareHouseItem = () => {
   const {
@@ -12,7 +22,8 @@ const wareHouseItem = () => {
     deleteWareHouseItemInWarehouse,
     changeWareHouse,
     getAllWarehouseItem,
-    exportWareHouse
+    tempExportWareHouse,
+    exportWarehouse,
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -31,7 +42,12 @@ const wareHouseItem = () => {
     "warehouseitem-request-read",
     async (
       event,
-      data: { pageSize: number; currentPage: number; id?: number; paramsSearch?: any; } = {
+      data: {
+        pageSize: number;
+        currentPage: number;
+        id?: number;
+        paramsSearch?: any;
+      } = {
         pageSize: 10,
         currentPage: 1,
       }
@@ -78,23 +94,74 @@ const wareHouseItem = () => {
     }
   );
 
-  ipcMain.handle("print-form", () => {
-    startPrint(
-      {
-        htmlString: `<style>h1{color: #42b983}</style> <h1>hello world !</h1>`,
-      },
-      undefined
-    );
-    return null
-  });
+  ipcMain.handle(
+    "print-form",
+    async (
+      event,
+      data: {
+        items: DataType[];
+        name: string;
+        note: string;
+        nature: string;
+        total: number;
+        date: any;
+      }
+    ) => {
+      const { items, name, note, nature, total, date } = data;
+      console.log(items);
+      startPrint(
+        {
+          htmlString: await formExportBill(items),
+        },
+        undefined
+      );
+      currentName = name;
+      currentNote = note;
+      currentTotal = total;
+      currentNature = nature;
+      currentDate = date;
+      currentItems = items;
+      return null;
+    }
+  );
 
   ipcMain.handle(
-    "export-warehouse",
+    "temp-export-warehouse",
     async (event, id_receiving: number, id_list: Intermediary[]) => {
-      const isSuccess = await exportWareHouse(id_receiving, id_list);
+      const isSuccess = await tempExportWareHouse(id_receiving, id_list);
       return isSuccess;
     }
   );
+  // ipcMain.handle(
+  //   "export-warehouse",
+  //   async function (
+  //     event,
+  //     id_list: Intermediary[],
+  //     name: string,
+  //     note: string,
+  //     nature,
+  //     total: number,
+  //     date: any
+  //   ) {}
+  // );
+
+  ipcMain.on("save-pdf", async () => {
+    const isComplete = await printPreview.saveFilePdf();
+    if (isComplete) {
+      const isSuccess = await exportWarehouse(
+        currentItems,
+        currentName,
+        currentNote,
+        currentNature,
+        currentTotal,
+        currentDate
+      );
+      const mainWindow = BrowserWindow.getFocusedWindow();
+      if (mainWindow) {
+        mainWindow.webContents.send("export-warehouse", { isSuccess });
+      }
+    }
+  });
 };
 
 export default wareHouseItem;

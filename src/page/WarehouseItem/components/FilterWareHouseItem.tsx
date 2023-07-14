@@ -6,14 +6,16 @@ import { ipcRenderer } from 'electron';
 import { useSearchParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { stringifyParams, formatDate } from "@/utils";
+import { STATUS_MODAL } from "../types";
 
 const { RangePicker } = DatePicker;
 
 interface PropsFilter {
   name?: string;
   isSearch?: Boolean;
-  handleIsSearch: (envSearch: Boolean) => void;
+  handleIsSearch: (envSearch: boolean) => void;
   handleChangeName: (value: string) => void;
+  page?: string;
 }
 
 type ISearch = {
@@ -38,7 +40,7 @@ const listTimeExpried: OptionSelect[] = [
   },
   {
     label: '1 tháng',
-    value:  '1_month'
+    value: '1_month'
   },
 ];
 
@@ -47,9 +49,35 @@ const listTimeExpried: OptionSelect[] = [
 
 const FilterWareHouseItem = (props: PropsFilter) => {
   const [listSource, setListSource] = useState<OptionSelect[]>([]);
-  const { name, ...other } = props;
+  const { name, page, ...other } = props;
   const [formFilter] = Form.useForm();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  let listOptionStatus: OptionSelect[] = [
+    {
+      label: 'Đã nhập',
+      value: STATUS.IMPORT
+    },
+    {
+      label: 'Tạm nhập',
+      value: STATUS.TEMPORARY_IMPORT
+    }
+  ]
+
+  if (page === 'receiving') {
+    listOptionStatus = [{
+      label: 'Tạm xuất',
+      value: STATUS.TEMPORARY_EXPORT
+    }, {
+      label: 'Tạm xuất (Tạm nhập)',
+      value: STATUS.TEMPORARY_EXPORT_TEMPORARY_IMPORT
+    }, {
+      label: 'Đã xuất',
+      value: STATUS.EXPORT
+    }]
+  }
+
+
 
   useEffect(() => {
     new Promise(async () => {
@@ -76,23 +104,23 @@ const FilterWareHouseItem = (props: PropsFilter) => {
 
   const onFinish = (value: ISearch) => {
 
-    const nowDate = formatDate(Date.now(), false , 'no_date');
-    const after_Date = formatDate(Date.now(), false , 'after_7day');
-    const after_Month = formatDate(Date.now(), false , 'after_month');
+    const nowDate = formatDate(Date.now(), false, 'no_date');
+    const after_Date = formatDate(Date.now(), false, 'after_7day');
+    const after_Month = formatDate(Date.now(), false, 'after_month');
 
-    const checkDate = () =>{
-      if(!value.date_expried) return ''
+    const checkDate = () => {
+      if (!value.date_expried) return ''
       return value.date_expried === '7_days' ? after_Date : after_Month
     }
-    
+
     const objSearch = {
       name: name ?? '',
       status: value.status ?? '',
       startDate: value.date && value.date[0] ? dayjs(value.date[0]).format('YYYY/MM/DD') : undefined,
       endDate: value.date && value.date[1] ? dayjs(value.date[1]).format('YYYY/MM/DD') : undefined,
       idSource: value.idSource ?? '',
-      now_date_ex : value.date_expried ? nowDate : '',
-      after_date_ex : checkDate()
+      now_date_ex: value.date_expried ? nowDate : '',
+      after_date_ex: checkDate()
     }
     other.handleIsSearch(true);
     setSearchParams(stringifyParams({ params: { ...objSearch } }));
@@ -155,20 +183,20 @@ const FilterWareHouseItem = (props: PropsFilter) => {
           </Col>
           <Col span={8}>
 
-<Form.Item
-  name={'date_expried'}
-  label={'Sắp hết hạn'}
-  className="label-custom-input-filter"
->
-  <Select
+            <Form.Item
+              name={'date_expried'}
+              label={'Sắp hết hạn'}
+              className="label-custom-input-filter"
+            >
+              <Select
 
-    style={{ width: '100%' }}
-    options={listTimeExpried}
+                style={{ width: '100%' }}
+                options={listTimeExpried}
 
-  />
-</Form.Item>
+              />
+            </Form.Item>
 
-</Col>
+          </Col>
         </Row>
         <Row align={'bottom'} style={{ float: 'right', marginTop: '20px' }}>
           <Space>

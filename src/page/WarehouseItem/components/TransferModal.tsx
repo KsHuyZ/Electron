@@ -291,7 +291,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
 
     if (newList) {
       try {
-        const result = await ipcRenderer.invoke(`${isShow === STATUS_MODAL.TRANSFER ? "change-warehouse" : "export-warehouse"}`, item, newList);
+        const result = await ipcRenderer.invoke(`${isShow === STATUS_MODAL.TRANSFER ? "change-warehouse" : "temp-export-warehouse"}`, item, newList);
         if (result) {
           await props.fetching();
           setIsShow();

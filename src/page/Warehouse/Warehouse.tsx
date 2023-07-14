@@ -123,9 +123,6 @@ const Warehouse = () => {
         cleanFormEdit();
     }
 
-    const handlePrint = async () => {
-        const result = await ipcRenderer.invoke("print-form")
-    }
 
     return (
         <div className="form-table">
@@ -134,7 +131,6 @@ const Warehouse = () => {
             }
             <div className="header">
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>
-                <div className="add-data"> <Button type="primary" onClick={handlePrint}>Test </Button></div>
             </div>
             <Table
                 columns={columns}
