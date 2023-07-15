@@ -9,7 +9,7 @@ import { renderTextStatus, formatNumberWithCommas } from "@/utils";
 import { DataType, FormWareHouseItem, ISearchWareHouseItem, STATUS_MODAL } from "../../WarehouseItem/types/index";
 import TableWareHouse from "../../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
-import { ItemSource, ResponseIpc, TableData } from "@/types";
+import { ItemSource, ResponseIpc, STATUS, TableData } from "@/types";
 import { useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
 // import TransferModal from "./components/TransferModal";
@@ -17,6 +17,8 @@ import { ERROR } from "../../WarehouseItem/constants/messValidate";
 import { useSearchParams } from "react-router-dom";
 import FilterWareHouseItem from "@/page/WarehouseItem/components/FilterWareHouseItem";
 import TransferModal from "@/page/WarehouseItem/components/TransferModal";
+import toasitify from "../../../lib/toastify"
+import moment from "moment";
 
 const { confirm } = Modal;
 
@@ -32,6 +34,7 @@ const defaultRows: DataType[] = [
     quantity_real: null,
     status: null,
     date_expried: '',
+    prev_idwarehouse: 0,
     date_created_at: '',
     date_updated_at: '',
   }
@@ -60,7 +63,10 @@ const RecipientItem = () => {
   const [isShowSearch, setIsShowSearch] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [nameSearch, setNameSearch] = useState('');
-  const [isSearch, setIsSearch] = useState<Boolean>(false);
+  const [isSearch, setIsSearch] = useState<boolean>(false);
+  const [isReadyExport, setIsReadyExport] = useState<boolean>(false)
+
+  const { notifyError, notifySuccess } = toasitify
 
   const columns: ColumnsType<DataType> = [
     {
@@ -136,24 +142,7 @@ const RecipientItem = () => {
         )
       }
     },
-    {
-      title: "Hành động",
-      dataIndex: "action",
-      fixed: "right",
-      width: 150,
-      render: (_, record: DataType) => (
-        <Space size="middle">
-          <UilPen style={{ cursor: "pointer" }} onClick={() => {
-            setIsEdit(true);
-            setItemEdit(record)
-            setIsShowModal(true)
-          }} />
-          <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />
-        </Space>
-      ),
-    }
   ];
-
 
   useEffect(() => {
     new Promise(async () => {
@@ -191,6 +180,7 @@ const RecipientItem = () => {
     };
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idRecipient, paramsSearch: paramsSearch });
     if (result) {
+      console.log(result)
       setListData((prev) => (
         {
           ...prev,
@@ -216,6 +206,13 @@ const RecipientItem = () => {
 
   const handleDataRowSelected = (listRows: DataType[]) => {
     setListItemHasChoose(listRows);
+    listRows.forEach(row => {
+      if (row.status !== STATUS.TEMPORARY_EXPORT) {
+        setIsReadyExport(false)
+        throw new Error("errorr")
+      }
+    })
+    return setIsReadyExport(true)
   }
 
   const removeItem = async (IDIntermediary: number, IDWarehouseItem: number) => {
@@ -260,7 +257,25 @@ const RecipientItem = () => {
     setIsSearch(true);
   }
 
-  console.log(listItemHasChoose)
+  const handleCreateExportBill = async () => {
+    if (!isReadyExport) return notifyError("Bạn đã chọn mặt hàng khác với tạm xuất")
+    const result = await ipcRenderer.invoke("print-form", { items: listItemHasChoose, name: "Test", note: "Khum bíc", nature: "Xuất theo", total: 20000, date: moment.now() })
+  }
+
+  const exportWarehouseCallBack = async (event: Electron.IpcRendererEvent, isSuccess: boolean) => {
+    if (!isSuccess) {
+      return notifyError("Xuất kho thất bại. Hãy thử lại")
+    }
+    await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
+    return notifySuccess("Xuất kho thành công")
+  }
+
+  useEffect(() => {
+    ipcRenderer.on("export-warehouse", exportWarehouseCallBack)
+    return () => {
+      ipcRenderer.removeListener("export-warehouse", exportWarehouseCallBack)
+    }
+  }, [])
 
   return (
     <Row className="filter-bar">
@@ -287,6 +302,7 @@ const RecipientItem = () => {
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
                     <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
                     <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
+                    <Button className="default" onClick={handleCreateExportBill} disabled={listItemHasChoose.length > 0 ? false : true} type="primary">Tạo Phiếu Xuất Kho</Button>
                   </Space>
                 </Col>
               </Row>
@@ -296,6 +312,7 @@ const RecipientItem = () => {
                   isSearch={isSearch}
                   handleIsSearch={(envSearch) => setIsSearch(envSearch)}
                   handleChangeName={(value) => setNameSearch(value)}
+                  page='receiving'
                 />)}
             </Card>
             <span style={{ marginLeft: 8, paddingBottom: 8 }}>

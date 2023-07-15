@@ -18,6 +18,7 @@ type DataType = {
   id_Source?: string;
   id_WareHouse?: number;
   warehouseName?: string;
+  prev_idwarehouse?: number;
 };
 
 type WarehouseItem = {
@@ -46,9 +47,9 @@ type ISearchWareHouseItem = {
   endDate: string;
   idSource: number | null;
   status: number | null;
-  now_date_ex: string;
-after_date_ex: string;
-}
+  now_date_ex?: string;
+  after_date_ex?: string;
+};
 
 export enum STATUS_MODAL {
   TRANSFER = "transfer",
@@ -57,4 +58,9 @@ export enum STATUS_MODAL {
   CLOSE = "close",
 }
 
-export type { DataType, WarehouseItem, FormWareHouseItem,ISearchWareHouseItem };
+export type {
+  DataType,
+  WarehouseItem,
+  FormWareHouseItem,
+  ISearchWareHouseItem,
+};
