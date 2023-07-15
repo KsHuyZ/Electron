@@ -70,3 +70,12 @@ export type TabMenu = {
   component: any
 
 }
+
+export type FormatTypeTable<T> = T & {
+  children?: FormatTypeTable<T>[];
+};
+
+export const nameOf =
+  <T>() =>
+  (name: keyof T): any =>
+    name;

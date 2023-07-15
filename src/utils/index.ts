@@ -1,8 +1,9 @@
-import { STATUS, COLOR_STATUS } from "@/types";
+import { STATUS, COLOR_STATUS, FormatTypeTable } from "@/types";
 import { RuleObject } from "antd/lib/form";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import queryString from "query-string";
+import { DataType } from "@/page/WarehouseItem/types";
 
 export const renderTextStatus = (idStatus: number) => {
   let response = {
@@ -54,7 +55,7 @@ export const renderTextStatus = (idStatus: number) => {
 };
 
 export const formatNumberWithCommas = (value: number): string => {
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " vnđ";
+  return value?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " vnđ" ?? 0;
 };
 
 export const createRegexValidator = (regex: RegExp, errorMessage: string) => {
@@ -143,3 +144,41 @@ if(timeDiff > 0){
 }
 return days;
 }
+
+export const createFormattedTable = (items: DataType[]): FormatTypeTable<DataType>[] => {
+  const result: FormatTypeTable<DataType>[] = [];
+
+  for (const current of items) {
+    let found = false;
+
+    for (const formattedItem of result) {
+      if (formattedItem.id_WareHouse === current.id_WareHouse) {
+        if (!formattedItem.children) {
+          formattedItem.children = [];
+        }
+
+        formattedItem.children.push(current);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      result.push(current);
+    }
+  }
+
+  return result;
+};
+
+export const removeItemChildrenInTable = (arrays: FormatTypeTable<DataType>[]): DataType[] => {
+  const newArray = JSON.parse(JSON.stringify(arrays));
+  for (let i = 0; i < newArray.length; i++) {
+    const item = newArray[i];
+    if(item.children){
+      delete item.children;
+    }
+    item.totalPrice = Number(item.price) * Number(item.quantity);
+  }
+  return newArray;
+};

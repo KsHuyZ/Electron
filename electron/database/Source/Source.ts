@@ -2,6 +2,8 @@ import sqlite3 from "sqlite3";
 import { BrowserWindow } from "electron";
 import db from "../../utils/connectDB";
 import { Source } from "../../types";
+import { ISearchWareHouseItem } from "../../types";
+
 sqlite3.verbose();
 
 const Source = {
@@ -106,6 +108,85 @@ const Source = {
       return { rows};
     } catch (err) {
       console.log(err);
+    }
+  },
+  getAllEntryForm: async (
+    id: number,
+    pageSize: number,
+    currentPage: number,
+    paramsSearch: ISearchWareHouseItem
+  ) => {
+    const { name, idSource, startDate, endDate, status, now_date_ex, after_date_ex } = paramsSearch;
+
+    try {
+      const offsetValue = (currentPage - 1) * pageSize;
+      const whereConditions: string[] = [];
+      const queryParams: any[] = [id, pageSize, offsetValue];
+
+      // Add query conditions based on the provided search parameters
+      if (name) {
+        whereConditions.unshift(`wi.name LIKE ?`);
+        queryParams.unshift(`%${name}%`);
+      }
+      if (idSource) {
+        whereConditions.unshift(`wi.id_Source = ?`);
+        queryParams.unshift(idSource);
+      }
+      if (startDate) {
+        whereConditions.unshift(`wi.date_created_at >= ?`);
+        queryParams.unshift(startDate);
+      }
+      if (endDate) {
+        whereConditions.unshift(`wi.date_created_at <= ?`);
+        queryParams.unshift(endDate);
+      }
+      if (status) {
+        whereConditions.unshift(`i.status = ?`);
+        queryParams.unshift(status);
+      }
+
+      if(now_date_ex){
+        whereConditions.unshift(`wi.date_expried >= ?`);
+        queryParams.unshift(now_date_ex);
+      }
+
+      if(after_date_ex){
+        whereConditions.unshift(`wi.date_expried <= ?`);
+        queryParams.unshift(after_date_ex);
+      }
+
+
+      const whereClause =
+        whereConditions.length > 0
+          ? `WHERE ${whereConditions.join(" AND ")} AND wi.id_Source = ?`
+          : "WHERE wi.id_Source = ?";
+      const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
+        wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+        i.ID as IDIntermediary, i.id_WareHouse, i.status, i.quality, i.quantity,
+        h.name as nameWareHouse,
+        i.date, COUNT(i.ID) OVER() AS total 
+        FROM warehouseItem wi
+        JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
+        JOIN WareHouse h ON h.ID = i.id_WareHouse
+        ${whereClause}
+        ORDER BY i.ID DESC
+        LIMIT ? OFFSET ?`;
+
+      const rows: any = await new Promise((resolve, reject) => {
+        db.all(selectQuery, ...queryParams, (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+      });
+
+      const countResult = rows.length > 0 ? rows[0].total : 0;
+      return { rows, total: countResult };
+    } catch (err) {
+      console.log(err);
+      return null;
     }
   },
 };

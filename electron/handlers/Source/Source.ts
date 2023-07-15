@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import SourceDB from "../../database/Source/Source";
 import { Source } from "../../types";
 const Source = () => {
-  const { createItemSource, getAllItemSource, updateSource, deleteItemSource,getAllItemSourceNoPagination } =
+  const { createItemSource, getAllItemSource, updateSource, deleteItemSource,getAllItemSourceNoPagination,getAllEntryForm } =
     SourceDB;
 
   // listen create Source request
@@ -46,6 +46,26 @@ const Source = () => {
     const response = await deleteItemSource(id);
     return response;
   });
+
+  ipcMain.handle(
+    "source-entry-form-request-read",
+    async (
+      event,
+      data: { pageSize: number; currentPage: number; id?: number; paramsSearch?: any; } = {
+        pageSize: 10,
+        currentPage: 1,
+      }
+    ) => {
+      const { pageSize, currentPage, paramsSearch } = data;
+      const response = await getAllEntryForm(
+        data.id,
+        pageSize,
+        currentPage,
+        paramsSearch
+      );
+      return response;
+    }
+  );
 
   // ipcMain.on("get-product-nguonHang")
 };

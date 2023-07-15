@@ -88,7 +88,7 @@ const ItemSource = () => {
       title: 'Tên nguồn hàng',
       dataIndex: 'name',
       render: (_,record) =>{
-        return <Link to={`/item-source/${record.ID}`}>{record.name}</Link>
+        return <Link to={`/item-source/${record.ID}/${record.name}`}>{record.name}</Link>
       }
     },
     {

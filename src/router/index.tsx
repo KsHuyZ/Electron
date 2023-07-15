@@ -37,7 +37,7 @@ const Routers = () => {
           <Route path='/recipient' element={<Recipient />} />
           <Route path='/recipient/:idRecipient' element={<RecipientItem />} />
           <Route path='/item-source' element={<ItemSource />} />
-          <Route path='/item-source/:id' element={<EntryForm />} />
+          <Route path='/item-source/:id/:nameSource' element={<EntryForm />} />
           <Route path='/warehouse-item' element={<WareHouseItem />} />
           {/* <Route path='/entry-form/:id' element={<EntryForm />} /> */}
         </Route>
