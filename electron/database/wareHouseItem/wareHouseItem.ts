@@ -666,7 +666,6 @@ const wareHouseItem = {
         date
       );
       const promises = intermediary.map(async (item) => {
-        console.log("item:", item);
         const row: { ID: number; quantity: number } = await new Promise(
           (resolve, reject) => {
             const query = `SELECT ID,quantity from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? and quality = ? and prev_idwarehouse = ? AND status = 4`;
@@ -693,28 +692,14 @@ const wareHouseItem = {
         if (row) {
           const { ID, quantity } = row;
           const updateQuery = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ? `;
-       
           await runQuery(updateQuery, [quantity, ID]);
           await runQuery(deleteQuery, [item["IDIntermediary"]]);
           await createDeliveryItem(idCoutDelivery, ID);
         } else {
-          const insertQuery = `INSERT INTO Intermediary(id_WareHouse,prev_idwarehouse, id_WareHouseItem, status
-            , quality, quantity, date, date_temp_export) VALUES (?, ?, ?, ?, ?, ?,?,?)`;
-          const { quality, quantity, date, date_temp_export } = item;
-          const id_wareHouse = item["id_WareHouse"];
-          const id_prev_warehouse = item["prev_idwarehouse"];
-          const id_wareHouse_item = item["IDWarehouseItem"];
+          const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
           const ID = await runQueryReturnID(insertQuery, [
-            id_wareHouse,
-            id_prev_warehouse,
-            id_wareHouse_item,
-            4,
-            quality,
-            quantity,
-            date,
-            date_temp_export,
+            item["IDIntermediary"],
           ]);
-          await runQuery(deleteQuery, [item["IDIntermediary"]]);
           await createDeliveryItem(idCoutDelivery, ID);
         }
       });
