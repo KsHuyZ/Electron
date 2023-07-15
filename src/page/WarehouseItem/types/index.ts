@@ -3,6 +3,7 @@ type DataType = {
   IDIntermediary: string;
   IDWarehouseItem?: string;
   name: string;
+  nameWareHouse?:string;
   price: string;
   unit: string;
   quality: number | null;
@@ -19,6 +20,7 @@ type DataType = {
   id_WareHouse?: number;
   warehouseName?: string;
   prev_idwarehouse?: number;
+  totalPrice?: number;
 };
 
 type WarehouseItem = {

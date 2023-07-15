@@ -4,16 +4,19 @@ import { Row, Col, Card, Input, Button, Space, Tag } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import TableWareHouse from "@/page/WarehouseItem/components/TableWareHouse";
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "@/page/WarehouseItem/types";
-import { formatNumberWithCommas, getDateExpried, renderTextStatus } from "@/utils";
-import { ResponseIpc,TableData } from "@/types";
+import { formatNumberWithCommas, getDateExpried, renderTextStatus, createFormattedTable, removeItemChildrenInTable } from "@/utils";
+import { ResponseIpc,TableData,FormatTypeTable } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import { useSearchParams, useParams } from "react-router-dom";
 import { ipcRenderer } from "electron";
+import TableTree from "@/components/TreeTable/TreeTable";
+import ModalCreateEntry from "../components/ModalCreateEntry";
 
 const defaultRows: DataType[] = [
     {
       IDIntermediary: '',
       name: '',
+      nameWareHouse : '',
       price: '',
       unit: '',
       quality: null,
@@ -37,15 +40,15 @@ const defaultRows: DataType[] = [
     rows: defaultRows,
   };
 
-const CreateEntryForm = () =>{
+const ListEntryForm = () =>{
     const [nameSearch, setNameSearch] = useState("");
     const [isSearch, setIsSearch] = useState<Boolean>(false);
-    const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
+    const [listData, setListData] = useState<TableData<FormatTypeTable<DataType>[]>>(defaultTable);
     const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
     const [isListenChange, setIsListenChange] = useState(false);
-    const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
+    const [statusModal, setStatusModal] = useState<boolean>(false);
     const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
-    const {id} = useParams();
+    const {id,nameSource} = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
 
     const columns: ColumnsType<DataType> = [
@@ -58,8 +61,18 @@ const CreateEntryForm = () =>{
           }
         },
         {
+          title: 'Tên Kho Hàng',
+          dataIndex: 'nameWareHouse',
+          render: (text: string) => (<b>{text.toUpperCase()}</b>),
+          width: 200,
+        },
+        {
           title: 'Tên mặt hàng',
           dataIndex: 'name',
+          // render: (text) => <a>{text}</a>,
+          // onCell: (_, index) => ({
+          //   colSpan: index === 1 ? 2 : 1,
+          // }),
           width: 200,
         },
         {
@@ -113,7 +126,7 @@ const CreateEntryForm = () =>{
           title: "Trạng thái",
           dataIndex: "status",
           fixed: 'right',
-          width: 150,
+          width: 200,
           render: (confirm: number) => {
             const { text, color } = renderTextStatus(confirm)
             return (
@@ -125,24 +138,8 @@ const CreateEntryForm = () =>{
             )
           }
         },
-        // {
-        //   title: "Hành động",
-        //   dataIndex: "action",
-        //   fixed: "right",
-        //   width: 150,
-        //   render: (_, record: DataType) => (
-        //     <Space size="middle">
-        //       <UilPen style={{ cursor: "pointer" }} onClick={() => {
-        //         setIsEdit(true);
-        //         setItemEdit(record)
-        //         setIsShowModal(true)
-        //       }} />
-        //       <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />
-        //     </Space>
-        //   ),
-        // }
       ];
-
+    
 
   useEffect(() => {
     new Promise(async () => {
@@ -183,15 +180,16 @@ const CreateEntryForm = () =>{
       now_date_ex : parsedSearchParams.now_date_ex || '' ,
       after_date_ex : parsedSearchParams.after_date_ex || ''
     };
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: id, paramsSearch: paramsSearch });
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: currentPage, id: id, paramsSearch: paramsSearch });
     if (result) {
+      const responseRow = createFormattedTable(result.rows);
       setListData((prev) => (
         {
           ...prev,
-          rows: result.rows as any,
+          rows: responseRow,
           pagination: {
             ...prev.pagination,
-            total: result.total as any
+            total: responseRow.length
           },
           loading: false
         }
@@ -209,11 +207,21 @@ const CreateEntryForm = () =>{
         getListItem(pagination.pageSize!, pagination.current!, pagination.total!)
       };
     
-      const handleDataRowSelected = (listRows: DataType[]) => {
+      const handleDataRowSelected = (listRows: any) => {
         setListItemHasChoose(listRows);
       }
-    
 
+      const removeItemList = (IDIntermediary: string) => {
+        const newList = removeItemChildrenInTable(listItemHasChoose);
+        
+        const filterNewList = newList.filter(item => item.IDIntermediary !== IDIntermediary);
+        setListItemHasChoose(filterNewList);
+        setIsListenChange(true);
+      }
+
+      console.log(listData);
+      
+      
     return (
         <Row className="filter-bar">
       {/* <Row style={{ width: '100%' }} align="middle">
@@ -236,8 +244,8 @@ const CreateEntryForm = () =>{
                 </Col>
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
-                    <Button className={true ? `default active-search` : `default`} icon={<UilFilter />}>Lọc</Button>
-                    {/* <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button> */}
+                    {/* <Button className={true ? `default active-search` : `default`} icon={<UilFilter />}>Lọc</Button> */}
+                    <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(true)}>Làm Phiếu Nhập</Button>
                     {/* <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button> */}
                   </Space>
                 </Col>
@@ -251,16 +259,14 @@ const CreateEntryForm = () =>{
                 />)} */}
             </Card>
             <span style={{ marginLeft: 8, paddingBottom: 8 }}>
-              {/* {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : ''} */}
+              {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : ''}
             </span>
           </div>
-          <TableWareHouse
-            setIsShowPopUp={() => setIsShowPopUp(true)}
-            setRowsSelect={handleDataRowSelected as any}
-            isShowSelection={true}
+          <TableTree
+          isShowSelection={true}
             columns={columns}
-            dataSource={listData.rows}
-            pagination={
+            data={listData.rows as any}
+            pagination = {
               {
                 ...listData.pagination,
                 showSizeChanger: true
@@ -271,37 +277,27 @@ const CreateEntryForm = () =>{
             onChange={handleTableChange}
             isListenChange={isListenChange}
             setIsListenChange={(status: boolean) => setIsListenChange(status)}
+            setRowsSelect={handleDataRowSelected as any}
             listRowSelected={listItemHasChoose}
           />
         </div>
       </Col>
-      {/* {
-        isShowModal && (
-          <AddWareHouseItem
-            isEdit={isEdit}
-            setIsEdit={(status) => setIsEdit(status)}
-            itemEdit={itemEdit}
-            isShowModal={isShowModal}
-            idWareHouse={idWareHouse}
-            onCloseModal={() => setIsShowModal(false)}
-            fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
+      
+      {
+        statusModal &&(
+          <ModalCreateEntry
+            isShowModal={statusModal}
+            onCloseModal={() => setStatusModal(false)}
+            listItem={listItemHasChoose as any}
+            idSource={id}
+            nameSource={nameSource}
+            removeItemList={removeItemList}
+            // fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
           />
         )
       }
-      {
-        statusModal === STATUS_MODAL.TRANSFER && (
-          <TransferModal
-            isShow={statusModal}
-            idWareHouse={idWareHouse}
-            setIsShow={handleShowTransferModal}
-            listItem={listItemHasChoose}
-            removeItemList={removeItemList}
-            fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
-          />
-        )
-      } */}
     </Row>
     )
 }
 
-export default CreateEntryForm
+export default ListEntryForm
