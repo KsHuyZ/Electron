@@ -11,6 +11,7 @@ const WareHouse = () => {
     updateReceiving,
     getListWareHouseExceptId,
     getListReceiving,
+    getAllWareHouseNoPagination
   } = wareHouseDB;
 
   //listen create warehouse request
@@ -41,6 +42,12 @@ const WareHouse = () => {
       return response;
     }
   );
+
+  ipcMain.handle("get-warehouse-no-pagination", async(event) =>{
+    const response = await getAllWareHouseNoPagination();
+    return response;
+  })
+
   // listen get all Receiving request
   ipcMain.handle(
     "receiving-request-read",

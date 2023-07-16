@@ -26,7 +26,7 @@ type DataType = {
 type WarehouseItem = {
   idSource: string;
   name: string;
-  price: string;
+  price: string | number | null;
   unit: string;
   quality: string;
   date_expried: any;

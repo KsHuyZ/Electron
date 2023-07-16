@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { UilFilter, UilSearch } from '@iconscout/react-unicons'
-import { Row, Col, Card, Input, Button, Space, Tag } from "antd";
+import { Row, Col, Card, Input, Button, Space, Tag, Select } from "antd";
 import type { ColumnsType } from 'antd/es/table';
-import TableWareHouse from "@/page/WarehouseItem/components/TableWareHouse";
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "@/page/WarehouseItem/types";
 import { formatNumberWithCommas, getDateExpried, renderTextStatus, createFormattedTable, removeItemChildrenInTable } from "@/utils";
-import { ResponseIpc,TableData,FormatTypeTable } from "@/types";
+import { ResponseIpc,TableData,FormatTypeTable,OptionSelect } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import { useSearchParams, useParams } from "react-router-dom";
 import { ipcRenderer } from "electron";
@@ -50,6 +49,8 @@ const ListEntryForm = () =>{
     const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
     const {id,nameSource} = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
+    const [listWareHouse, setListWareHouse] = useState<OptionSelect[]>([]);
+    const [selectSearch, setSelectSearch] = useState<{select: string}>();
 
     const columns: ColumnsType<DataType> = [
         {
@@ -69,10 +70,6 @@ const ListEntryForm = () =>{
         {
           title: 'Tên mặt hàng',
           dataIndex: 'name',
-          // render: (text) => <a>{text}</a>,
-          // onCell: (_, index) => ({
-          //   colSpan: index === 1 ? 2 : 1,
-          // }),
           width: 200,
         },
         {
@@ -144,6 +141,7 @@ const ListEntryForm = () =>{
   useEffect(() => {
     new Promise(async () => {
       await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+      await getListWareHouse();
     })
   }, []);
 
@@ -153,11 +151,23 @@ const ListEntryForm = () =>{
         await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
       })
     }
-  }, [isSearch]);
+  }, [isSearch, selectSearch]);
+
+  const getListWareHouse = async () => {
+    const result = await ipcRenderer.invoke("get-warehouse-no-pagination");
+    if (result as any) {
+      const option: OptionSelect[] = result.rows.map((item: any) => ({
+        label: item.name,
+        value: item.ID
+      }));
+
+      setListWareHouse(option);
+    }
+  }
 
 
   const getListItem = async (pageSize: number, currentPage: number, total: number) => {
-    const parsedSearchParams = Object.fromEntries(searchParams);
+
     setListData({
       ...listData,
       pagination: {
@@ -168,18 +178,14 @@ const ListEntryForm = () =>{
       loading: true
     });
 
-    console.log(parsedSearchParams);
-    
 
-    const paramsSearch: ISearchWareHouseItem = {
-      name: parsedSearchParams.name || nameSearch,
-      idSource: Number(parsedSearchParams.idSource) || null,
-      startDate: parsedSearchParams.startDate || '',
-      endDate: parsedSearchParams.endDate || '',
-      status: Number(parsedSearchParams.status) || null,
-      now_date_ex : parsedSearchParams.now_date_ex || '' ,
-      after_date_ex : parsedSearchParams.after_date_ex || ''
+    const paramsSearch: {name: string, itemWareHouse: any} = {
+      name: nameSearch ?? '',
+      itemWareHouse : selectSearch?.select ?? ''
     };
+
+    console.log(paramsSearch);
+    
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: currentPage, id: id, paramsSearch: paramsSearch });
     if (result) {
       const responseRow = createFormattedTable(result.rows);
@@ -218,31 +224,53 @@ const ListEntryForm = () =>{
         setListItemHasChoose(filterNewList);
         setIsListenChange(true);
       }
+      
+      const handleChangeInput = (key: string,event : any) =>{
+        if(key === 'select'){
+          setSelectSearch({
+            select : event
+          });
+          setIsSearch(true);
+        }else{
+          setNameSearch(event.target.value);
+        }
+      }
 
-      console.log(listData);
-      
-      
+      const handleSearchName = () => {
+        setIsSearch(true);
+      }
+  
     return (
         <Row className="filter-bar">
-      {/* <Row style={{ width: '100%' }} align="middle">
-        <Col span={12}>
-          <h2 style={{margin : 0}}>Nguồn Hàng </h2>
-        </Col>
-      </Row> */}
       <Col span={24}>
         <div>
           <div>
-
             <Card style={{ margin: '16px 0' }}>
               <Row className="filter-bar">
-                <Col span={12} className="col-item-filter">
-                  <div className="form-item" style={{ width: '60%' }}>
+                <Col span={10} className="col-item-filter">
+                  <div className="form-item" style={{ width: '70%' }}>
                     <label htmlFor="">Tên mặt hàng</label>
-                    <Input value={nameSearch} onChange={(event) => setNameSearch(event.target.value)} />
+                    <Input value={nameSearch} onChange={(event) => handleChangeInput('name',event)} />
                   </div>
-                  <Button type="primary" ><UilSearch /></Button>
+                  <Button type="primary" onClick={handleSearchName}><UilSearch /></Button>
                 </Col>
-                <Col span={12}>
+                <Col span={10} className="col-item-filter">
+                  <div className="form-item" style={{ width: '70%' }}>
+                    <label htmlFor="">Kho Hàng</label>
+                    <Select
+                    style={{width : '100%'}}
+                    allowClear
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                    options={listWareHouse}
+                    onChange={(value) => handleChangeInput('select',value)}
+                    />
+                  </div>
+                </Col>
+                <Col span={4}>
                   <Space direction="horizontal" size={24}>
                     {/* <Button className={true ? `default active-search` : `default`} icon={<UilFilter />}>Lọc</Button> */}
                     <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(true)}>Làm Phiếu Nhập</Button>
@@ -250,13 +278,6 @@ const ListEntryForm = () =>{
                   </Space>
                 </Col>
               </Row>
-              {/* {isShowSearch && (
-                <FilterWareHouseItem
-                  name={nameSearch}
-                  isSearch={isSearch}
-                  handleIsSearch={(envSearch) => setIsSearch(envSearch)}
-                  handleChangeName={(value) => setNameSearch(value)}
-                />)} */}
             </Card>
             <span style={{ marginLeft: 8, paddingBottom: 8 }}>
               {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : ''}

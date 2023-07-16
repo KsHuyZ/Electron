@@ -227,7 +227,7 @@ const wareHouseItem = {
 
     await new Promise((resolve, reject) => {
       db.run(
-        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, date_create_at = ?, date_updated_at = ?, note = ?, quantity_plane = ? WHERE ID = ?`,
+        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, date_created_at = ?, date_updated_at = ?, note = ?, quantity_plane = ? WHERE ID = ?`,
         [
           name,
           price,

@@ -100,7 +100,7 @@ export const formatDate = (newDate: any, suffix: boolean = false, type: string =
   return formattedDate;
 };
 
-export const convertPrice = (priceString: string) => {
+export const convertPrice = (priceString: any) : number => {
   // Remove all dots from the price string
   const priceWithoutDots = priceString.replace(/\./g, "");
 

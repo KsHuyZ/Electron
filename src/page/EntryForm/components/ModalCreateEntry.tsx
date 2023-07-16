@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Modal, Form, Row, Col, 
     Input, Select, Space, Button, DatePicker, Tag, Table, message } from "antd";
 import { ModalEntryForm } from "../types";
@@ -10,6 +10,7 @@ import { formatNumberWithCommas, getDateExpried, removeItemChildrenInTable } fro
 import { getMessage, ERROR } from "@/page/WarehouseItem/constants/messValidate";
 import { UilMultiply } from "@iconscout/react-unicons";
 import { FormInstance } from "antd/lib/form";
+import docso from "@/utils/toVietnamese";
 
 interface PropsModal {
     isShowModal: any;
@@ -36,7 +37,6 @@ const nameOfEntryForm = nameOf<ModalEntryForm>();
 
 const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
     const {isShowModal, onCloseModal, listItem, removeItemList,nameSource} = props;
-    const [formEntry] = Form.useForm();
     const [loadingButton, setLoadingButton] = useState<boolean>(false);
     const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(removeItemChildrenInTable(listItem as any));
     const [paginationInfo, setPaginationInfo] = useState({
@@ -187,7 +187,7 @@ const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
                 <Button onClick={handleClean}>
                     Đóng
                 </Button>
-                <Button type="primary" htmlType="submit" form="formEntry" loading={loadingButton} onClick={handleSubmitForm}>
+                <Button type="primary" htmlType="submit" loading={loadingButton} onClick={handleSubmitForm}>
                     Làm Phiếu
                 </Button>
             </Space>
@@ -196,7 +196,7 @@ const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
 
     const handleClean = () =>{
         onCloseModal();
-        formEntry.resetFields();
+        formRef.current?.resetFields();
     }
 
     const onFinishFormManagement = async(values: ModalEntryForm) =>{
@@ -211,7 +211,11 @@ const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
       const filterItem = listItemEntryForm.filter(cur => cur.IDIntermediary !== id);
       setListItemEntryForm(filterItem);
       removeItemList(id);
-    } 
+    };
+
+    const totalPrice = useMemo(() => {
+      return listItemEntryForm.reduce((accumulator, currentValue) => accumulator + Number(currentValue.price) * currentValue.quantity!, 0);
+    }, [listItemEntryForm]);
 
     return (
         <Modal
@@ -222,7 +226,7 @@ const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
             width={'90%'}
             footer={<Footer />}
         >
-            <Form layout="vertical" id="formEntry" ref={formRef} onFinish={onFinishFormManagement}>
+            <Form layout="vertical" ref={formRef} onFinish={onFinishFormManagement}>
                 <Row gutter={32}>
                     <Col span={8}>
                         <Form.Item
@@ -270,6 +274,10 @@ const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
                         >
                             <Input.TextArea rows={4} />
                         </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <h4>Thành tiền : {`${new Intl.NumberFormat().format(totalPrice)} vnđ`}</h4>
+                      <h4>(Bằng chữ : {`${docso(totalPrice)}`})</h4>
                     </Col>
                 </Row>
 

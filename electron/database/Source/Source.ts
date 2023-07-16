@@ -114,9 +114,9 @@ const Source = {
     id: number,
     pageSize: number,
     currentPage: number,
-    paramsSearch: ISearchWareHouseItem
+    paramsSearch: {name: string, itemWareHouse: string}
   ) => {
-    const { name, idSource, startDate, endDate, status, now_date_ex, after_date_ex } = paramsSearch;
+    const { name, itemWareHouse } = paramsSearch;
 
     try {
       const offsetValue = (currentPage - 1) * pageSize;
@@ -128,33 +128,10 @@ const Source = {
         whereConditions.unshift(`wi.name LIKE ?`);
         queryParams.unshift(`%${name}%`);
       }
-      if (idSource) {
-        whereConditions.unshift(`wi.id_Source = ?`);
-        queryParams.unshift(idSource);
+      if (itemWareHouse) {
+        whereConditions.unshift(`i.id_WareHouse = ?`);
+        queryParams.unshift(itemWareHouse);
       }
-      if (startDate) {
-        whereConditions.unshift(`wi.date_created_at >= ?`);
-        queryParams.unshift(startDate);
-      }
-      if (endDate) {
-        whereConditions.unshift(`wi.date_created_at <= ?`);
-        queryParams.unshift(endDate);
-      }
-      if (status) {
-        whereConditions.unshift(`i.status = ?`);
-        queryParams.unshift(status);
-      }
-
-      if(now_date_ex){
-        whereConditions.unshift(`wi.date_expried >= ?`);
-        queryParams.unshift(now_date_ex);
-      }
-
-      if(after_date_ex){
-        whereConditions.unshift(`wi.date_expried <= ?`);
-        queryParams.unshift(after_date_ex);
-      }
-
 
       const whereClause =
         whereConditions.length > 0
