@@ -259,7 +259,7 @@ const RecipientItem = () => {
 
   const handleCreateExportBill = async () => {
     if (!isReadyExport) return notifyError("Bạn đã chọn mặt hàng khác với tạm xuất")
-    const result = await ipcRenderer.invoke("print-form", { items: listItemHasChoose, name: "Test", note: "Khum bíc", nature: "Xuất theo", total: 20000, date: moment.now() })
+    const result = await ipcRenderer.invoke("print-form-export", { items: listItemHasChoose, name: "Test", note: "Khum bíc", nature: "Xuất theo", total: 20000, date: moment.now() })
   }
 
   const exportWarehouseCallBack = async (event: Electron.IpcRendererEvent, isSuccess: boolean) => {
