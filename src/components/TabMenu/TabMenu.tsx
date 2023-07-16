@@ -1,9 +1,8 @@
-import React, { useState, memo } from "react";
+import React, { useState, useMemo, memo } from "react";
 import "./tabMenu.scss";
 import { TabMenu as TabMenuType } from "@/types";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-
 
 interface PropsTabMenu {
     data: TabMenuType[],
@@ -38,6 +37,8 @@ function TabMenu (props: PropsTabMenu){
         })
     },[location.hash]);
 
+    const memoizedActiveTab = useMemo(() => activeTab, [activeTab]);
+
     return (
         <div className="content-wrapper">
             <section className="content-header">
@@ -45,7 +46,7 @@ function TabMenu (props: PropsTabMenu){
                     {
                         props.data?.map((item: TabMenuType, index: number) =>(
                                                     <NavLink  key={item.tabName} className={'nav-item'} to={item.navLink} data-toggle="tab">
-                            <li className={activeTab === item.tabName ? 'nav-tabs__item actives' : 'nav-tabs__item'}>
+                            <li className={memoizedActiveTab === item.tabName ? 'nav-tabs__item actives' : 'nav-tabs__item'}>
                                                     {item.name}
                                                 </li>
                                                     </NavLink>
@@ -56,7 +57,7 @@ function TabMenu (props: PropsTabMenu){
             </section>
             <React.Suspense fallback={<></>}>
                 <Content
-                 activeRegisterTab={activeTab}
+                 activeRegisterTab={memoizedActiveTab}
                  data={props.data}
                  component={props.component}
                 />

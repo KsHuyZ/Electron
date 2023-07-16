@@ -2,7 +2,7 @@ import { Modal, Form, Space, Select, Button, Row, Col, Input, DatePicker, InputN
 import "../styles/wareHouseItem.scss";
 import { WarehouseItem, FormWareHouseItem,DataType } from "../types";
 import { getMessage,ERROR,ERROR_SERVER } from "../constants/messValidate";
-import { createRegexValidator, formatDate } from "@/utils";
+import { createRegexValidator, formatDate, convertPrice } from "@/utils";
 import { priceRegex, OptionSelect, ItemSource,QUALITY, STATUS} from "@/types";
 import { useState, useEffect } from "react";
 import { ipcRenderer } from "electron";
@@ -83,6 +83,7 @@ const parsedDate = dayjs(itemEdit?.date_expried);
         
             const params : FormWareHouseItem= {
                 ...values,
+                price : convertPrice(values.price),
                 id_wareHouse : Number(idWareHouse),
                 date_expried: dateFormat,
                 status: STATUS.TEMPORARY_IMPORT,

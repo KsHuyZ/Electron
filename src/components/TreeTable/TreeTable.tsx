@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { DataType } from "@/page/WarehouseItem/types";
 import type { TableRowSelection } from 'antd/es/table/interface';
 import { FormatTypeTable } from "@/types";
-import { useState,SetStateAction,Dispatch, useEffect } from "react";
+import React,{ useState,SetStateAction,Dispatch, useEffect } from "react";
 
 interface TableTreeProps extends TableProps<any>{
 isShowSelection? : Boolean;
@@ -16,48 +16,58 @@ setIsListenChange?: (status: boolean) => void;
 listRowSelected?: DataType[];
 }
 
-function TableTree(props:  TableTreeProps){
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const {columns, data,isShowSelection,setIsListenChange,...other} =  props;
+const TableTree = ({
+  columns,
+  data,
+  isShowSelection,
+  setIsListenChange,
+  setRowsSelect,
+  listRowSelected,
+}: TableTreeProps) => {
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
+  const onSelectChange = (selectedRowKeys : React.Key[], selectedRows :DataType[]) => {
+    setSelectedRowKeys(selectedRowKeys);
+    if (selectedRows && setRowsSelect) {
+      setRowsSelect(selectedRows);
+    }
+  };
 
-    useEffect(() => {
-        if (props.isListenChange && props.listRowSelected) {
-          setSelectedRowKeys(props.listRowSelected.map(item => +item.IDIntermediary));
-          if (props.listRowSelected && props.setRowsSelect) {
-            props.setRowsSelect(props.listRowSelected)
-          }
-          
-          props.setIsListenChange(false);
-        }
-      }, [props.isListenChange])
+  const rowSelection = {
+    selectedRowKeys,
+    preserveSelectedRowKeys: true,
+    onChange: onSelectChange,
+  };
 
-    const onSelectChange = (selectedRowKeys : React.Key[], selectedRows : DataType[]) => {
-        setSelectedRowKeys(selectedRowKeys);
-        if (selectedRows && props.setRowsSelect) {
-          props.setRowsSelect(selectedRows)
-        }
-      }
-
-
-    const rowSelection: TableRowSelection<DataType> = {
-        selectedRowKeys,
-        preserveSelectedRowKeys: true,
-        onChange: onSelectChange,
-      };
-
-    
+  const MemoTableTree = React.memo(({ columns, data, rowSelection }: TableTreeProps) => {
     return (
-        <Table
+      <Table
         columns={columns}
         scroll={{ y: 500 }}
         style={{ maxWidth: '1200px' }}
-        rowSelection={isShowSelection ? { ...rowSelection } : undefined}
+        rowSelection={rowSelection}
         dataSource={data as any}
-        rowKey={(record: FormatTypeTable<DataType>) => record.IDIntermediary}
-        {...other}
+        rowKey={(record) => record.IDIntermediary}
+        expandable = {{
+          childrenColumnName : "children",
+          defaultExpandAllRows : true
+          }}
+        bordered
       />
-    )
-}
+    );
+  });
+
+  useEffect(() => {
+    if (listRowSelected) {
+      setSelectedRowKeys(listRowSelected.map((item) => +item.IDIntermediary));
+      if (setRowsSelect) {
+        setRowsSelect(listRowSelected);
+      }
+      setIsListenChange(false);
+    }
+  }, [listRowSelected]);
+
+  return <MemoTableTree columns={columns} data={data} rowSelection={rowSelection} />;
+};
 
 export default TableTree;

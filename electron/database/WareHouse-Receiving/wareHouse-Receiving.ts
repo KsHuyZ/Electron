@@ -150,6 +150,24 @@ const WareHouse = {
       console.log(err);
     }
   },
+  getAllWareHouseNoPagination: async () => {
+    try {
+      const selectQuery =
+        "SELECT * FROM WareHouse WHERE is_receiving = 0";
+      const rows: any = await new Promise((resolve, reject) => {
+        db.all(selectQuery, (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+      });
+      return { rows};
+    } catch (err) {
+      console.log(err);
+    }
+  },
 };
 
 export default WareHouse;
