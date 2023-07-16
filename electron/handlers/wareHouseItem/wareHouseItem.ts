@@ -12,6 +12,7 @@ let currentNature = "";
 let currentTotal = 0;
 let currentDate = moment.now();
 let currentItems = [];
+let isForm = "";
 
 const wareHouseItem = () => {
   const {
@@ -95,7 +96,7 @@ const wareHouseItem = () => {
   );
 
   ipcMain.handle(
-    "print-form",
+    "print-form-export",
     async (
       event,
       data: {
@@ -108,7 +109,6 @@ const wareHouseItem = () => {
       }
     ) => {
       const { items, name, note, nature, total, date } = data;
-      console.log(items);
       startPrint(
         {
           htmlString: await formExportBill(items),
@@ -121,6 +121,7 @@ const wareHouseItem = () => {
       currentNature = nature;
       currentDate = date;
       currentItems = items;
+      isForm = "export";
       return null;
     }
   );
@@ -132,33 +133,25 @@ const wareHouseItem = () => {
       return isSuccess;
     }
   );
-  // ipcMain.handle(
-  //   "export-warehouse",
-  //   async function (
-  //     event,
-  //     id_list: Intermediary[],
-  //     name: string,
-  //     note: string,
-  //     nature,
-  //     total: number,
-  //     date: any
-  //   ) {}
-  // );
 
   ipcMain.on("save-pdf", async () => {
     const isComplete = await printPreview.saveFilePdf();
     if (isComplete) {
-      const isSuccess = await exportWarehouse(
-        currentItems,
-        currentName,
-        currentNote,
-        currentNature,
-        currentTotal,
-        currentDate
-      );
-      const mainWindow = BrowserWindow.getFocusedWindow();
-      if (mainWindow) {
-        mainWindow.webContents.send("export-warehouse", { isSuccess });
+      if (isForm === "export") {
+        const isSuccess = await exportWarehouse(
+          currentItems,
+          currentName,
+          currentNote,
+          currentNature,
+          currentTotal,
+          currentDate
+        );
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("export-warehouse", { isSuccess });
+        }
+      } else {
+        // import warehouse func
       }
     }
   });
