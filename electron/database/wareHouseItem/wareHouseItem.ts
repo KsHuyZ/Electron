@@ -3,6 +3,7 @@ import db from "../../utils/connectDB";
 import { Intermediary, WarehouseItem, ISearchWareHouseItem } from "../../types";
 import { runQuery, runQueryReturnID } from "../../utils";
 import countDelivery from "../countDelivery/countDelivery";
+import countCoupon from "../countCoupon/countCoupon";
 import { Moment } from "moment";
 const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
@@ -670,6 +671,38 @@ const wareHouseItem = {
             item["IDIntermediary"],
           ]);
           await createDeliveryItem(idCoutDelivery, ID);
+        })
+      await Promise.all(promises);
+      return true;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  },
+  importWarehouse: async (
+    id_Source: any[],
+    name: string,
+    note: string,
+    nature: string,
+    total: number,
+    date: Moment | null | any
+  ) => {
+    try {
+      const { createCountCoupon, createCouponItem } = countCoupon;
+      const idCoutCoupon = await createCountCoupon(
+        id_Source[0]["id_Source"],
+        name,
+        nature,
+        note,
+        total,
+        date
+      );
+      const promises = id_Source.map(async (item) => {
+          const insertQuery = `UPDATE Intermediary SET status = 3 WHERE ID = ?`;
+          const ID = await runQueryReturnID(insertQuery, [
+            item["IDIntermediary"],
+          ]);
+          await createCouponItem(idCoutCoupon, ID);
         })
       await Promise.all(promises);
       return true;

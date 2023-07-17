@@ -3,6 +3,7 @@ import wareHouseItemDB from "../../database/wareHouseItem/wareHouseItem";
 import { DataType, Intermediary, WarehouseItem } from "../../types";
 import { startPrint } from "../../module/print";
 import { formExportBill } from "../../utils/formExportBill";
+import { formImportBill } from "../../utils/formImportBill";
 import moment, { Moment } from "moment";
 import printPreview from "../../module/print/printPreview";
 
@@ -25,6 +26,7 @@ const wareHouseItem = () => {
     getAllWarehouseItem,
     tempExportWareHouse,
     exportWarehouse,
+    importWarehouse
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -125,6 +127,36 @@ const wareHouseItem = () => {
       return null;
     }
   );
+  ipcMain.handle(
+    "print-form-import",
+    async (
+      event,
+      data: {
+        items: DataType[];
+        name: string;
+        note: string;
+        nature: string;
+        total: number;
+        date: any;
+      }
+    ) => {
+      const { items, name, note, nature, total, date } = data;
+      startPrint(
+        {
+          htmlString: await formImportBill(items),
+        },
+        undefined
+      );
+      currentName = name;
+      currentNote = note;
+      currentTotal = total;
+      currentNature = nature;
+      currentDate = date;
+      currentItems = items;
+      isForm = "import";
+      return null;
+    }
+  );
 
   ipcMain.handle(
     "temp-export-warehouse",
@@ -151,7 +183,18 @@ const wareHouseItem = () => {
           mainWindow.webContents.send("export-warehouse", { isSuccess });
         }
       } else {
-        // import warehouse func
+        const isSuccess = await importWarehouse(
+          currentItems,
+          currentName,
+          currentNote,
+          currentNature,
+          currentTotal,
+          currentDate
+        );
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("import-warehouse", { isSuccess });
+        }  
       }
     }
   });
