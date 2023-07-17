@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Modal, Form, Row, Col, 
     Input, Select, Space, Button, DatePicker, Tag, Table, message } from "antd";
 import { ModalEntryForm } from "../types";
@@ -6,11 +6,12 @@ import { nameOf, OptionSelect, FormatTypeTable } from "@/types";
 import TableTree from "@/components/TreeTable/TreeTable";
 import { ColumnsType } from "antd/es/table";
 import { DataType } from "@/page/WarehouseItem/types";
-import { formatNumberWithCommas, getDateExpried, removeItemChildrenInTable } from "@/utils";
+import { formatNumberWithCommas, getDateExpried, removeItemChildrenInTable, formatDate } from "@/utils";
 import { getMessage, ERROR } from "@/page/WarehouseItem/constants/messValidate";
 import { UilMultiply } from "@iconscout/react-unicons";
 import { FormInstance } from "antd/lib/form";
 import docso from "@/utils/toVietnamese";
+import { ipcRenderer } from "electron";
 
 interface PropsModal {
     isShowModal: any;
@@ -18,7 +19,7 @@ interface PropsModal {
     idSource?: string;
     nameSource?: string;
     listItem?: FormatTypeTable<DataType> | [];
-    // fetching: () => Promise<void>;
+    fetching: () => Promise<void>;
     removeItemList: (IDIntermediary: string) => void;
 }
 
@@ -36,7 +37,7 @@ const defaultOptionNature : OptionSelect[] = [
 const nameOfEntryForm = nameOf<ModalEntryForm>();
 
 const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
-    const {isShowModal, onCloseModal, listItem, removeItemList,nameSource} = props;
+    const {isShowModal, onCloseModal, listItem, removeItemList,nameSource, fetching} = props;
     const [loadingButton, setLoadingButton] = useState<boolean>(false);
     const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(removeItemChildrenInTable(listItem as any));
     const [paginationInfo, setPaginationInfo] = useState({
@@ -45,6 +46,12 @@ const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
     });
     const formRef = useRef<FormInstance>(null);
     
+    useEffect(() => {
+      ipcRenderer.on("import-warehouse", importWarehouseCallBack)
+      return () => {
+        ipcRenderer.removeListener("import-warehouse", importWarehouseCallBack)
+      }
+    }, [])
 
 
     const columns: ColumnsType<DataType> = [
@@ -194,6 +201,14 @@ const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
         )
     }
 
+    const importWarehouseCallBack = async (event: Electron.IpcRendererEvent, isSuccess: boolean) => {
+      if (!isSuccess) {
+        return message.error("Nhập kho thất bại. Hãy thử lại")
+      }
+      await fetching();
+      return message.success("Nhập kho thành công")
+    }
+
     const handleClean = () =>{
         onCloseModal();
         formRef.current?.resetFields();
@@ -204,6 +219,20 @@ const ModalCreateEntry: React.FC<PropsModal> =  (props) =>{
         message.error('Không có sản phẩm để làm phiếu');
         return;
       }
+
+      const params: any = {
+        ...values,
+        items : listItemEntryForm,
+        name : values.name,
+        note : values.note,
+        nature : values.nature,
+        date : formatDate(values.date, false, 'no_date'),
+        total : totalPrice
+      };
+
+      const result = await ipcRenderer.invoke("print-form-import", {...params});
+
+      console.log(params);
       
     }
 

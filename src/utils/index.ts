@@ -175,9 +175,6 @@ export const removeItemChildrenInTable = (arrays: FormatTypeTable<DataType>[]): 
   const newArray = JSON.parse(JSON.stringify(arrays));
   for (let i = 0; i < newArray.length; i++) {
     const item = newArray[i];
-    if(item.children){
-      delete item.children;
-    }
     item.totalPrice = Number(item.price) * Number(item.quantity);
   }
   return newArray;

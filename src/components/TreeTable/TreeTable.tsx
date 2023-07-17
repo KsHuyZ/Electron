@@ -16,20 +16,20 @@ setIsListenChange?: (status: boolean) => void;
 listRowSelected?: DataType[];
 }
 
-const TableTree = ({
-  columns,
-  data,
-  isShowSelection,
-  setIsListenChange,
-  setRowsSelect,
-  listRowSelected,
-}: TableTreeProps) => {
+const TableTree = (props: TableTreeProps) => {
+  const {  columns,
+    data,
+    isShowSelection,
+    setIsListenChange,
+    setRowsSelect,
+    listRowSelected,
+    ...other} = props
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
-  const onSelectChange = (selectedRowKeys : React.Key[], selectedRows :DataType[]) => {
-    setSelectedRowKeys(selectedRowKeys);
-    if (selectedRows && setRowsSelect) {
-      setRowsSelect(selectedRows);
+  const onSelectChange = (newSelectedRowKeys: React.Key[], selectedRow?: DataType[]) => {
+    setSelectedRowKeys(newSelectedRowKeys);
+    if (selectedRow && setRowsSelect) {
+      setRowsSelect(selectedRow)
     }
   };
 
@@ -39,35 +39,36 @@ const TableTree = ({
     onChange: onSelectChange,
   };
 
-  const MemoTableTree = React.memo(({ columns, data, rowSelection }: TableTreeProps) => {
+  const MemoTableTree = React.memo(({ columns, data, rowSelection, ...other }: TableTreeProps) => {
     return (
       <Table
         columns={columns}
         scroll={{ y: 500 }}
+        loading={true}
         style={{ maxWidth: '1200px' }}
         rowSelection={rowSelection}
         dataSource={data as any}
-        rowKey={(record) => record.IDIntermediary}
-        expandable = {{
-          childrenColumnName : "children",
-          defaultExpandAllRows : true
-          }}
-        bordered
+        rowKey={(record: DataType) => record.IDIntermediary}
+        // expandable = {{
+        //   childrenColumnName : "children",
+        //   defaultExpandAllRows : true
+        //   }}
+        {...other}
       />
     );
   });
 
-  useEffect(() => {
-    if (listRowSelected) {
-      setSelectedRowKeys(listRowSelected.map((item) => +item.IDIntermediary));
-      if (setRowsSelect) {
-        setRowsSelect(listRowSelected);
-      }
-      setIsListenChange(false);
-    }
-  }, [listRowSelected]);
+  // useEffect(() => {
+  //   if (listRowSelected) {
+  //     setSelectedRowKeys(listRowSelected.map((item) => +item.IDIntermediary));
+  //     if (setRowsSelect) {
+  //       setRowsSelect(listRowSelected);
+  //     }
+  //     setIsListenChange(false);
+  //   }
+  // }, [listRowSelected]);
 
-  return <MemoTableTree columns={columns} data={data} rowSelection={rowSelection} />;
+  return <MemoTableTree columns={columns} data={data} rowSelection={rowSelection} {...other} />;
 };
 
 export default TableTree;

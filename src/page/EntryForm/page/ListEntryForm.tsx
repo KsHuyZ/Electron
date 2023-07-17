@@ -10,6 +10,7 @@ import { useSearchParams, useParams } from "react-router-dom";
 import { ipcRenderer } from "electron";
 import TableTree from "@/components/TreeTable/TreeTable";
 import ModalCreateEntry from "../components/ModalCreateEntry";
+import TableWareHouse from "@/page/WarehouseItem/components/TableWareHouse";
 
 const defaultRows: DataType[] = [
     {
@@ -32,7 +33,7 @@ const defaultRows: DataType[] = [
   const defaultTable: TableData<DataType[]> = {
     pagination: {
       current: 1,
-      pageSize: 10,
+      pageSize: 5,
       total: 0,
     },
     loading: false,
@@ -64,7 +65,24 @@ const ListEntryForm = () =>{
         {
           title: 'Tên Kho Hàng',
           dataIndex: 'nameWareHouse',
-          render: (text: string) => (<b>{text.toUpperCase()}</b>),
+          render: (value, row, index) => {
+            const trueIndex =
+            index + listData.pagination.pageSize * (1 - 1);
+            const obj = {
+              children : (<b>{value.toUpperCase() ?? ''}</b>),
+              props : {} as any
+            };
+            if(index > 0 && row.id_WareHouse === listData.rows[trueIndex -1].id_WareHouse){
+              obj.props.rowSpan = 0;
+              // obj.props.colSpan = 2;
+            }
+            else{
+              for (let i = 0; trueIndex + i !== listData.rows.length && row.id_WareHouse === listData.rows[trueIndex + i].id_WareHouse; i+=1) {
+               obj.props.rowSpan = i+1; 
+              }
+            }
+            return obj;
+          },
           width: 200,
         },
         {
@@ -184,18 +202,16 @@ const ListEntryForm = () =>{
       itemWareHouse : selectSearch?.select ?? ''
     };
 
-    console.log(paramsSearch);
-    
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: currentPage, id: id, paramsSearch: paramsSearch });
     if (result) {
-      const responseRow = createFormattedTable(result.rows);
+      // const responseRow = createFormattedTable(result.rows);
       setListData((prev) => (
         {
           ...prev,
-          rows: responseRow,
+          rows: result.rows,
           pagination: {
             ...prev.pagination,
-            total: responseRow.length
+            total: result.total as any
           },
           loading: false
         }
@@ -213,11 +229,14 @@ const ListEntryForm = () =>{
         getListItem(pagination.pageSize!, pagination.current!, pagination.total!)
       };
     
-      const handleDataRowSelected = (listRows: any) => {
-        setListItemHasChoose(listRows);
-      }
+      const handleDataRowSelected = (listRows: DataType[]) => {
+        console.log('chon', listRows);
+       setListItemHasChoose(listRows);      
+      };
+      
 
       const removeItemList = (IDIntermediary: string) => {
+        
         const newList = removeItemChildrenInTable(listItemHasChoose);
         
         const filterNewList = newList.filter(item => item.IDIntermediary !== IDIntermediary);
@@ -240,6 +259,9 @@ const ListEntryForm = () =>{
         setIsSearch(true);
       }
   
+      console.log(listData);
+      
+
     return (
         <Row className="filter-bar">
       <Col span={24}>
@@ -283,10 +305,10 @@ const ListEntryForm = () =>{
               {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : ''}
             </span>
           </div>
-          <TableTree
+          <TableWareHouse
           isShowSelection={true}
             columns={columns}
-            data={listData.rows as any}
+            dataSource={listData.rows as any}
             pagination = {
               {
                 ...listData.pagination,
@@ -313,7 +335,7 @@ const ListEntryForm = () =>{
             idSource={id}
             nameSource={nameSource}
             removeItemList={removeItemList}
-            // fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
+            fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
           />
         )
       }

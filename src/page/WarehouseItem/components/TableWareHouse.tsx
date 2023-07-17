@@ -6,7 +6,7 @@ import { DataType } from "../types";
 
 interface TableWareHouseProps extends TableProps<any> {
   isShowSelection?: Boolean;
-  setIsShowPopUp: () => void;
+  setIsShowPopUp?: () => void;
   setRowSelected?: (data: any) => void;
   isListenChange?: Boolean;
   setIsListenChange: (status: boolean) => void;
