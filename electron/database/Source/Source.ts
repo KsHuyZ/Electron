@@ -159,6 +159,9 @@ const Source = {
         });
       });
 
+      console.log(rows);
+      
+
       const countResult = rows.length > 0 ? rows[0].total : 0;
       return { rows, total: countResult };
     } catch (err) {

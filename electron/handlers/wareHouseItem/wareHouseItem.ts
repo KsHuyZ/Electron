@@ -143,7 +143,7 @@ const wareHouseItem = () => {
       const { items, name, note, nature, total, date } = data;
       startPrint(
         {
-          htmlString: await formImportBill(items),
+          htmlString: await formImportBill(data),
         },
         undefined
       );
