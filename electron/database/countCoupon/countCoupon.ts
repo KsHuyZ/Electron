@@ -8,10 +8,11 @@ const countCoupon = {
     nature: string,
     note: string,
     total: string | number,
-    date: Moment | null
+    date: Moment | null,
+    title: string
   ) => {
     const createQuery =
-      "INSERT INTO CoutCoupon(id_Source, name, Nature, Note,Total,date) VALUES (?,?,?,?,?,?)";
+      "INSERT INTO CoutCoupon(id_Source, name, Nature, Note,Total,date,title) VALUES (?,?,?,?,?,?)";
     try {
       const ID = await runQueryReturnID(createQuery, [
         id_Source,
@@ -20,6 +21,7 @@ const countCoupon = {
         note,
         total,
         date,
+        title
       ]);
       return ID;
     } catch (error) {

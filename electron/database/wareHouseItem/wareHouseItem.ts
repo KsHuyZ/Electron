@@ -685,7 +685,8 @@ const wareHouseItem = {
     note: string,
     nature: string,
     total: number,
-    date: Moment | null | any
+    date: Moment | null | any,
+    title : string,
   ) => {
     try {
       const { createCountCoupon, createCouponItem } = countCoupon;
@@ -695,7 +696,8 @@ const wareHouseItem = {
         nature,
         note,
         total,
-        date
+        date,
+        title
       );
       const promises = id_Source.map(async (item) => {
           const insertQuery = `UPDATE Intermediary SET status = 3 WHERE ID = ?`;
