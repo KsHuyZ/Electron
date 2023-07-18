@@ -37,7 +37,7 @@ interface PropsModal {
   nameSource?: string;
   listItem?: FormatTypeTable<DataType> | [];
   fetching: () => Promise<void>;
-  removeItemList: (IDIntermediary: string) => void;
+  removeItemList: (IDIntermediary: string| any) => void;
 }
 
 const defaultOptionNature: OptionSelect[] = [
@@ -54,6 +54,11 @@ const defaultOptionNature: OptionSelect[] = [
 const defaultInput = {
   name : 'QUÂN KHU 5 CỤC HẬU CẦN',
   title : 'CONG TY TNHH & SX THIET BI Y TE HOANG NGUYEN',
+};
+
+const paginationInfo = {
+  current: 1,
+  pageSize: 10,
 }
 
 const nameOfEntryForm = nameOf<ModalEntryForm>();
@@ -67,14 +72,11 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     nameSource,
     fetching,
   } = props;
-  const [loadingButton, setLoadingButton] = useState<boolean>(false);
+
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(
     removeItemChildrenInTable(listItem as any)
   );
-  const [paginationInfo, setPaginationInfo] = useState({
-    current: 1,
-    pageSize: 10,
-  });
+
   const formRef = useRef<FormInstance>(null);
 
   useEffect(() => {
@@ -246,7 +248,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
         <Button
           type="primary"
           htmlType="submit"
-          loading={loadingButton}
           onClick={handleSubmitForm}
         >
           Làm Phiếu
@@ -265,7 +266,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       await fetching();
       message.success("Nhập kho thành công");
       handleClean();
-      setLoadingButton(false);
+      removeItemList(listItemEntryForm);
       return;
     }
   };
@@ -294,7 +295,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
 
     const result = await ipcRenderer.invoke("print-form-import", { ...params });
-    setLoadingButton(true);
   };
 
   const handleRemoveItem = (id: string) => {

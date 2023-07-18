@@ -235,11 +235,15 @@ const ListEntryForm = () =>{
       };
       
 
-      const removeItemList = (IDIntermediary: string) => {
+      const removeItemList = (IDIntermediary: string | any) => {
         
-        const newList = removeItemChildrenInTable(listItemHasChoose);
+        let filterNewList;
         
-        const filterNewList = newList.filter(item => item.IDIntermediary !== IDIntermediary);
+        if(IDIntermediary.length > 0) {
+          filterNewList = IDIntermediary;
+        }else{
+           filterNewList = listItemHasChoose.filter(item => item.IDIntermediary !== IDIntermediary);
+        }
         setListItemHasChoose(filterNewList);
         setIsListenChange(true);
       }
