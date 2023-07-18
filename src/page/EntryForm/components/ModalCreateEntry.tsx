@@ -51,6 +51,11 @@ const defaultOptionNature: OptionSelect[] = [
   },
 ];
 
+const defaultInput = {
+  name : 'QUÂN KHU 5 CỤC HẬU CẦN',
+  title : 'CONG TY TNHH & SX THIET BI Y TE HOANG NGUYEN',
+}
+
 const nameOfEntryForm = nameOf<ModalEntryForm>();
 
 const ModalCreateEntry: React.FC<PropsModal> = (props) => {
@@ -78,6 +83,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       ipcRenderer.removeListener("import-warehouse", importWarehouseCallBack);
     };
   }, []);
+
+  useEffect(() =>{
+    formRef.current?.setFieldsValue({
+      ...defaultInput
+    })
+  },[])
 
   const columns: ColumnsType<DataType> = [
     {
@@ -250,9 +261,13 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   ) => {
     if (!isSuccess) {
       return message.error("Nhập kho thất bại. Hãy thử lại");
+    }else{
+      await fetching();
+      message.success("Nhập kho thành công");
+      handleClean();
+      setLoadingButton(false);
+      return;
     }
-    await fetching();
-    return message.success("Nhập kho thành công");
   };
 
   const handleClean = () => {
@@ -279,8 +294,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
 
     const result = await ipcRenderer.invoke("print-form-import", { ...params });
-
-    console.log(params);
+    setLoadingButton(true);
   };
 
   const handleRemoveItem = (id: string) => {
