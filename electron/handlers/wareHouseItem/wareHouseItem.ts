@@ -14,6 +14,7 @@ let currentTotal = 0;
 let currentDate = moment.now();
 let currentItems = [];
 let isForm = "";
+let currentTitle = "";
 
 const wareHouseItem = () => {
   const {
@@ -138,9 +139,11 @@ const wareHouseItem = () => {
         nature: string;
         total: number;
         date: any;
+        title: string;
+        nameSource: string;
       }
     ) => {
-      const { items, name, note, nature, total, date } = data;
+      const { items, name, note, nature, total, date, title,nameSource } = data;
       startPrint(
         {
           htmlString: await formImportBill(data),
@@ -154,6 +157,7 @@ const wareHouseItem = () => {
       currentDate = date;
       currentItems = items;
       isForm = "import";
+      currentTitle = title;
       return null;
     }
   );
@@ -189,7 +193,8 @@ const wareHouseItem = () => {
           currentNote,
           currentNature,
           currentTotal,
-          currentDate
+          currentDate,
+          currentTitle
         );
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (mainWindow) {

@@ -52,3 +52,14 @@ export const runQueryReturnID = function (query, params) {
   });
 };
 
+export const dateStringReverse = (originalDate: string, isFull: boolean = false, position?: number): string => {
+  const [year, month, day] = originalDate.split("/");
+
+  if (isFull && position !== undefined) {
+    return originalDate.split("/")[position];
+  }
+
+  return `${day}/${month}/${year}`;
+};
+
+

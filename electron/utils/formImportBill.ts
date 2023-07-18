@@ -2,6 +2,8 @@ import countCoupon from "../database/countCoupon/countCoupon";
 import { DataType } from "../types";
 import { countMoney } from "./countMoney";
 import toVietnamese from "./toVietnamese";
+import { dateStringReverse } from ".";
+
 
 export const formImportBill = async (data : {
   items: DataType[];
@@ -10,12 +12,28 @@ export const formImportBill = async (data : {
   nature: string;
   total: number;
   date: any;
+  title: string;
+  nameSource: string;
 }) => {
   const { countCouponRow } = countCoupon;
   const totalMoney = countMoney(data.items);
   const count = await countCouponRow();
 
-  return `<!DOCTYPE html>
+  const groupByWarehouse = data.items.reduce((acc: any, item : any) => {
+    const { nameWareHouse, ...rest } = item;
+    if (!acc[nameWareHouse]) {
+        acc[nameWareHouse] = [rest];
+    } else {
+        acc[nameWareHouse].push(rest);
+    }
+    return acc;
+}, {});
+
+console.log(groupByWarehouse);
+
+
+  return `
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -26,210 +44,110 @@ export const formImportBill = async (data : {
 
 <body>
 <style>
-.header {
+    .header {
     margin: auto;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
     width: 90%;
-    height: 250px;
-  }
-  /* Header - top */
-  .header .header-top {
-    display: flex;
-  }
-  .header .header-top .center-top {
-    flex: 8;
-    text-align: center;
-  }
-  .header .header-top .right-top {
-    flex: 1;
-    text-align: right;
-  }
-  .header .header-top .left-top {
-    flex: 2;
-    text-align: center;
-  }
-  /* Header- down */
-  .header-down {
-    display: flex;
-  }
-  
-  .header .header-down .confirmation-box {
-    flex: 2;
-    height: 100px;
-    border: 1px dashed black;
-    padding-top: 0;
-    line-height: 15px;
-    position: relative;
-  }
-  
-  .header .header-down .confirmation-label {
-    position: absolute;
-    top: -7%;
-    font-size: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: white;
-    padding: 0 10px;
-    white-space: nowrap;
-  }
-  .header-down .center-down {
-    flex: 6;
-    transform: translateX(25%);
-  }
-  .header-down .right-down {
-    flex: 3;
-  }
-  .header-down .right-down .page {
-    text-align: right;
-  }
-  
-  /* Table */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: auto;
-    margin-top: 20px;
-  }
-  
-  table,
-  th,
-  td {
-    border: 1px solid black;
-    padding: 8px;
-    text-align: left;
-  }
-  table th {
-    background-color: #f2f2f2;
-    text-align: center;
-  }
-  /* Footer */
-  .money {
-    width: 40%;
-  }
-  .money .money-fix {
-    display: flex;
-    margin-left: 10%;
-    justify-content: space-between;
-  }
-  .money .thanhtien {
-    margin-left: 10%;
-  }
-  .date {
-    display: flex;
-    width: 90%;
-    margin: 0 auto 0;
-  }
-  .date .date1 {
-    flex: 50%;
-    text-align: left;
-  }
-  .date .date2 {
-    flex: 50%;
-    text-align: right;
-  }
-  .single {
-    display: flex;
-    width: 100%;
-  }
-  .single h4 {
-    flex: 20%;
-    text-align: center;
-  }
+    }
 </style>
-  <!-- Header -->
-  <div class="header">
-    <div class="header-top">
-      <div class="left-top">
-        <h3 class="name">${data.name ?? ''}</h3>
-      </div>
-      <div class="center-top">
-        <h1>PHIẾU NHẬP KHO</h1>
-      </div>
-      <div class="right-top">
-        <p class="right">Số lệnh: ${Number(count) + 1}</p>
-      </div>
+<div style="margin: auto; display: block; width: 1123px; height: 794px;" id="phieu-nhap-kho">
+   
+    <div style="margin: auto; align-items: center; justify-content: space-between; margin-bottom: 20px; width: 90%;" class="header">
+        <div style="display: flex;" class="header-top">
+            <h3 style="text-align: center;" class="left">
+                <div>${data.name.toUpperCase() ?? ''}</div>
+            </h3>
+            <div style="flex: 8;" class="center">
+                <h1 style="text-align: center;">PHIẾU NHẬP KHO</h1>
+                <div style="text-align: center;" class="inputnguonkhach">
+                    <div class="nguonnhap">
+                        <p>Nguồn nhập: ${data.nameSource.toUpperCase() ?? ''}</p>
+                    </div>
+                    <div class="khachhang">
+                        <p>${data.nature ?? ''}: ${data.title}</p>
+                    </div>
+                    <p>Hợp đồng số:</p>
+                </div>
+            </div>
+            <div class="right-head">
+                <p style="flex: 1; text-align: right;" class="right">Số lệnh: ${Number(count) + 1 ?? 0}</p>
+                <p style="flex: 1; text-align: right;" class="right">Ngày: <span id="printDate">${dateStringReverse(data.date , false ) ?? ''}</span></p>
+            </div>
+        </div>
+        <p style="text-align: right;" class="tinhchat">Tính chất: ${data.nature}</p>
     </div>
-    <div class="header-down">
-      <div class="confirmation-box">
-        <span class="confirmation-label">Xác nhận thanh toán</span>
-      </div>
-      <div class="center-down">
-        <div class="dvn">
-          <p>Đơn vị nhận: BO THAM MUU </p>
+    
+    <table style="width: 100%; border-collapse: collapse; margin: auto; margin-top: 20px; border: 1px solid black; padding: 8px; text-align: left; border-collapse: collapse;" class="data-table">
+        <tbody>
+            <tr>
+                <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Số TT</th>
+                <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Tên hàng</th>
+                <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">ĐVT</th>
+                <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">CL</th>
+                <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Hạn Dùng Năm SX</th>
+                <th colspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Số lượng</th>
+                <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Giá lẻ</th>
+                <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Thành tiền</th>
+                <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Ghi chú</th>
+            </tr>
+            <tr>
+                <th style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Kế hoạch thực hiện</th>
+                <th style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Thực hiện</th>
+            </tr>
+
+            ${Object.entries(groupByWarehouse).map(([nameWareHouse, products]: any) => (
+              `
+              
+              <th>
+                  <td style={{ padding: 8, textAlign: "left" }}>${nameWareHouse}</td>
+              </th>
+              ${products.map((item: any , index : number) =>(
+                `
+                <tr>
+                <td style="max-width:300; border:1px solid black; padding: 8px; text-align:center;">${index +1}</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${item.name}</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${item.unit}</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${item.quality}</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${item.date_expried}</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${item.quantity_plane}</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${item.quantity}</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${new Intl.NumberFormat().format(item.price)}</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${new Intl.NumberFormat().format(item.totalPrice)} đ</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${data.note ?? ''}</td>
+            </tr>
+                `
+              ))}
+              
+              `
+              ))}
+            
+        
+    
+        </tbody>
+    </table>
+    <!-- Footer -->
+    <div style="width: 40%;" class="money">
+        <div style="display: flex; margin-left: 10%; justify-content: space-between;" class="money-fix">
+            <p><b>Tổng cộng: ${data.items.length ?? 0} khoản</b></p>
+            <p><b>Thành tiền: ${new Intl.NumberFormat().format(totalMoney)} đ</b></p>
         </div>
-        <div class="capTheo">
-          <p>Cấp theo: Cong dan nhap ngu 2023</p>
-        </div>
-        <div class="nguoiNhan">
-          <p>Người nhận: </p>
-        </div>
-        <div class="ngayDongGoi">
-          <p>Ngày đóng gói: </p>
-        </div>
-      </div>
-      <div class="right-down">
-        <p class="date-ex">Có giá trị đến ......./......./......</p>
-        <p class="tinhchat">Tính chất: ${data.nature ?? ''}</p>
-        <p class="intro">Giấy gt....................do.........................cấp</p>
-        <p class="vanchuyen">Hàng do...................................vận chuyển</p>
-        <div class="page">Trang 1</div>
-      </div>
+        <p style="margin-left: 10%;" class="thanhtien"><b>(${toVietnamese(totalMoney)} Việt Nam Đồng)</b></p>
     </div>
-  </div>
-  <!-- Table -->
-  <table>
-    <tr>
-      <th rowspan="2">Số TT</th>
-      <th rowspan="2" style="max-width: 100px;">Tên hàng</th>
-      <th rowspan="2">ĐVT</th>
-      <th rowspan="2">CL</th>
-      <th rowspan="2">Hạn Dùng Năm SX</th>
-      <th colspan="2">Số lượng</th>
-      <th rowspan="2">Giá lẻ</th>
-      <th rowspan="2">Thành tiền</th>
-      <th rowspan="2">Ghi chú</th>
-    </tr>
-    <tr>
-      <th>Kế hoạch thực hiện</th>
-      <th>Thực hiện</th>
-    </tr>
-${data?.items.map(
-  (item, index) =>
-    `<tr>
-    <td>${index}</td>
-    <td style="max-width: 300px;">${item.name}</td>
-    <td>${item.unit}</td>
-    <td>${item.quality}</td>
-    <td>${item.date_expried}</td>
-    <td>${item.quantity_plane}</td>
-    <td>${item.quantity_real}</td>
-    <td>${item.price}</td>
-    <td>${new Intl.NumberFormat().format(item.price * item.quantity)}</td>
-  </tr>`
-)}
-  </table>
-  <!-- footer -->
-  <div class="money">
-    <div class="money-fix">
-      <p><b>Tổng cộng: ${data?.items.length} khoản</b></p>
-      <p><b>Thành tiền: ${new Intl.NumberFormat().format(totalMoney)} VNĐ</b></p>
+    <p style="margin-left: 3%;">Ghi chú: (HD 284 ngay 22/12/2022)</p>
+    <div style="display: flex; width: 90%; margin: 0 auto 0;" class="date">
+        <p style="flex: 50%; text-align: left;" class="date1">Giao nhận ngày...tháng...năm...</p>
+        <p style="flex: 50%; text-align: right;" class="date2">Ngày ${dateStringReverse(data.date , true , 2)} tháng  ${dateStringReverse(data.date , true , 1)} năm  ${dateStringReverse(data.date , true , 0)}</p>
     </div>
-    <p class="thanhtien"><b>(${toVietnamese(totalMoney)} Việt Nam Đồng)</b></p>
-  </div>
-  <p style="margin-left: 3%;">Ghi chú: (HD 284 ngay 22/12/2022)</p>
-  <div class="date">
-    <p class="date1">Giao nhận ngày...tháng...năm... </p>
-    <p class="date2">Ngày 31 tháng 12 năm 2022</p>
-  </div>
-  <div class="single">
-    <h4>NGƯỜI GIAO</h4>
-    <h4>NGƯỜI NHẬN</h4>
-    <h4>PT DƯỢC CHÍNH</h4>
-    <h4>TRƯỞNG PHÒNG QUÂN Y</h4>
-    <h4>THỦ TRƯỞNG ĐƠN VỊ</h4>
-  </div>
+    <div style="display: flex; width: 100%;" class="single">
+        <h4 style="flex: 20%; text-align: center;">NGƯỜI GIAO</h4>
+        <h4 style="flex: 20%; text-align: center;">NGƯỜI NHẬN</h4>
+        <h4 style="flex: 20%; text-align: center;">PT DƯỢC CHÍNH</h4>
+        <h4 style="flex: 20%; text-align: center;">TRƯỞNG PHÒNG QUÂN Y</h4>
+        <h4 style="flex: 20%; text-align: center;">THỦ TRƯỞNG ĐƠN VỊ</h4>
+    </div>
+</div>
 </body>
 
 </html>`;
