@@ -86,16 +86,14 @@ const Source = {
         });
       });
     } catch (error) {
-      console.log(error)
-      return false
+      console.log(error);
+      return false;
     }
-
   },
 
   getAllItemSourceNoPagination: async () => {
     try {
-      const selectQuery =
-        "SELECT * FROM Source";
+      const selectQuery = "SELECT * FROM Source";
       const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, (err, rows) => {
           if (err) {
@@ -105,7 +103,7 @@ const Source = {
           }
         });
       });
-      return { rows};
+      return { rows };
     } catch (err) {
       console.log(err);
     }
@@ -114,7 +112,7 @@ const Source = {
     id: number,
     pageSize: number,
     currentPage: number,
-    paramsSearch: {name: string, itemWareHouse: string}
+    paramsSearch: { name: string; itemWareHouse: string }
   ) => {
     const { name, itemWareHouse } = paramsSearch;
 
@@ -135,8 +133,10 @@ const Source = {
 
       const whereClause =
         whereConditions.length > 0
-          ? `WHERE ${whereConditions.join(" AND ")} AND wi.id_Source = ?`
-          : "WHERE wi.id_Source = ?";
+          ? `WHERE ${whereConditions.join(
+              " AND "
+            )} AND wi.id_Source AND status IN(1,3,5) = ?`
+          : "WHERE wi.id_Source = ? AND status IN(1,3,5)";
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.quality, i.quantity,
@@ -158,10 +158,6 @@ const Source = {
           }
         });
       });
-
-      console.log(rows);
-      
-
       const countResult = rows.length > 0 ? rows[0].total : 0;
       return { rows, total: countResult };
     } catch (err) {

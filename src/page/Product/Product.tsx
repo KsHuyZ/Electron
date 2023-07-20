@@ -215,9 +215,6 @@ const Product = () => {
   return (
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
-        <Col span={12}>
-          <Button className="button-bar" onClick={() => setStatusModal(STATUS_MODAL.RECEIPT)} icon={<UilFileExport />} type="primary" disabled={dataRowSelected!?.length > 0 ? false : true}>Xuất kho</Button>
-        </Col>
       </Row>
       <Col span={24}>
         <div>
@@ -233,8 +230,9 @@ const Product = () => {
                 </Col>
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
-                    <Button className="default" icon={<UilImport />}>Đã nhập</Button>
-                    <Button className="default" icon={<UilFileExport />}>Tạm Xuất</Button>
+                    {/* <Button className="default" icon={<UilImport />}>Đã nhập</Button>
+                    <Button className="default" icon={<UilFileExport />}>Tạm Xuất</Button> */}
+                    <Button className="button-bar" onClick={() => setStatusModal(STATUS_MODAL.RECEIPT)} icon={<UilFileExport />} type="primary" disabled={dataRowSelected!?.length > 0 ? false : true}>Tạm Xuất kho</Button>
                   </Space>
                 </Col>
               </Row>

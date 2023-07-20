@@ -195,7 +195,7 @@ const WareHouseItem = () => {
       now_date_ex : parsedSearchParams.now_date_ex || '' ,
       after_date_ex : parsedSearchParams.after_date_ex || ''
     };
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idWareHouse, paramsSearch: paramsSearch });
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage,  idWareHouse, paramsSearch: paramsSearch });
     if (result) {
       setListData((prev) => (
         {
