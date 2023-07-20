@@ -2,7 +2,6 @@ import { UilMultiply, UilPen } from '@iconscout/react-unicons';
 import { Table, Space, Button } from 'antd';
 import { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useState } from 'react'
-import { useParams } from "react-router-dom";
 import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
 import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
@@ -52,7 +51,6 @@ const ModalDelete = (props: ModalRecipientProps) => {
     )
 }
 
-
 const Recipient = () => {
 
     const [showAddModal, setShowAddModal] = useState<boolean>(false)
@@ -67,8 +65,6 @@ const Recipient = () => {
     });
     const [showModalDelete, setShowModalDelete] = useState(false)
 
-    const { idRecipient } = useParams();
-
     const columns: ColumnsType<DataType> = [
         {
             title: 'Mã đơn vị nhận',
@@ -81,7 +77,7 @@ const Recipient = () => {
             title: 'Tên đơn vị nhận',
             dataIndex: 'name',
             render: (_, record) => {
-                return <Link to={`/recipient/${record.ID}`}>{record.name}</Link>
+                return <Link to={`/recipient/${record.ID}/${record.name}`}>{record.name}</Link>
             }
         },
         {

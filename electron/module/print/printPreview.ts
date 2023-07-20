@@ -242,7 +242,6 @@ class _Pdf {
   };
 
   saveFilePdf = async () => {
-  
     let errMessage = "pdf transform failed, please restart app !";
     let url = "";
     try {
@@ -271,7 +270,7 @@ class _Pdf {
               if (err) {
                 console.log("Lỗi khi sao chép tệp tin:", err);
               } else {
-                console.log("Đã lưu tệp tin:", file.filePath);
+                fs.unlinkSync(pdfPath);
               }
             });
           }

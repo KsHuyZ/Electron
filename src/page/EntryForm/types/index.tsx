@@ -7,4 +7,5 @@ export type ModalEntryForm = {
   date: string;
   total?: string;
   idSource: string;
+  idReceiving?: string
 };

@@ -27,7 +27,8 @@ const wareHouseItem = () => {
     getAllWarehouseItem,
     tempExportWareHouse,
     exportWarehouse,
-    importWarehouse
+    importWarehouse,
+    getAllWarehouseItembyReceivingId,
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -49,21 +50,30 @@ const wareHouseItem = () => {
       data: {
         pageSize: number;
         currentPage: number;
-        id?: number;
+        idWareHouse?: number;
+        idRecipient?: number;
         paramsSearch?: any;
       } = {
         pageSize: 10,
         currentPage: 1,
       }
     ) => {
-      const { pageSize, currentPage, paramsSearch } = data;
-      const response = await getAllWarehouseItembyWareHouseId(
-        data.id,
+      const { pageSize, currentPage, paramsSearch, idRecipient, idWareHouse } =
+        data;
+      if (idWareHouse) {
+        return await getAllWarehouseItembyWareHouseId(
+          idWareHouse,
+          pageSize,
+          currentPage,
+          paramsSearch
+        );
+      }
+      return await getAllWarehouseItembyReceivingId(
+        idRecipient,
         pageSize,
         currentPage,
         paramsSearch
       );
-      return response;
     }
   );
 
@@ -109,12 +119,15 @@ const wareHouseItem = () => {
         nature: string;
         total: number;
         date: any;
+        title: string;
+        nameSource: string;
       }
     ) => {
-      const { items, name, note, nature, total, date } = data;
+      const { items, name, note, nature, total, date, title, nameSource } =
+        data;
       startPrint(
         {
-          htmlString: await formExportBill(items),
+          htmlString: await formExportBill(data),
         },
         undefined
       );
@@ -143,7 +156,8 @@ const wareHouseItem = () => {
         nameSource: string;
       }
     ) => {
-      const { items, name, note, nature, total, date, title,nameSource } = data;
+      const { items, name, note, nature, total, date, title, nameSource } =
+        data;
       startPrint(
         {
           htmlString: await formImportBill(data),
@@ -199,7 +213,7 @@ const wareHouseItem = () => {
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (mainWindow) {
           mainWindow.webContents.send("import-warehouse", { isSuccess });
-        }  
+        }
       }
     }
   });

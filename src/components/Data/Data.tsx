@@ -5,6 +5,7 @@ import {
   UilUsersAlt,
   UilPackage,
   UilChart,
+  UilHistory,
   UilSignOutAlt,
 } from "@iconscout/react-unicons";
 
@@ -40,9 +41,9 @@ export const SidebarData = [
     url: "/products"
   },
   {
-    icon: UilChart,
-    heading: 'Analytics',
-    url: "/"
+    icon: UilHistory,
+    heading: 'Lịch sử',
+    url: "/history"
   },
 ];
 

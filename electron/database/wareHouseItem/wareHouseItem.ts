@@ -82,7 +82,89 @@ const wareHouseItem = {
           }
         });
       });
+      const countResult = rows.length > 0 ? rows[0].total : 0;
+      return { rows, total: countResult };
+    } catch (err) {
+      console.log(err);
+      return null;
+    }
+  },
+  getAllWarehouseItembyReceivingId: async (
+    id: number,
+    pageSize: number,
+    currentPage: number,
+    paramsSearch: ISearchWareHouseItem
+  ) => {
+    const {
+      name,
+      idSource,
+      startDate,
+      endDate,
+      status,
+      now_date_ex,
+      after_date_ex,
+    } = paramsSearch;
 
+    try {
+      const offsetValue = (currentPage - 1) * pageSize;
+      const whereConditions: string[] = [];
+      const queryParams: any[] = [id, pageSize, offsetValue];
+
+      // Add query conditions based on the provided search parameters
+      if (name) {
+        whereConditions.unshift(`wi.name LIKE ?`);
+        queryParams.unshift(`%${name}%`);
+      }
+      if (idSource) {
+        whereConditions.unshift(`wi.id_Source = ?`);
+        queryParams.unshift(idSource);
+      }
+      if (startDate) {
+        whereConditions.unshift(`wi.date_created_at >= ?`);
+        queryParams.unshift(startDate);
+      }
+      if (endDate) {
+        whereConditions.unshift(`wi.date_created_at <= ?`);
+        queryParams.unshift(endDate);
+      }
+      if (status) {
+        whereConditions.unshift(`i.status = ?`);
+        queryParams.unshift(status);
+      }
+
+      if (now_date_ex) {
+        whereConditions.unshift(`wi.date_expried >= ?`);
+        queryParams.unshift(now_date_ex);
+      }
+
+      if (after_date_ex) {
+        whereConditions.unshift(`wi.date_expried <= ?`);
+        queryParams.unshift(after_date_ex);
+      }
+
+      const whereClause =
+        whereConditions.length > 0
+          ? `WHERE ${whereConditions.join(" AND ")} AND i.id_WareHouse = ?`
+          : "WHERE i.id_WareHouse = ?";
+      const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
+        wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+        i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity, w.name AS nameWareHouse,
+        i.date, COUNT(i.ID) OVER() AS total 
+        FROM warehouseItem wi
+        JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
+        JOIN Warehouse w ON w.ID = i.prev_idwarehouse
+        ${whereClause}
+        ORDER BY i.ID DESC
+        LIMIT ? OFFSET ?`;
+      const rows: any = await new Promise((resolve, reject) => {
+        db.all(selectQuery, ...queryParams, (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+      });
       const countResult = rows.length > 0 ? rows[0].total : 0;
       return { rows, total: countResult };
     } catch (err) {
@@ -99,7 +181,7 @@ const wareHouseItem = {
      FROM warehouseItem wi
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID
-     WHERE i.status IN (1,2,3,5) ORDER BY i.ID DESC LIMIT ? OFFSET ?`;
+     WHERE i.status IN(1,3) ORDER BY i.ID DESC LIMIT ? OFFSET ?`;
     try {
       const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, [pageSize, offsetValue], (err, rows) => {
@@ -134,7 +216,6 @@ const wareHouseItem = {
       id_wareHouse,
     } = data;
     const status = 1;
-    console.log(data);
 
     try {
       const createItemQuery = `INSERT INTO warehouseItem (id_Source, name, price, unit, date_expried, 
@@ -204,8 +285,6 @@ const wareHouseItem = {
       idWarehouseItem,
       idIntermediary,
     } = data;
-
-    console.log(data);
 
     const intermediaryExists = await new Promise((resolve, reject) => {
       db.get(
@@ -391,8 +470,6 @@ const wareHouseItem = {
           );
         });
 
-        console.log("checking id", item);
-
         if (ID !== "NOT_EXITS") {
           const quantity = await new Promise((resolve, reject) => {
             const query = `SELECT quantity from Intermediary WHERE ID = ?`;
@@ -422,8 +499,6 @@ const wareHouseItem = {
               item.id_wareHouse,
             ]);
           } else {
-            console.log("case3");
-
             const changeWareHouseQuery = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
             const deleteWareHouseQuery = `DELETE FROM Intermediary WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
 
@@ -454,8 +529,6 @@ const wareHouseItem = {
               }
             );
           });
-
-          console.log("quantity", quantity);
 
           if (Number(quantity) < item.quantity) {
             throw new Error(
@@ -666,12 +739,17 @@ const wareHouseItem = {
         date
       );
       const promises = intermediary.map(async (item) => {
-          const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
-          const ID = await runQueryReturnID(insertQuery, [
-            item["IDIntermediary"],
-          ]);
-          await createDeliveryItem(idCoutDelivery, ID);
-        })
+        const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
+        await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
+        await createDeliveryItem(
+          idCoutDelivery,
+          item["name"],
+          item.quantity,
+          item["price"],
+          item.quality,
+          item["prev_idwarehouse"]
+        );
+      });
       await Promise.all(promises);
       return true;
     } catch (error) {
@@ -686,7 +764,7 @@ const wareHouseItem = {
     nature: string,
     total: number,
     date: Moment | null | any,
-    title : string,
+    title: string
   ) => {
     try {
       const { createCountCoupon, createCouponItem } = countCoupon;
@@ -700,12 +778,12 @@ const wareHouseItem = {
         title
       );
       const promises = id_Source.map(async (item) => {
-          const insertQuery = `UPDATE Intermediary SET status = 3 WHERE ID = ?`;
-          const ID = await runQueryReturnID(insertQuery, [
-            item["IDIntermediary"],
-          ]);
-          await createCouponItem(idCoutCoupon, ID);
-        })
+        const insertQuery = `UPDATE Intermediary SET status = 3 WHERE ID = ?`;
+        const ID = await runQueryReturnID(insertQuery, [
+          item["IDIntermediary"],
+        ]);
+        await createCouponItem(idCoutCoupon, ID);
+      });
       await Promise.all(promises);
       return true;
     } catch (error) {
@@ -713,7 +791,6 @@ const wareHouseItem = {
       return false;
     }
   },
-  
 };
 
 export default wareHouseItem;

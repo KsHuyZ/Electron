@@ -35,7 +35,8 @@ interface PropsModal {
   onCloseModal: () => void;
   idSource?: string;
   nameSource?: string;
-  listItem?: FormatTypeTable<DataType> | [];
+  idReceiving?: string;
+  listItem: FormatTypeTable<DataType> | [];
   fetching: () => Promise<void>;
   removeItemList: (IDIntermediary: string) => void;
 }
@@ -52,13 +53,14 @@ const defaultOptionNature: OptionSelect[] = [
 ];
 
 const defaultInput = {
-  name : 'QUÂN KHU 5 CỤC HẬU CẦN',
-  title : 'CONG TY TNHH & SX THIET BI Y TE HOANG NGUYEN',
+  name: 'QUÂN KHU 5 CỤC HẬU CẦN',
+  title: '',
 }
 
 const nameOfEntryForm = nameOf<ModalEntryForm>();
 
 const ModalCreateEntry: React.FC<PropsModal> = (props) => {
+
   const {
     isShowModal,
     onCloseModal,
@@ -66,7 +68,9 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     removeItemList,
     nameSource,
     fetching,
+    idReceiving
   } = props;
+  console.log("list item: ", listItem)
   const [loadingButton, setLoadingButton] = useState<boolean>(false);
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(
     removeItemChildrenInTable(listItem as any)
@@ -84,11 +88,11 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
   }, []);
 
-  useEffect(() =>{
+  useEffect(() => {
     formRef.current?.setFieldsValue({
       ...defaultInput
     })
-  },[])
+  }, [])
 
   const columns: ColumnsType<DataType> = [
     {
@@ -186,22 +190,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
         </span>
       ),
     },
-    // {
-    //   title: "Trạng thái",
-    //   dataIndex: "status",
-    //   fixed: 'right',
-    //   width: 200,
-    //   render: (confirm: number) => {
-    //     const { text, color } = renderTextStatus(confirm)
-    //     return (
-    //       <span>
-    //         <Tag color={color}>
-    //           {text}
-    //         </Tag>
-    //       </span>
-    //     )
-    //   }
-    // },
     {
       title: "Hành động",
       dataIndex: "action",
@@ -249,7 +237,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           loading={loadingButton}
           onClick={handleSubmitForm}
         >
-          Làm Phiếu
+          Làm phiếu
         </Button>
       </Space>
     );
@@ -261,7 +249,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   ) => {
     if (!isSuccess) {
       return message.error("Nhập kho thất bại. Hãy thử lại");
-    }else{
+    } else {
       await fetching();
       message.success("Nhập kho thành công");
       handleClean();
@@ -293,7 +281,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       nameSource: nameSource,
     };
 
-    const result = await ipcRenderer.invoke("print-form-import", { ...params });
+    const result = await ipcRenderer.invoke(!idReceiving ? "print-form-import" : "print-form-export", { ...params });
     setLoadingButton(true);
   };
 
@@ -315,7 +303,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
 
   return (
     <Modal
-      title={"LÀM PHIẾU NHẬP"}
+      title={`LÀM PHIẾU ${idReceiving ? "XUẤT" : "NHẬP"}`}
       centered
       open={isShowModal}
       onCancel={handleClean}
@@ -340,12 +328,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           </Col>
           <Col span={8}>
             <Form.Item
-              label="Tên loại phiếu"
+              label={!idReceiving ? "Tên loại phiếu" : "Cấp theo"}
               name={nameOfEntryForm("title")}
               rules={[
                 {
                   required: true,
-                  message: getMessage(ERROR.ERROR_1, "Tên loại phiếu"),
+                  message: getMessage(ERROR.ERROR_1, !idReceiving ? "Tên loại phiếu" : "Cấp theo"),
                 },
               ]}
             >
@@ -353,7 +341,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="Nguồn nhập" name={nameOfEntryForm("idSource")}>
+            <Form.Item label={!idReceiving ? "Nguồn nhập" : "Đơn vị nhận"} name={nameOfEntryForm(!idReceiving ? "idSource" : "idReceiving")}>
               <Input placeholder={nameSource} disabled />
             </Form.Item>
           </Col>
@@ -394,7 +382,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             <h4>
               Thành tiền : {`${new Intl.NumberFormat().format(totalPrice)} vnđ`}
             </h4>
-            <h4>(Bằng chữ : {`${docso(totalPrice)}`})</h4>
+            <h4>(Bằng chữ : {`${docso(totalPrice)} đồng`})</h4>
           </Col>
         </Row>
 

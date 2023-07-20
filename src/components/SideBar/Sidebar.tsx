@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import "./Sidebar.css";
-import { UilSignOutAlt } from "@iconscout/react-unicons";
+import { UilSignOutAlt, UilBars } from "@iconscout/react-unicons";
 import { SidebarData } from "../Data/Data";
-import { UilBars } from "@iconscout/react-unicons";
 import { motion } from "framer-motion";
 import { Link, NavLink } from "react-router-dom"
 
 const Sidebar = () => {
-    const [selected, setSelected] = useState(0);
     const [expanded, setExpaned] = useState(true)
 
     const sidebarVariants = {
@@ -27,9 +25,8 @@ const Sidebar = () => {
                 variants={sidebarVariants}
                 animate={window.innerWidth <= 768 ? `${expanded}` : ''}
             >
-                {/* logo */}
+
                 <div className="logo">
-                    {/* <img src={Logo} alt="logo" /> */}
                     <span>
                         Quản lý <span>kho</span>
                     </span>

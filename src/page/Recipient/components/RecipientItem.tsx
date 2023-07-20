@@ -19,6 +19,7 @@ import FilterWareHouseItem from "@/page/WarehouseItem/components/FilterWareHouse
 import TransferModal from "@/page/WarehouseItem/components/TransferModal";
 import toasitify from "../../../lib/toastify"
 import moment from "moment";
+import ModalCreateEntry from "@/page/EntryForm/components/ModalCreateEntry";
 
 const { confirm } = Modal;
 
@@ -54,10 +55,10 @@ const RecipientItem = () => {
   const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
   const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
   const [isShowModal, setIsShowModal] = useState<boolean>(false);
-  const { idRecipient } = useParams();
+  const { idRecipient, nameReceiving } = useParams();
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [itemEdit, setItemEdit] = useState<DataType>();
-  const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
+  const [statusModal, setStatusModal] = useState<boolean>(false);
   const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
   const [isListenChange, setIsListenChange] = useState(false);
   const [isShowSearch, setIsShowSearch] = useState(false);
@@ -178,7 +179,7 @@ const RecipientItem = () => {
       endDate: parsedSearchParams.endDate || '',
       status: Number(parsedSearchParams.status) || null
     };
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, id: idRecipient, paramsSearch: paramsSearch });
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, idRecipient, paramsSearch: paramsSearch });
     if (result) {
       console.log(result)
       setListData((prev) => (
@@ -242,11 +243,8 @@ const RecipientItem = () => {
     });
   };
 
-  const handleShowTransferModal = () => {
-    setStatusModal(STATUS_MODAL.CLOSE);
-  }
 
-  const removeItemList = (IDIntermediary: string[]) => {
+  const removeItemList = (IDIntermediary: string) => {
     console.log('remove item list', IDIntermediary);
     const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
     setListItemHasChoose(filterNewList);
@@ -267,6 +265,8 @@ const RecipientItem = () => {
       return notifyError("Xuất kho thất bại. Hãy thử lại")
     }
     await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
+    setListItemHasChoose([])
+    setStatusModal(false)
     return notifySuccess("Xuất kho thành công")
   }
 
@@ -281,7 +281,7 @@ const RecipientItem = () => {
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
         <Col span={12}>
-          <h2>Kho 1</h2>
+          <h2>{nameReceiving}</h2>
         </Col>
       </Row>
       <Col span={24}>
@@ -300,9 +300,7 @@ const RecipientItem = () => {
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
-                    <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
-                    <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
-                    <Button className="default" onClick={handleCreateExportBill} disabled={listItemHasChoose.length > 0 ? false : true} type="primary">Tạo Phiếu Xuất Kho</Button>
+                    <Button className="default" onClick={() => setStatusModal(true)} disabled={listItemHasChoose.length > 0 ? false : true} type="primary">Tạo Phiếu Xuất Kho</Button>
                   </Space>
                 </Col>
               </Row>
@@ -341,18 +339,19 @@ const RecipientItem = () => {
         </div>
       </Col>
 
-      {/* {
-        statusModal === STATUS_MODAL.RECEIPT && (
-          <TransferModal
-            isShow={statusModal}
-            idWareHouse={idRecipient}
-            setIsShow={handleShowTransferModal}
-            listItem={listItemHasChoose}
+      {
+        statusModal && (
+          <ModalCreateEntry
+            isShowModal={statusModal}
+            onCloseModal={() => setStatusModal(false)}
+            listItem={listItemHasChoose as any}
+            idReceiving={idRecipient}
+            nameSource={nameReceiving}
             removeItemList={removeItemList}
             fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
           />
         )
-      } */}
+      }
     </Row>
 
   )

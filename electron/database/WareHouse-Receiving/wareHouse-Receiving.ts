@@ -46,7 +46,6 @@ const WareHouse = {
           }
         });
       });
-      // console.log(rows.length);
 
       const countResult = rows.length ? rows[0].count : 0;
       return { rows, total: countResult };

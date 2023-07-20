@@ -1,12 +1,33 @@
+import { dateStringReverse } from ".";
 import countDelivery from "../database/countDelivery/countDelivery";
 import { DataType } from "../types";
 import { countMoney } from "./countMoney";
 import toVietnamese from "./toVietnamese";
 
-export const formExportBill = async (items: DataType[]) => {
+export const formExportBill = async (data: {
+  items: DataType[];
+  name: string;
+  note: string;
+  nature: string;
+  total: number;
+  date: any;
+  title: string;
+  nameSource: string;
+}) => {
+  const { items, name, note, nature, total, date, title, nameSource } = data;
   const { countDeliveryRow } = countDelivery;
   const totalMoney = countMoney(items);
   const count = await countDeliveryRow();
+
+  const groupByWarehouse = data.items.reduce((acc: any, item: any) => {
+    const { nameWareHouse, ...rest } = item;
+    if (!acc[nameWareHouse]) {
+      acc[nameWareHouse] = [rest];
+    } else {
+      acc[nameWareHouse].push(rest);
+    }
+    return acc;
+  }, {});
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -135,7 +156,7 @@ export const formExportBill = async (items: DataType[]) => {
   <div class="header">
     <div class="header-top">
       <div class="left-top">
-        <h3 class="name">QUÂN KHU 5 <br> CỤC HẬU CẦN</h3>
+        <h3 class="name">${data.name.toUpperCase() ?? ""}</h3>
       </div>
       <div class="center-top">
         <h1>PHIẾU XUẤT KHO</h1>
@@ -150,10 +171,10 @@ export const formExportBill = async (items: DataType[]) => {
       </div>
       <div class="center-down">
         <div class="dvn">
-          <p>Đơn vị nhận: BO THAM MUU </p>
+          <p>Đơn vị nhận: ${nameSource} </p>
         </div>
         <div class="capTheo">
-          <p>Cấp theo: Cong dan nhap ngu 2023</p>
+          <p>Cấp theo: ${title}</p>
         </div>
         <div class="nguoiNhan">
           <p>Người nhận: </p>
@@ -167,7 +188,7 @@ export const formExportBill = async (items: DataType[]) => {
         <p class="tinhchat">Tính chất: Nhập theo KH</p>
         <p class="intro">Giấy gt....................do.........................cấp</p>
         <p class="vanchuyen">Hàng do...................................vận chuyển</p>
-        <div class="page">Trang 1</div>
+      
       </div>
     </div>
   </div>
@@ -188,33 +209,51 @@ export const formExportBill = async (items: DataType[]) => {
       <th>Kế hoạch thực hiện</th>
       <th>Thực hiện</th>
     </tr>
-${items.map(
-  (item, index) =>
-    `<tr>
-    <td>${index}</td>
-    <td style="max-width: 300px;">${item.name}</td>
-    <td>${item.unit}</td>
-    <td>${item.quality}</td>
-    <td>${item.date_expried}</td>
-    <td>${item.quantity_plane}</td>
-    <td>${item.quantity_real}</td>
-    <td>${item.price}</td>
-    <td>${new Intl.NumberFormat().format(item.price * item.quantity)}</td>
-  </tr>`
-)}
+
+    ${Object.entries(groupByWarehouse).map(
+      ([nameWareHouse, products]: any) =>
+        ` <tr>
+      <td style={{ padding: 8, textAlign: "left" }} colspan="9">${nameWareHouse}</td>
+    </tr>
+    ${products.map(
+      (item: any, index: number) =>
+        `<tr>
+        <td>${index + 1}</td>
+        <td style="max-width: 300px;">${item.name}</td>
+        <td>${item.unit}</td>
+        <td>${item.quality}</td>
+        <td>${item.date_expried}</td>
+        <td>${item.quantity_plane}</td>
+        <td>${item.quantity_real}</td>
+        <td>${item.price}</td>
+        <td>${new Intl.NumberFormat().format(item.price * item.quantity)}</td>
+      </tr>`
+    )}`
+    )}
+
+
   </table>
-  <!-- footer -->
   <div class="money">
     <div class="money-fix">
       <p><b>Tổng cộng: ${items.length} khoản</b></p>
-      <p><b>Thành tiền: ${new Intl.NumberFormat().format(totalMoney)} VNĐ</b></p>
+      <p><b>Thành tiền: ${new Intl.NumberFormat().format(
+        totalMoney
+      )} VNĐ</b></p>
     </div>
     <p class="thanhtien"><b>(${toVietnamese(totalMoney)} Việt Nam Đồng)</b></p>
   </div>
-  <p style="margin-left: 3%;">Ghi chú: (HD 284 ngay 22/12/2022)</p>
+  <p style="margin-left: 3%;">Ghi chú: </p>
   <div class="date">
     <p class="date1">Giao nhận ngày...tháng...năm... </p>
-    <p class="date2">Ngày 31 tháng 12 năm 2022</p>
+    <p class="date2">Ngày ${dateStringReverse(
+      data.date,
+      true,
+      2
+    )} tháng  ${dateStringReverse(data.date, true, 1)} năm  ${dateStringReverse(
+    data.date,
+    true,
+    0
+  )}</p>
   </div>
   <div class="single">
     <h4>NGƯỜI GIAO</h4>

@@ -44,12 +44,10 @@ const ListEntryForm = () =>{
     const [nameSearch, setNameSearch] = useState("");
     const [isSearch, setIsSearch] = useState<Boolean>(false);
     const [listData, setListData] = useState<TableData<FormatTypeTable<DataType>[]>>(defaultTable);
-    const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
     const [isListenChange, setIsListenChange] = useState(false);
     const [statusModal, setStatusModal] = useState<boolean>(false);
     const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
     const {id,nameSource} = useParams();
-    const [searchParams, setSearchParams] = useSearchParams();
     const [listWareHouse, setListWareHouse] = useState<OptionSelect[]>([]);
     const [selectSearch, setSelectSearch] = useState<{select: string}>();
 
