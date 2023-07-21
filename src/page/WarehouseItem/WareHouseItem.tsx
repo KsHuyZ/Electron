@@ -224,18 +224,6 @@ const WareHouseItem = () => {
     setListItemHasChoose(listRows);
   }
 
-  // const getDifferentItems = (list: DataType[]) => {
-  //   const seenIds = new Set();
-  //   const differentItems = [];
-  //   for (const item of list) {
-  //     if (seenIds.has(item.id_nguonHang)) {
-  //       differentItems.push(item);
-  //     }
-  //     seenIds.add(item.id_nguonHang);
-  //   }
-  //   return differentItems;
-  // }
-
   const removeItem = async (IDIntermediary: number, IDWarehouseItem: number) => {
     const result = await ipcRenderer.invoke("delete-warehouseitem", IDIntermediary, IDWarehouseItem);
     if (result) {
@@ -246,7 +234,7 @@ const WareHouseItem = () => {
   }
 
   const handleRemoveItem = (data: DataType) => {
-    console.log(data);
+
     confirm({
       closable: true,
       title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,

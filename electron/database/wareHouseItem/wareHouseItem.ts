@@ -743,9 +743,8 @@ const wareHouseItem = {
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
         await createDeliveryItem(
           idCoutDelivery,
-          item["name"],
+          item["IDWarehouseItem"],
           item.quantity,
-          item["price"],
           item.quality,
           item["prev_idwarehouse"]
         );

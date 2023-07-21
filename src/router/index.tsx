@@ -1,9 +1,7 @@
-import { Route, useLocation, Router, Outlet, createBrowserRouter, HashRouter, Routes, Navigate } from "react-router-dom";
+import { Route, Outlet, HashRouter, Routes, Navigate } from "react-router-dom";
 import Login from "@/page/Login";
 import Sidebar from "@/components/SideBar/Sidebar";
 import { FC } from "react";
-import MainDash from "@/components/MainDash/MainDash";
-import TableData from "@/components/TableData/TableData";
 import "../App.scss"
 import Warehouse from "@/page/Warehouse/Warehouse";
 import ModalItemSource from "@/page/ItemSource/components/ModalItemSource";
@@ -13,7 +11,8 @@ import WareHouseItem from "@/page/WarehouseItem/WareHouseItem";
 import Recipient from "@/page/Recipient/Recipient";
 import RecipientItem from "@/page/Recipient/components/RecipientItem";
 import EntryForm from "@/page/EntryForm/EntryForm";
-
+import History from "@/page/History/History";
+import DeliveryItem from "@/page/History/components/HistoryItem";
 
 const MainLayout: FC = () => {
   return (
@@ -39,6 +38,10 @@ const Routers = () => {
           <Route path='/item-source' element={<ItemSource />} />
           <Route path='/item-source/:id/:nameSource' element={<EntryForm />} />
           <Route path='/warehouse-item' element={<WareHouseItem />} />
+          <Route path="/history" element={<Navigate to={"/history/export"} />} />
+          <Route path="/history/export" element={<History />} />
+          <Route path="/history/import" element={<History />} />
+          <Route path="/history/export/:id" element={<DeliveryItem />} />
           {/* <Route path='/entry-form/:id' element={<EntryForm />} /> */}
         </Route>
         <Route path='/' element={<Login />} />

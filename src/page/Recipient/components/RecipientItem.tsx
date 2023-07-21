@@ -1,27 +1,20 @@
 import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
 // import "./styles/wareHouseItem.scss";
-import { UilPlus, UilImport, UilFileExport, UilSearch, UilFilter } from '@iconscout/react-unicons'
+import { UilSearch, UilFilter } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
-import { useCallback, useEffect, useState } from "react";
-import { UilMultiply, UilPen, UilExclamationCircle } from '@iconscout/react-unicons';
+import { useEffect, useState } from "react";
 import { renderTextStatus, formatNumberWithCommas } from "@/utils";
-import { DataType, FormWareHouseItem, ISearchWareHouseItem, STATUS_MODAL } from "../../WarehouseItem/types/index";
+import { DataType, ISearchWareHouseItem } from "../../WarehouseItem/types/index";
 import TableWareHouse from "../../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
-import { ItemSource, ResponseIpc, STATUS, TableData } from "@/types";
+import { ResponseIpc, STATUS, TableData } from "@/types";
 import { useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
-// import TransferModal from "./components/TransferModal";
-import { ERROR } from "../../WarehouseItem/constants/messValidate";
 import { useSearchParams } from "react-router-dom";
 import FilterWareHouseItem from "@/page/WarehouseItem/components/FilterWareHouseItem";
-import TransferModal from "@/page/WarehouseItem/components/TransferModal";
 import toasitify from "../../../lib/toastify"
-import moment from "moment";
 import ModalCreateEntry from "@/page/EntryForm/components/ModalCreateEntry";
-
-const { confirm } = Modal;
 
 const defaultRows: DataType[] = [
   {
@@ -54,10 +47,7 @@ const defaultTable: TableData<DataType[]> = {
 const RecipientItem = () => {
   const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
   const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
-  const [isShowModal, setIsShowModal] = useState<boolean>(false);
   const { idRecipient, nameReceiving } = useParams();
-  const [isEdit, setIsEdit] = useState<boolean>(false);
-  const [itemEdit, setItemEdit] = useState<DataType>();
   const [statusModal, setStatusModal] = useState<boolean>(false);
   const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
   const [isListenChange, setIsListenChange] = useState(false);
@@ -216,36 +206,7 @@ const RecipientItem = () => {
     return setIsReadyExport(true)
   }
 
-  const removeItem = async (IDIntermediary: number, IDWarehouseItem: number) => {
-    const result = await ipcRenderer.invoke("delete-warehouseitem", IDIntermediary, IDWarehouseItem);
-    if (result) {
-      message.success('Xóa sản phẩm thành công');
-      await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
-
-    }
-  }
-
-  const handleRemoveItem = (data: DataType) => {
-    console.log(data);
-    confirm({
-      closable: true,
-      title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,
-      icon: <UilExclamationCircle />,
-      okText: 'Đồng ý',
-      okType: 'danger',
-      cancelText: 'Từ chối',
-      onOk() {
-        removeItem(Number(data.IDIntermediary), Number(data.IDWarehouseItem))
-      },
-      onCancel() {
-
-      }
-    });
-  };
-
-
   const removeItemList = (IDIntermediary: string) => {
-    console.log('remove item list', IDIntermediary);
     const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
     setListItemHasChoose(filterNewList);
     setIsListenChange(true);
@@ -255,9 +216,9 @@ const RecipientItem = () => {
     setIsSearch(true);
   }
 
-  const handleCreateExportBill = async () => {
+  const handleOpenExportBill = async () => {
     if (!isReadyExport) return notifyError("Bạn đã chọn mặt hàng khác với tạm xuất")
-    const result = await ipcRenderer.invoke("print-form-export", { items: listItemHasChoose, name: "Test", note: "Khum bíc", nature: "Xuất theo", total: 20000, date: moment.now() })
+    setStatusModal(true)
   }
 
   const exportWarehouseCallBack = async (event: Electron.IpcRendererEvent, isSuccess: boolean) => {
@@ -287,7 +248,6 @@ const RecipientItem = () => {
       <Col span={24}>
         <div>
           <div>
-
             <Card style={{ margin: '16px 0' }}>
               <Row className="filter-bar">
                 <Col span={12} className="col-item-filter">
@@ -300,7 +260,7 @@ const RecipientItem = () => {
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
-                    <Button className="default" onClick={() => setStatusModal(true)} disabled={listItemHasChoose.length > 0 ? false : true} type="primary">Tạo Phiếu Xuất Kho</Button>
+                    <Button className="default" onClick={handleOpenExportBill} disabled={listItemHasChoose.length > 0 ? false : true} type="primary">Tạo Phiếu Xuất Kho</Button>
                   </Space>
                 </Col>
               </Row>
