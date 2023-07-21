@@ -208,7 +208,6 @@ const wareHouseItem = () => {
           currentNature,
           currentTotal,
           currentDate,
-          currentTitle
         );
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (mainWindow) {

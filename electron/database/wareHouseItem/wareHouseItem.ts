@@ -758,31 +758,36 @@ const wareHouseItem = {
     }
   },
   importWarehouse: async (
-    id_Source: any[],
+    intermediary: Intermediary[],
     name: string,
     note: string,
     nature: string,
     total: number,
     date: Moment | null | any,
-    title: string
   ) => {
     try {
       const { createCountCoupon, createCouponItem } = countCoupon;
       const idCoutCoupon = await createCountCoupon(
-        id_Source[0]["id_Source"],
+        intermediary[0]["id_WareHouse"],
         name,
         nature,
         note,
         total,
         date,
-        title
       );
-      const promises = id_Source.map(async (item) => {
+      const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = 3 WHERE ID = ?`;
         const ID = await runQueryReturnID(insertQuery, [
           item["IDIntermediary"],
         ]);
-        await createCouponItem(idCoutCoupon, ID);
+        await createCouponItem(
+          idCoutCoupon, 
+          item["name"],
+          item.quantity,
+          item["price"],
+          item.quality,
+          item["id_WareHouse"]
+        );
       });
       await Promise.all(promises);
       return true;
