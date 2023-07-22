@@ -1,5 +1,5 @@
 import db from "../../utils/connectDB";
-import { Intermediary, WarehouseItem, ISearchWareHouseItem } from "../../types";
+import { Intermediary, WarehouseItem, ISearchWareHouseItem, IPostMultipleItem } from "../../types";
 import { runQuery, runQueryReturnID } from "../../utils";
 import countDelivery from "../countDelivery/countDelivery";
 import countCoupon from "../countCoupon/countCoupon";
@@ -26,6 +26,10 @@ const wareHouseItem = {
       const offsetValue = (currentPage - 1) * pageSize;
       const whereConditions: string[] = [];
       const queryParams: any[] = [id, pageSize, offsetValue];
+
+      console.log('offsetValue' , offsetValue);
+      console.log('pageSize' , pageSize);
+      
 
       // Add query conditions based on the provided search parameters
       if (name) {
@@ -298,6 +302,78 @@ const wareHouseItem = {
       return false;
     }
   },
+  createWareHouseItemMultiple :  async(dataArray: IPostMultipleItem[], idSource: number, paramsOther : {id_wareHouse : number , status: string, date: string, date_created_at: string,date_updated_at: string}) => {
+    try {
+      const status = 1;
+  
+      const createItemQuery = `INSERT INTO warehouseItem (id_Source, name, price, unit, date_expried, 
+        date_created_at, date_updated_at, note, quantity_plane, quantity_real) VALUES 
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  
+      const createIntermediary = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status
+        , quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`;
+  
+      const results = await Promise.all(dataArray.map(async (data) => {
+        const {
+          name,
+          price,
+          unit,
+          quality,
+          date_expried,
+          note,
+          quantity_plane,
+          quantity_real,
+        } = data;
+  
+        const idWarehouseItem = await new Promise<number>((resolve, reject) => {
+          db.run(
+            createItemQuery,
+            [
+              idSource,
+              name,
+              price,
+              unit,
+              date_expried,
+              paramsOther.date_created_at,
+              paramsOther.date_updated_at,
+              note,
+              quantity_plane,
+              quantity_real,
+            ],
+            function (err) {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(this.lastID);
+              }
+            }
+          );
+        });
+  
+        const idIntermediary = await new Promise<number>((resolve, reject) => {
+          db.run(
+            createIntermediary,
+            [paramsOther.id_wareHouse, idWarehouseItem, status, quality, quantity_real, paramsOther.date],
+            function (err) {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(this.lastID);
+              }
+            }
+          );
+        });
+  
+        return { idWarehouseItem, idIntermediary };
+      }));
+  
+      return results;
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
+  },
+  
   updateWareHouseItem: async (data: WarehouseItem & Intermediary) => {
     const {
       name,
@@ -773,13 +849,13 @@ const wareHouseItem = {
       const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
-        await createDeliveryItem(
-          idCoutDelivery,
-          item["IDWarehouseItem"],
-          item.quantity,
-          item.quality,
-          item["prev_idwarehouse"]
-        );
+        // await createDeliveryItem(
+        //   idCoutDelivery,
+        //   item["IDWarehouseItem"],
+        //   item.quantity,
+        //   item.quality,
+        //   item["prev_idwarehouse"]
+        // );
       });
       await Promise.all(promises);
       return true;

@@ -1,7 +1,8 @@
-import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
+import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input, Upload } from "antd";
 import "./styles/wareHouseItem.scss";
 import { UilFilter, UilSearch } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
+import { UilUpload } from '@iconscout/react-unicons'
 
 import { useEffect, useState } from "react";
 import { UilMultiply, UilPen, UilExclamationCircle } from '@iconscout/react-unicons';
@@ -11,11 +12,12 @@ import TableWareHouse from "./components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import AddWareHouseItem from "./components/AddWareHouseItem";
 import { ResponseIpc, TableData } from "@/types";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "./components/TransferModal";
 import FilterWareHouseItem from "./components/FilterWareHouseItem";
 import { useSearchParams } from "react-router-dom";
+import type { UploadProps } from "antd";
 
 const { confirm } = Modal;
 
@@ -45,6 +47,7 @@ const defaultTable: TableData<DataType[]> = {
   loading: false,
   rows: defaultRows,
 };
+
 
 const WareHouseItem = () => {
   const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
@@ -131,12 +134,13 @@ const WareHouseItem = () => {
         const { text, color } = renderTextStatus(confirm)
         return (
           <div style={{ display: 'flex' }}>
-            <Tag color={color}>
+            {new Date(value.date_expried) < new Date() ? <Tag color={'error'}>
+              Đã hết hạn
+            </Tag>:(
+              <Tag color={color}>
               {text}
             </Tag>
-            {new Date(value.date_expried) < new Date() && <Tag color={'error'}>
-              Đã hết hạn
-            </Tag>}
+            )}
           </div>
         )
       }
@@ -198,7 +202,7 @@ const WareHouseItem = () => {
       now_date_ex: parsedSearchParams.now_date_ex || '',
       after_date_ex: parsedSearchParams.after_date_ex || ''
     };
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, idWareHouse, paramsSearch: paramsSearch });
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, idWareHouse: idWareHouse, paramsSearch: paramsSearch });
     if (result) {
       setListData((prev) => (
         {
@@ -269,6 +273,9 @@ const WareHouseItem = () => {
     setIsSearch(true);
   }
 
+  console.log(listData);
+  
+
   return (
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
@@ -281,6 +288,7 @@ const WareHouseItem = () => {
           <div>
 
             <Card style={{ margin: '16px 0' }}>
+          
               <Row className="filter-bar">
                 <Col span={12} className="col-item-filter">
                   <div className="form-item" style={{ width: '60%' }}>
@@ -294,7 +302,9 @@ const WareHouseItem = () => {
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
                     <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
                     <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
+                    <Link to={`/upload-multiple/${idWareHouse}`}>Upload</Link>
                   </Space>
+                  
                 </Col>
               </Row>
               {isShowSearch && (

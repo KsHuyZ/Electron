@@ -71,3 +71,19 @@ export type ISearchWareHouseItem = {
   now_date_ex: string;
   after_date_ex: string;
 };
+
+export type IPostMultipleItem = {
+  name: string,
+  price: number,
+  unit: string,
+  date_expried: string;
+  date_created_at: string;
+  date_updated_at: string;
+  note: string,
+  quantity_plane: number,
+  quantity_real: number
+  id_wareHouse: number,
+  status : string,
+  date: string,
+  quality: number
+}

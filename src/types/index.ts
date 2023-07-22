@@ -79,3 +79,16 @@ export const nameOf =
   <T>() =>
   (name: keyof T): any =>
     name;
+  
+export type IFileUpload = {
+  key?: string,
+  name?: string,
+  unit?: string,
+  quality ?: number,
+  date_expried?: any,
+  price ?: any,
+  quantity_plane?: number,
+  quantity_real?: number,
+  total?: any,
+  note?: string
+}

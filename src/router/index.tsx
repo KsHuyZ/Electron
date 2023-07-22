@@ -13,6 +13,8 @@ import RecipientItem from "@/page/Recipient/components/RecipientItem";
 import EntryForm from "@/page/EntryForm/EntryForm";
 import History from "@/page/History/History";
 import DeliveryItem from "@/page/History/components/HistoryItem";
+import UploadXlsx from "@/page/UploadXlsx";
+
 
 const MainLayout: FC = () => {
   return (
@@ -42,6 +44,7 @@ const Routers = () => {
           <Route path="/history/export" element={<History />} />
           <Route path="/history/import" element={<History />} />
           <Route path="/history/export/:id" element={<DeliveryItem />} />
+          <Route path='/upload-multiple/:idWareHouse' element={<UploadXlsx />} />
           {/* <Route path='/entry-form/:id' element={<EntryForm />} /> */}
         </Route>
         <Route path='/' element={<Login />} />
