@@ -7,7 +7,6 @@ import { Link, NavLink } from "react-router-dom"
 
 const Sidebar = () => {
     const [expanded, setExpaned] = useState(true)
-
     const sidebarVariants = {
         true: {
             left: '0'
@@ -16,6 +15,7 @@ const Sidebar = () => {
             left: '-60%'
         }
     }
+
     return (
         <>
             <div className="bars" style={expanded ? { left: '60%' } : { left: '5%' }} onClick={() => setExpaned(!expanded)}>

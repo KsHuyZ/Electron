@@ -59,7 +59,7 @@ const WareHouseItem = () => {
   const [isShowSearch, setIsShowSearch] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [nameSearch, setNameSearch] = useState('');
-  const [isSearch, setIsSearch] = useState<Boolean>(false);
+  const [isSearch, setIsSearch] = useState<boolean>(false);
 
   const columns: ColumnsType<DataType> = [
     {
@@ -112,7 +112,7 @@ const WareHouseItem = () => {
     {
       title: 'Thời gian hết hạn',
       dataIndex: 'date_expried',
-      render : (record) =>(
+      render: (record) => (
         <span>{getDateExpried(record)}</span>
       ),
       width: 200,
@@ -127,14 +127,17 @@ const WareHouseItem = () => {
       dataIndex: "status",
       fixed: 'right',
       width: 150,
-      render: (confirm: number) => {
+      render: (confirm: number, value) => {
         const { text, color } = renderTextStatus(confirm)
         return (
-          <span>
+          <div style={{ display: 'flex' }}>
             <Tag color={color}>
               {text}
             </Tag>
-          </span>
+            {new Date(value.date_expried) < new Date() && <Tag color={'error'}>
+              Đã hết hạn
+            </Tag>}
+          </div>
         )
       }
     },
@@ -184,7 +187,7 @@ const WareHouseItem = () => {
     });
 
     console.log(parsedSearchParams);
-    
+
 
     const paramsSearch: ISearchWareHouseItem = {
       name: parsedSearchParams.name || nameSearch,
@@ -192,10 +195,10 @@ const WareHouseItem = () => {
       startDate: parsedSearchParams.startDate || '',
       endDate: parsedSearchParams.endDate || '',
       status: Number(parsedSearchParams.status) || null,
-      now_date_ex : parsedSearchParams.now_date_ex || '' ,
-      after_date_ex : parsedSearchParams.after_date_ex || ''
+      now_date_ex: parsedSearchParams.now_date_ex || '',
+      after_date_ex: parsedSearchParams.after_date_ex || ''
     };
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage,  idWareHouse, paramsSearch: paramsSearch });
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, idWareHouse, paramsSearch: paramsSearch });
     if (result) {
       setListData((prev) => (
         {
@@ -224,18 +227,6 @@ const WareHouseItem = () => {
     setListItemHasChoose(listRows);
   }
 
-  // const getDifferentItems = (list: DataType[]) => {
-  //   const seenIds = new Set();
-  //   const differentItems = [];
-  //   for (const item of list) {
-  //     if (seenIds.has(item.id_nguonHang)) {
-  //       differentItems.push(item);
-  //     }
-  //     seenIds.add(item.id_nguonHang);
-  //   }
-  //   return differentItems;
-  // }
-
   const removeItem = async (IDIntermediary: number, IDWarehouseItem: number) => {
     const result = await ipcRenderer.invoke("delete-warehouseitem", IDIntermediary, IDWarehouseItem);
     if (result) {
@@ -246,7 +237,7 @@ const WareHouseItem = () => {
   }
 
   const handleRemoveItem = (data: DataType) => {
-    console.log(data);
+
     confirm({
       closable: true,
       title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,
@@ -282,7 +273,7 @@ const WareHouseItem = () => {
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
         <Col span={12}>
-          <h2 style={{margin : 0}}>Kho {idWareHouse ?? ''}</h2>
+          <h2 style={{ margin: 0 }}>Kho {idWareHouse ?? ''}</h2>
         </Col>
       </Row>
       <Col span={24}>

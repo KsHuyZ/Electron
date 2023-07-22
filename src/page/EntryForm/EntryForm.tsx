@@ -33,9 +33,6 @@ const EntryForm = () =>{
 
     const component = useMemo(() => [<Tab1Content />], []);
 
-    console.log('render form');
-    
-
     return (
         <TabMenu data={dataTab} component={component}/>
     )
