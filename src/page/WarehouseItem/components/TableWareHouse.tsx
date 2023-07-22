@@ -42,7 +42,6 @@ function TableWareHouse(props: TableWareHouseProps){
     <Table
       rowSelection={isShowSelection ? rowSelection : undefined}
       scroll={{ y: 500 }}
-
       style={{ maxWidth: '1200px' }}
       rowKey={isShowSelection ? (record: DataType) => record.IDIntermediary : undefined}
       {

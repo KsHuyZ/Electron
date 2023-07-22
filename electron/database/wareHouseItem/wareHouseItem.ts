@@ -1,10 +1,10 @@
-import { BrowserWindow, IpcMainEvent } from "electron";
 import db from "../../utils/connectDB";
 import { Intermediary, WarehouseItem, ISearchWareHouseItem } from "../../types";
 import { runQuery, runQueryReturnID } from "../../utils";
 import countDelivery from "../countDelivery/countDelivery";
 import countCoupon from "../countCoupon/countCoupon";
 import { Moment } from "moment";
+
 const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
     id: number,
@@ -49,7 +49,7 @@ const wareHouseItem = {
         queryParams.unshift(status);
       }
 
-      if (now_date_ex) {
+      if (now_date_ex !== after_date_ex) {
         whereConditions.unshift(`wi.date_expried >= ?`);
         queryParams.unshift(now_date_ex);
       }
@@ -95,22 +95,13 @@ const wareHouseItem = {
     currentPage: number,
     paramsSearch: ISearchWareHouseItem
   ) => {
-    const {
-      name,
-      idSource,
-      startDate,
-      endDate,
-      status,
-      now_date_ex,
-      after_date_ex,
-    } = paramsSearch;
+    const { name, idSource, startDate, endDate, status } = paramsSearch;
 
     try {
       const offsetValue = (currentPage - 1) * pageSize;
       const whereConditions: string[] = [];
       const queryParams: any[] = [id, pageSize, offsetValue];
 
-      // Add query conditions based on the provided search parameters
       if (name) {
         whereConditions.unshift(`wi.name LIKE ?`);
         queryParams.unshift(`%${name}%`);
@@ -130,16 +121,6 @@ const wareHouseItem = {
       if (status) {
         whereConditions.unshift(`i.status = ?`);
         queryParams.unshift(status);
-      }
-
-      if (now_date_ex) {
-        whereConditions.unshift(`wi.date_expried >= ?`);
-        queryParams.unshift(now_date_ex);
-      }
-
-      if (after_date_ex) {
-        whereConditions.unshift(`wi.date_expried <= ?`);
-        queryParams.unshift(after_date_ex);
       }
 
       const whereClause =
@@ -172,8 +153,57 @@ const wareHouseItem = {
       return null;
     }
   },
-  getAllWarehouseItem: async (pageSize, currentPage) => {
+  getAllWarehouseItem: async (
+    pageSize: number,
+    currentPage: number,
+    paramsSearch: ISearchWareHouseItem
+  ) => {
     const offsetValue = (currentPage - 1) * pageSize;
+    const whereConditions: string[] = [];
+    const queryParams: any[] = [pageSize, offsetValue];
+    const {
+      name,
+      idSource,
+      startDate,
+      endDate,
+      status,
+      now_date_ex,
+      after_date_ex,
+    } = paramsSearch;
+    if (name) {
+      whereConditions.unshift(`wi.name LIKE ?`);
+      queryParams.unshift(`%${name}%`);
+    }
+    if (idSource) {
+      whereConditions.unshift(`wi.id_Source = ?`);
+      queryParams.unshift(idSource);
+    }
+    if (startDate) {
+      whereConditions.unshift(`wi.date_created_at >= ?`);
+      queryParams.unshift(startDate);
+    }
+    if (endDate) {
+      whereConditions.unshift(`wi.date_created_at <= ?`);
+      queryParams.unshift(endDate);
+    }
+    if (status) {
+      whereConditions.unshift(`i.status = ?`);
+      queryParams.unshift(status);
+    }
+
+    if (now_date_ex !== after_date_ex) {
+      whereConditions.unshift(`wi.date_expried >= ?`);
+      queryParams.unshift(now_date_ex);
+    }
+
+    if (after_date_ex) {
+      whereConditions.unshift(`wi.date_expried <= ?`);
+      queryParams.unshift(after_date_ex);
+    }
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(" AND ")} AND i.status IN(1,3)`
+        : "AND i.status IN(1,3)";
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
      i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
@@ -181,10 +211,12 @@ const wareHouseItem = {
      FROM warehouseItem wi
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID
-     WHERE i.status IN(1,3) ORDER BY i.ID DESC LIMIT ? OFFSET ?`;
+    ${whereClause}
+     ORDER BY i.ID DESC LIMIT ? OFFSET ?`;
+
     try {
       const rows: any = await new Promise((resolve, reject) => {
-        db.all(selectQuery, [pageSize, offsetValue], (err, rows) => {
+        db.all(selectQuery, ...queryParams, (err, rows) => {
           if (err) {
             reject(err);
           } else {
@@ -743,9 +775,8 @@ const wareHouseItem = {
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
         await createDeliveryItem(
           idCoutDelivery,
-          item["name"],
+          item["IDWarehouseItem"],
           item.quantity,
-          item["price"],
           item.quality,
           item["prev_idwarehouse"]
         );

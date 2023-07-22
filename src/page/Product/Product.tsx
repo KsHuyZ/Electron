@@ -1,19 +1,17 @@
 import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
-import { UilPlus, UilImport, UilFileExport, UilSearch } from '@iconscout/react-unicons'
+import { UilPlus, UilImport, UilFileExport, UilSearch, UilFilter } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
 import { useEffect, useState } from "react";
-import { UilMultiply, UilPen, UilExclamationCircle } from '@iconscout/react-unicons';
 import { renderTextStatus, formatNumberWithCommas } from "@/utils";
-import { DataType, FormWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
+import { DataType, FormWareHouseItem, ISearchWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
 import TableWareHouse from "../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import { ItemSource, ResponseIpc, TableData } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "../WarehouseItem/components/TransferModal";
-import { ERROR } from "../WarehouseItem/constants/messValidate";
-
-const { confirm } = Modal;
+import FilterWareHouseItem from "../WarehouseItem/components/FilterWareHouseItem";
+import { useSearchParams } from "react-router-dom";
 
 const defaultRows: DataType[] = [
   {
@@ -47,12 +45,13 @@ const Product = () => {
   const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
   const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
   const [dataRowSelected, setDataRowSelected] = useState<DataType[]>([]);
-  const [isShowModal, setIsShowModal] = useState<boolean>(false);
-  const [isEdit, setIsEdit] = useState<boolean>(false);
-  const [itemEdit, setItemEdit] = useState<DataType>();
+  const [isShowSearch, setIsShowSearch] = useState(false);
+  const [nameSearch, setNameSearch] = useState('');
   const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
   const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>(defaultRows);
   const [isListenChange, setIsListenChange] = useState(false);
+  const [isSearch, setIsSearch] = useState<boolean>(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const columns: ColumnsType<DataType> = [
     {
@@ -123,27 +122,34 @@ const Product = () => {
       dataIndex: "status",
       fixed: 'right',
       width: 150,
-      render: (confirm: number) => {
+      render: (confirm: number, value) => {
         const { text, color } = renderTextStatus(confirm)
         return (
-          <span>
+          <div style={{ display: 'flex' }}>
             <Tag color={color}>
               {text}
             </Tag>
-          </span>
+            {new Date(value.date_expried) < new Date() && <Tag color={'error'}>
+              Đã hết hạn
+            </Tag>}
+          </div>
         )
       }
     },
   ];
 
-
   useEffect(() => {
-    new Promise(async () => {
-      await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-    })
+    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
   }, [])
 
+  useEffect(() => {
+    if (isSearch) {
+      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+    }
+  }, [isSearch])
+
   const getListItem = async (pageSize: number, currentPage: number, total: number) => {
+    const parsedSearchParams = Object.fromEntries(searchParams);
     setListData({
       ...listData,
       pagination: {
@@ -153,9 +159,17 @@ const Product = () => {
       },
       loading: true
     })
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("get-all-warehouse-item", { pageSize: pageSize, currentPage: currentPage });
+    const paramsSearch: ISearchWareHouseItem = {
+      name: parsedSearchParams.name || nameSearch,
+      idSource: Number(parsedSearchParams.idSource) || null,
+      startDate: parsedSearchParams.startDate || '',
+      endDate: parsedSearchParams.endDate || '',
+      status: Number(parsedSearchParams.status) || null,
+      now_date_ex: parsedSearchParams.now_date_ex || '',
+      after_date_ex: parsedSearchParams.after_date_ex || ''
+    };
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("get-all-warehouse-item", { pageSize: pageSize, currentPage, paramsSearch });
     if (result) {
-
       setListData((prev) => (
         {
           ...prev,
@@ -166,41 +180,16 @@ const Product = () => {
           },
           loading: false
         }
-      ))
+      ));
+      if (isSearch) {
+        setIsSearch(false);
+      }
     }
   }
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
     getListItem(pagination.pageSize!, pagination.current!, pagination.total!)
   };
-
-  const handleDataRowSelected = (listIdRow: number[]) => {
-    console.log(listIdRow);
-
-    const mergedList = listIdRow.map((id, index) => {
-      const foundItem = listData.rows.find((item) => Number(item.IDIntermediary) === id);
-      return foundItem ? { ...foundItem } : null;
-    });
-
-    console.log(mergedList);
-    if (mergedList.length > 0) {
-      setStatusModal(STATUS_MODAL.TRANSFER);
-      setListItemHasChoose(mergedList as DataType[]);
-
-    } else {
-      message.error(ERROR.ERROR_3);
-      return;
-    }
-  }
-
-  const removeItem = async (IDIntermediary: number, IDWarehouseItem: number) => {
-    const result = await ipcRenderer.invoke("delete-warehouseitem", IDIntermediary, IDWarehouseItem);
-    if (result) {
-      message.success('Xóa sản phẩm thành công');
-      await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
-
-    }
-  }
 
   const handleShowTransferModal = () => {
     setStatusModal(STATUS_MODAL.CLOSE);
@@ -224,24 +213,28 @@ const Product = () => {
                 <Col span={12} className="col-item-filter">
                   <div className="form-item" style={{ width: '60%' }}>
                     <label htmlFor="">Tên mặt hàng</label>
-                    <Input />
+                    <Input value={nameSearch} onChange={(event) => setNameSearch(event.target.value)} />
                   </div>
-                  <Button type="primary"><UilSearch /></Button>
+                  <Button type="primary" onClick={() => setIsSearch(true)}><UilSearch /></Button>
                 </Col>
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
-                    {/* <Button className="default" icon={<UilImport />}>Đã nhập</Button>
-                    <Button className="default" icon={<UilFileExport />}>Tạm Xuất</Button> */}
+                    <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
                     <Button className="button-bar" onClick={() => setStatusModal(STATUS_MODAL.RECEIPT)} icon={<UilFileExport />} type="primary" disabled={dataRowSelected!?.length > 0 ? false : true}>Tạm Xuất kho</Button>
                   </Space>
                 </Col>
               </Row>
-
+              {isShowSearch && (
+                <FilterWareHouseItem
+                  name={nameSearch}
+                  isSearch={isSearch}
+                  handleIsSearch={(envSearch) => setIsSearch(envSearch)}
+                  handleChangeName={(value) => setNameSearch(value)}
+                />)}
             </Card>
           </div>
           <TableWareHouse
             setIsShowPopUp={() => setIsShowPopUp(true)}
-            setRowSelected={handleDataRowSelected}
             isShowSelection={true}
             columns={columns}
             dataSource={listData.rows}

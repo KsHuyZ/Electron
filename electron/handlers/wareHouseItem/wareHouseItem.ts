@@ -78,8 +78,13 @@ const wareHouseItem = () => {
   );
 
   ipcMain.handle("get-all-warehouse-item", async (event, data) => {
-    const { pageSize, currentPage } = data;
-    const response = await getAllWarehouseItem(pageSize, currentPage);
+    const { pageSize, currentPage, paramsSearch } = data;
+
+    const response = await getAllWarehouseItem(
+      pageSize,
+      currentPage,
+      paramsSearch
+    );
     return response;
   });
 
