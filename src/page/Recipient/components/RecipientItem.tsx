@@ -136,16 +136,12 @@ const RecipientItem = () => {
   ];
 
   useEffect(() => {
-    new Promise(async () => {
-      await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-    })
+    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
   }, []);
 
   useEffect(() => {
     if (isSearch) {
-      new Promise(async () => {
-        await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-      })
+      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
     }
   }, [isSearch]);
 
@@ -171,7 +167,7 @@ const RecipientItem = () => {
     };
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, idRecipient, paramsSearch: paramsSearch });
     if (result) {
-      console.log(result)
+
       setListData((prev) => (
         {
           ...prev,
@@ -187,8 +183,6 @@ const RecipientItem = () => {
         setIsSearch(false);
       }
     }
-
-
   }
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
@@ -217,7 +211,7 @@ const RecipientItem = () => {
   }
 
   const handleOpenExportBill = async () => {
-    if (!isReadyExport) return notifyError("Bạn đã chọn mặt hàng khác với tạm xuất")
+    if (!isReadyExport) return notifyError("Chỉ được lựa chọn mặt hàng tạm xuất")
     setStatusModal(true)
   }
 

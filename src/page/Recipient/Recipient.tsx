@@ -56,7 +56,6 @@ const Recipient = () => {
     const [showAddModal, setShowAddModal] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(false)
     const [allRecipient, setAllRecipient] = useState<DataType[]>([])
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [currentRecipient, setCurrentRecipient] = useState<DataType | null | undefined>()
     const [pagination, setPagination] = useState<TablePaginationConfig>({
         current: 1,
@@ -104,55 +103,7 @@ const Recipient = () => {
         setShowAddModal(true)
         setCurrentRecipient(data)
     }
-
-    const handleSelectRowDelete = (data: DataType) => {
-        setShowModalDelete(true)
-        setCurrentRecipient(data)
-    }
     const { notifySuccess } = toastify
-
-    const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
-        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
-        setSelectedRowKeys(newSelectedRowKeys);
-    };
-
-    const rowSelection: TableRowSelection<DataType> = {
-        selectedRowKeys,
-        onChange: onSelectChange,
-        selections: [
-            Table.SELECTION_ALL,
-            Table.SELECTION_INVERT,
-            Table.SELECTION_NONE,
-            {
-                key: 'odd',
-                text: 'Select Odd Row',
-                onSelect: (changeableRowKeys) => {
-                    let newSelectedRowKeys = [];
-                    newSelectedRowKeys = changeableRowKeys.filter((_, index) => {
-                        if (index % 2 !== 0) {
-                            return false;
-                        }
-                        return true;
-                    });
-                    setSelectedRowKeys(newSelectedRowKeys);
-                },
-            },
-            {
-                key: 'even',
-                text: 'Select Even Row',
-                onSelect: (changeableRowKeys) => {
-                    let newSelectedRowKeys = [];
-                    newSelectedRowKeys = changeableRowKeys.filter((_, index) => {
-                        if (index % 2 !== 0) {
-                            return true;
-                        }
-                        return false;
-                    });
-                    setSelectedRowKeys(newSelectedRowKeys);
-                },
-            },
-        ],
-    };
 
     const handleTableChange = (
         pagination: TablePaginationConfig
@@ -228,7 +179,6 @@ const Recipient = () => {
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm đơn vị nhận</Button></div>
             </div>
             <Table
-                rowSelection={rowSelection}
                 columns={columns}
                 dataSource={allRecipient.map(item => ({ ...item, key: item.ID }))}
                 style={{ backgroundColor: "transparent" }}

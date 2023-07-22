@@ -42,6 +42,10 @@ const listTimeExpried: OptionSelect[] = [
     label: '1 tháng',
     value: '1_month'
   },
+  {
+    label: 'Đã hết hạn',
+    value: 'out_date'
+  }
 ];
 
 
@@ -110,7 +114,7 @@ const FilterWareHouseItem = (props: PropsFilter) => {
 
     const checkDate = () => {
       if (!value.date_expried) return ''
-      return value.date_expried === '7_days' ? after_Date : after_Month
+      return value.date_expried === '7_days' ? after_Date : (value.date_expried === 'out_date' ? nowDate : after_Month)
     }
 
     const objSearch = {
@@ -181,7 +185,7 @@ const FilterWareHouseItem = (props: PropsFilter) => {
             </Form.Item>
 
           </Col>
-          <Col span={8}>
+          {page !== 'receiving' && <Col span={8}>
 
             <Form.Item
               name={'date_expried'}
@@ -196,7 +200,7 @@ const FilterWareHouseItem = (props: PropsFilter) => {
               />
             </Form.Item>
 
-          </Col>
+          </Col>}
         </Row>
         <Row align={'bottom'} style={{ float: 'right', marginTop: '20px' }}>
           <Space>
