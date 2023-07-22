@@ -39,6 +39,7 @@ const countDelivery = {
   },
   createDeliveryItem: async (
     idCoutDelivery: number | unknown,
+    name: string,
     idWarehouseItem: number,
     quantity: number,
     quality: number,
@@ -62,7 +63,7 @@ const countDelivery = {
   },
   getCountDelivery: async (pageSize: number, currentPage: number) => {
     const offsetValue = (currentPage - 1) * pageSize;
-    const selectQuery = `select ce.ID, ce.name, ce.Nature, ce.Note, ce.Total as TotalPrice, ce.date,w.name as nameReceiving, COUNT(ce.ID) OVER() AS total  from CoutDelivery ce
+    const selectQuery = `select ce.ID, ce.name, ce.Nature, ce.Note, ce.Total as Totalprice, ce.date,w.name as nameReceiving, COUNT(ce.ID) OVER() AS total  from CoutDelivery ce
     JOIN warehouse w on w.ID = ce.id_WareHouse
     ORDER BY ce.ID DESC LIMIT ? OFFSET ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [
