@@ -179,3 +179,82 @@ export const removeItemChildrenInTable = (arrays: FormatTypeTable<DataType>[]): 
   }
   return newArray;
 };
+
+interface DataObject {
+  [key: string]: any;
+}
+
+export function chooseRowsAboveThreshold(
+  data: DataObject[],
+  targetKeys: string[],
+  threshold: number
+): DataObject[] {
+  const keyCountMap: { [key: string]: number } = {};
+
+  // Count the occurrences of the target keys in the array of objects
+  data.forEach((item) => {
+    targetKeys.forEach((key) => {
+      if (item.hasOwnProperty(key)) {
+        keyCountMap[key] = (keyCountMap[key] || 0) + 1;
+      }
+    });
+  });
+
+  // Filter and choose the rows that meet the threshold condition
+  const chosenRows: DataObject[] = data.filter((item) => {
+    let count = 0;
+    targetKeys.forEach((key) => {
+      if (item.hasOwnProperty(key)) {
+        count++;
+      }
+    });
+    return count > threshold;
+  });
+
+  return chosenRows;
+}
+
+const keys = ['key', 'unit', 'quality', 'date_expried', 'price', 'quantity_plane','quantity_real', 'total', 'note', 'name'];
+
+const convertKey = (oldKey: string) => {
+  const index = parseInt(oldKey.replace('__EMPTY_', ''));
+  if (oldKey === '__EMPTY') {
+    return keys[0];
+  }
+  if (!isNaN(index) && index >= 1 && index <= keys.length) {
+    return keys[index];
+  }
+  return keys[keys.length - 1];
+};
+  
+export const convertItemKey = (arrayList : any) =>{
+  return arrayList && arrayList?.map((obj: any) => {
+    const newObj: any = {};
+    console.log(obj);
+    
+    for (const oldKey in obj) {
+      const newKey = convertKey(oldKey);
+      newObj[newKey] = obj[oldKey];
+    }
+    return newObj;
+  })
+};
+
+export function formatDateUploadFile(dateString: any) {
+  console.log(dateString);
+  
+  const parts = dateString.split('/'); // Split the input date string by the slash '/'
+  
+  // Ensure the parts have valid values
+  if (parts.length !== 2 || parts[0].length !== 2 || parts[1].length !== 2) {
+    return 'Invalid date format';
+  }
+
+  const [month, day] = parts;
+  const year = new Date().getFullYear(); // Get the current year
+
+  // Construct the new date string in the "YYYY/MM/DD" format
+  const newDateString = `${year}/${month}/${day}`;
+
+  return newDateString;
+}

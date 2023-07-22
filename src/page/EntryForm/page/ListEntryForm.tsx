@@ -200,7 +200,7 @@ const ListEntryForm = () =>{
       itemWareHouse : selectSearch?.select ?? ''
     };
 
-    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: currentPage, id: id, paramsSearch: paramsSearch });
+    const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, id: id, paramsSearch: paramsSearch });
     if (result) {
       // const responseRow = createFormattedTable(result.rows);
       setListData((prev) => (

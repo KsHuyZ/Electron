@@ -3,6 +3,7 @@ import "./tabMenu.scss";
 import { TabMenu as TabMenuType } from "@/types";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { Spin } from "antd";
 
 interface PropsTabMenu {
     data: TabMenuType[],
@@ -55,7 +56,7 @@ function TabMenu (props: PropsTabMenu){
                     
                 </ul>
             </section>
-            <React.Suspense fallback={<></>}>
+            <React.Suspense fallback={<><Spin/></>}>
                 <Content
                  activeRegisterTab={memoizedActiveTab}
                  data={props.data}

@@ -29,6 +29,7 @@ const wareHouseItem = () => {
     exportWarehouse,
     importWarehouse,
     getAllWarehouseItembyReceivingId,
+    createWareHouseItemMultiple
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -37,6 +38,15 @@ const wareHouseItem = () => {
     async (event: IpcMainEvent, data: string) => {
       const newData = JSON.parse(data);
       const isCreated = await createWareHouseItem(newData);
+      return isCreated;
+    }
+  );
+
+  ipcMain.handle(
+    "create-multiple-product-item",
+    async (event: IpcMainEvent, data: string , idSource : number, paramsOther : {id_wareHouse : number , status: string, date: string, date_created_at: string,date_updated_at: string}) => {
+      const newData = JSON.parse(data);
+      const isCreated = await createWareHouseItemMultiple(newData, idSource, paramsOther);
       return isCreated;
     }
   );
@@ -61,13 +71,16 @@ const wareHouseItem = () => {
       const { pageSize, currentPage, paramsSearch, idRecipient, idWareHouse } =
         data;
       if (idWareHouse) {
+        console.log('here  vao day');
+        
         return await getAllWarehouseItembyWareHouseId(
           idWareHouse,
           pageSize,
           currentPage,
           paramsSearch
-        );
-      }
+          );
+        }
+        console.log('here  vao ngoai');
       return await getAllWarehouseItembyReceivingId(
         idRecipient,
         pageSize,
