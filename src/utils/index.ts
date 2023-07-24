@@ -230,7 +230,6 @@ const convertKey = (oldKey: string) => {
 export const convertItemKey = (arrayList : any) =>{
   return arrayList && arrayList?.map((obj: any) => {
     const newObj: any = {};
-    console.log(obj);
     
     for (const oldKey in obj) {
       const newKey = convertKey(oldKey);
@@ -241,8 +240,6 @@ export const convertItemKey = (arrayList : any) =>{
 };
 
 export function formatDateUploadFile(dateString: any) {
-  console.log(dateString);
-  
   const parts = dateString.split('/'); // Split the input date string by the slash '/'
   
   // Ensure the parts have valid values

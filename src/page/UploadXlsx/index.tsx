@@ -81,6 +81,7 @@ const UploadXlsx = () => {
     const [editingKey, setEditingKey] = useState('');
     const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>();
     const refError = useRef<any>(null);
+    const refInputFile = useRef<any>(null);
     const [item, setItem] = useState<number>();
     const [isErrorSelect, setIsErrorSelect] = useState(false);
     const {idWareHouse} = useParams();
@@ -202,7 +203,10 @@ const UploadXlsx = () => {
         if (isFetch) {
             if (excelFile !== null) {
                 const workbook = XLSX.read(excelFile, { type: 'buffer' });
+                console.log(JSON.stringify(workbook));
+                
                 setListSheet(workbook.SheetNames ?? []);
+                setIsFetch(false);
             }
         }
     }, [isFetch])
@@ -263,6 +267,8 @@ const UploadXlsx = () => {
         setExcelFile(null);
         setTypeError(null);
         setExcelData(null);
+        setListSheet([]);
+        refInputFile.current.value = null;
     }
 
     const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -288,7 +294,8 @@ const UploadXlsx = () => {
     }
 
 
-
+    console.log(excelData);
+    
 
     // submit event
     const handleFileSubmit = async(e: any) => {
@@ -309,6 +316,8 @@ const UploadXlsx = () => {
         if (items.date_expried && /^\d{2}\/\d{2}$/.test(items.date_expried)) {
             message.error('Định dạng ngày của HD không đúng định dạng YYYY/MM/DD');
             errorEncountered = true; 
+            console.log(items.date_expried);
+            
             return;
         }
         });
@@ -318,19 +327,21 @@ const UploadXlsx = () => {
           return;
         }
         // submit
-        const paramsOther = {
-          id_wareHouse : Number(idWareHouse),
-          status: STATUS.TEMPORARY_IMPORT,
-          date: formatDate(new Date(), true, 'date_First'),
-          date_created_at: formatDate(new Date(), true, 'no_date'),
-          date_updated_at: formatDate(new Date(), true, 'no_date')
-        };
-
-        const response  = await ipcRenderer.invoke('create-multiple-product-item', JSON.stringify(excelData) , item , paramsOther);
-        if(response){
-          navigate(`/home/${idWareHouse}`,{replace: true});
+        if(!errorEncountered){
+          const paramsOther = {
+            id_wareHouse : Number(idWareHouse),
+            status: STATUS.TEMPORARY_IMPORT,
+            date: formatDate(new Date(), true, 'date_First'),
+            date_created_at: formatDate(new Date(), true, 'no_date'),
+            date_updated_at: formatDate(new Date(), true, 'no_date')
+          };
+  
+          const response  = await ipcRenderer.invoke('create-multiple-product-item', JSON.stringify(excelData) , item , paramsOther);
+          if(response){
+            navigate(`/home/${idWareHouse}`,{replace: true});
+          }
+          
         }
-        
 
 
        } catch (error: any) {
@@ -355,15 +366,19 @@ const UploadXlsx = () => {
             const data = XLSX.utils.sheet_to_json(worksheet);
             
             const dataSlice: any = data.slice(4);
-
-            const key = Object.keys(dataSlice && dataSlice[0])?.map((key) => {
+            console.log(dataSlice);
+            if(dataSlice.length > 0){
+              const key = Object.keys(dataSlice && dataSlice[0])?.map((key) => {
                 return key;
             });
 
             const chosenRows = convertItemKey(chooseRowsAboveThreshold(dataSlice as any, key, 5));
-            console.log(chosenRows);
-            
             setExcelData(chosenRows.slice(1));
+            }else{
+              message.error('Dữ liệu không trùng khớp');
+              setExcelData(null);
+
+            }
         }
     };
 
@@ -424,7 +439,7 @@ const UploadXlsx = () => {
                                 <Col span={8} className="col-item-filter">
                                     <form className="form-group custom-form" onSubmit={handleFileSubmit}>
                                         <label htmlFor="input-upload" className='btn btn-uploadFile'>Chọn file</label>
-                                        <input type="file" accept='.xlsx' id='input-upload' className="form-control" hidden required onChange={handleFile} />
+                                        <input type="file" accept='.xlsx' id='input-upload' ref={refInputFile} className="form-control" hidden required onChange={handleFile} />
                                         <button type="submit" className="btn btn-success btn-md" disabled={excelData && excelData?.length > 0 && listSheet && listSheet?.length > 0 ? false: true}>Nhập nhiều file</button>
                                         {typeError && (
                                             <div className="alert alert-danger" role="alert">{typeError}</div>

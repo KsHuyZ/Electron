@@ -135,7 +135,7 @@ const Source = {
         whereConditions.length > 0
           ? `WHERE ${whereConditions.join(
               " AND "
-            )} AND wi.id_Source AND status IN(1,3,5) = ?`
+            )} AND wi.id_Source = ? AND status IN(1,3,5)`
           : "WHERE wi.id_Source = ? AND status IN(1,3,5)";
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
