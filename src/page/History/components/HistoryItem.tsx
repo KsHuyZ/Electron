@@ -7,16 +7,16 @@ import {
     UilArrowLeft,
 } from "@iconscout/react-unicons";
 
-type DeliveryItemType = {
+type HistoryType = {
     IDWarehouseItem: string;
-    nameWarehouse: string;
+    nameWarehouse?: string;
     name: string;
     price: number;
     quality: number;
     quantity: number;
 }
 
-const columns: ColumnsType<DeliveryItemType> = [
+const columns: ColumnsType<HistoryType> = [
     {
         title: "Mã mặt hàng",
         dataIndex: "IDWarehouseItem",
@@ -52,7 +52,7 @@ const columns: ColumnsType<DeliveryItemType> = [
     }
 ]
 
-const DeliveryItem = () => {
+const History = () => {
 
     const [tableData, setTableData] = useState([])
     const [loading, setLoading] = useState(false)
@@ -62,13 +62,10 @@ const DeliveryItem = () => {
     const isExport = location.pathname.startsWith("/history/export")
 
     const handleGetData = async () => {
-        if (isExport) {
-            setLoading(true)
-            const result = await ipcRenderer.invoke(`get-delivery-item`, id)
-            setLoading(false)
-            return setTableData(result)
-        }
-        
+        setLoading(true)
+        const result = await ipcRenderer.invoke(`get-${isExport ? 'delivery' : 'coupon'}-item`, id)
+        setLoading(false)
+        return setTableData(result)
     }
 
     useEffect(() => {
@@ -90,4 +87,4 @@ const DeliveryItem = () => {
     )
 }
 
-export default DeliveryItem
+export default History

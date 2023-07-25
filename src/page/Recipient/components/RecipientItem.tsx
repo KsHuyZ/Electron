@@ -37,7 +37,7 @@ const defaultRows: DataType[] = [
 const defaultTable: TableData<DataType[]> = {
   pagination: {
     current: 1,
-    pageSize: 3,
+    pageSize: 2,
     total: 0,
   },
   loading: false,
@@ -141,7 +141,7 @@ const RecipientItem = () => {
 
   useEffect(() => {
     if (isSearch) {
-      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+      getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
     }
   }, [isSearch]);
 

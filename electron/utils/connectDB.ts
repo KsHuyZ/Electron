@@ -27,7 +27,7 @@ db.run(
   "CREATE TABLE IF NOT EXISTS CoutCoupon (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Source INTEGER NOT NULL, name VARCHAR(100) NOT NULL, Nature VARCHAR(100), Note VARCHAR(250), Total REAL, date DATE, title VARCHAR(250), FOREIGN KEY (id_Source) REFERENCES Source(ID))"
 );
 db.run(
-  "CREATE TABLE IF NOT EXISTS Coupon_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Cout_Coupon INTEGER NOT NULL, name VARCHAR(100) NOT NULL, quantity INTEGER,quality INTEGER,price INTEGER,id_Warehouse INTEGER NOT NULL, FOREIGN KEY (id_Cout_Coupon) REFERENCES CountCoupon(ID), FOREIGN KEY (id_Warehouse) REFERENCES WareHouse(ID))"
+  "CREATE TABLE IF NOT EXISTS Coupon_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Cout_Coupon INTEGER NOT NULL, id_warehouse_item INTEGER, quantity INTEGER,quality INTEGER,id_Warehouse INTEGER NOT NULL, FOREIGN KEY (id_Cout_Coupon) REFERENCES CountCoupon(ID),FOREIGN KEY (id_warehouse_item) REFERENCES WareHouseItem(ID), FOREIGN KEY (id_Warehouse) REFERENCES WareHouse(ID))"
 );
 db.run(
   "CREATE TABLE IF NOT EXISTS Delivery_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Cout_Delivery INTEGER NOT NULL, id_warehouse_item INTEGER, quantity INTEGER,quality INTEGER,id_Warehouse INTEGER NOT NULL, FOREIGN KEY (id_Cout_Delivery) REFERENCES CountDelivery(ID), FOREIGN KEY (id_warehouse_item) REFERENCES WareHouseItem(ID),FOREIGN KEY (id_Warehouse) REFERENCES WareHouse(ID) )"

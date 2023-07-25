@@ -13,10 +13,11 @@ const countDelivery = {
     nature: string,
     note: string,
     total: string | number,
+    title: string,
     date: Moment | null
   ) => {
     const createQuery =
-      "INSERT INTO CoutDelivery(id_WareHouse, name, Nature, Note,Total,date) VALUES (?,?,?,?,?,?)";
+      "INSERT INTO CoutDelivery(id_WareHouse, name, Nature, Note,Total,title,date) VALUES (?,?,?,?,?,?)";
     try {
       const ID = await runQueryReturnID(createQuery, [
         idWarehouse,
@@ -24,6 +25,7 @@ const countDelivery = {
         nature,
         note,
         total,
+        title,
         date,
       ]);
       return ID;
@@ -39,7 +41,6 @@ const countDelivery = {
   },
   createDeliveryItem: async (
     idCoutDelivery: number | unknown,
-    name: string,
     idWarehouseItem: number,
     quantity: number,
     quality: number,

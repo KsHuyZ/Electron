@@ -268,7 +268,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       message.error("Không có sản phẩm để làm phiếu");
       return;
     }
-
     const params: any = {
       ...values,
       items: listItemEntryForm,
