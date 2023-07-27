@@ -2,6 +2,7 @@
   // background-color: aquamarine;
   display: flex;
   align-items: flex-end;
+  flex-wrap: wrap;
   margin-bottom: 10px;
   // justify-content: space-around;
   button.button-bar {
@@ -93,4 +94,12 @@
   padding: 10px 0 5px 0;
   text-transform: uppercase;
   margin-bottom: 0px!important;
+}
+
+.btn-upload{
+  background-color: #00695c !important;
+      border: 1px solid #00695c;
+      color: #fff !important;
+      padding: 7px 10px;
+      border-radius: 5px;
 }

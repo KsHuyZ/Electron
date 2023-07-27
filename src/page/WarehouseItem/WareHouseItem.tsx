@@ -160,7 +160,7 @@ const WareHouseItem = () => {
             setItemEdit(record)
             setIsShowModal(true)
           }} />
-          <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />
+         {record.status !== 3 && <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />}
         </Space>
       ),
     }
@@ -168,16 +168,12 @@ const WareHouseItem = () => {
 
 
   useEffect(() => {
-    new Promise(async () => {
-      await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-    })
+    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
   }, []);
 
   useEffect(() => {
     if (isSearch) {
-      new Promise(async () => {
-        await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-      })
+      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
     }
   }, [isSearch]);
 
@@ -192,9 +188,6 @@ const WareHouseItem = () => {
       },
       loading: true
     });
-
-    console.log(parsedSearchParams);
-
 
     const paramsSearch: ISearchWareHouseItem = {
       name: parsedSearchParams.name || nameSearch,
@@ -245,7 +238,6 @@ const WareHouseItem = () => {
   }
 
   const handleRemoveItem = (data: DataType) => {
-
     confirm({
       closable: true,
       title: `Bạn chắc chắn sẽ xóa MH${data.IDWarehouseItem} ?`,
@@ -267,7 +259,6 @@ const WareHouseItem = () => {
   }
 
   const removeItemList = (IDIntermediary: string[]) => {
-    console.log('remove item list', IDIntermediary);
     const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
     setListItemHasChoose(filterNewList);
     setIsListenChange(true);
@@ -277,9 +268,11 @@ const WareHouseItem = () => {
     setIsSearch(true);
   }
 
-  console.log(listData);
-  console.log(isSearch);
-  
+
+  const handleExportReport = () => {
+    ipcRenderer.send('export-report-warehouseitem', idWareHouse)
+  }
+
 
   return (
     <Row className="filter-bar">
@@ -293,7 +286,7 @@ const WareHouseItem = () => {
           <div>
 
             <Card style={{ margin: '16px 0' }}>
-          
+
               <Row className="filter-bar">
                 <Col span={12} className="col-item-filter">
                   <div className="form-item" style={{ width: '60%' }}>
@@ -303,13 +296,14 @@ const WareHouseItem = () => {
                   <Button type="primary" onClick={handleSearchName}><UilSearch /></Button>
                 </Col>
                 <Col span={12}>
-                  <Space direction="horizontal" size={24}>
+                  <Space direction="horizontal" size={24} wrap>
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
                     <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
                     <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
-                    <Link to={`/upload-multiple/${idWareHouse}`}>Upload</Link>
+                    <Button className="default" onClick={handleExportReport} type="primary">Xuất báo cáo hàng tồn</Button>
+                    <Link className="btn btn-upload" to={`/upload-multiple/${idWareHouse}`}>Thêm Sản Phẩm từ File</Link>
                   </Space>
-                  
+
                 </Col>
               </Row>
               {isShowSearch && (

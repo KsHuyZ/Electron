@@ -105,7 +105,6 @@ const ItemSource = () => {
       render: (_, data) => (
         <Space size="middle">
           <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
-          <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} onClick={() => handleSelectRowDelete(data)} />
         </Space>
       ),
     }
@@ -126,44 +125,6 @@ const ItemSource = () => {
   const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
     console.log('selectedRowKeys changed: ', newSelectedRowKeys);
     setSelectedRowKeys(newSelectedRowKeys);
-  };
-
-  const rowSelection: TableRowSelection<DataType> = {
-    selectedRowKeys,
-    onChange: onSelectChange,
-    selections: [
-      Table.SELECTION_ALL,
-      Table.SELECTION_INVERT,
-      Table.SELECTION_NONE,
-      {
-        key: 'odd',
-        text: 'Select Odd Row',
-        onSelect: (changeableRowKeys) => {
-          let newSelectedRowKeys = [];
-          newSelectedRowKeys = changeableRowKeys.filter((_, index) => {
-            if (index % 2 !== 0) {
-              return false;
-            }
-            return true;
-          });
-          setSelectedRowKeys(newSelectedRowKeys);
-        },
-      },
-      {
-        key: 'even',
-        text: 'Select Even Row',
-        onSelect: (changeableRowKeys) => {
-          let newSelectedRowKeys = [];
-          newSelectedRowKeys = changeableRowKeys.filter((_, index) => {
-            if (index % 2 !== 0) {
-              return true;
-            }
-            return false;
-          });
-          setSelectedRowKeys(newSelectedRowKeys);
-        },
-      },
-    ],
   };
 
   const handleTableChange = (
@@ -227,7 +188,6 @@ const ItemSource = () => {
         <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm nguồn hàng</Button></div>
       </div>
       <Table
-        rowSelection={rowSelection}
         columns={columns}
         dataSource={allItemSource.map(item => ({ ...item, key: item.ID }))}
         style={{ backgroundColor: "transparent" }}

@@ -4,6 +4,7 @@ import { DataType, Intermediary, WarehouseItem } from "../../types";
 import { startPrint } from "../../module/print";
 import { formExportBill } from "../../utils/formExportBill";
 import { formImportBill } from "../../utils/formImportBill";
+import formReport from "../../utils/formReport";
 import moment, { Moment } from "moment";
 import printPreview from "../../module/print/printPreview";
 
@@ -29,7 +30,8 @@ const wareHouseItem = () => {
     exportWarehouse,
     importWarehouse,
     getAllWarehouseItembyReceivingId,
-    createWareHouseItemMultiple
+    createWareHouseItemMultiple,
+    getAllWarehouseItemandWHName,
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -44,9 +46,24 @@ const wareHouseItem = () => {
 
   ipcMain.handle(
     "create-multiple-product-item",
-    async (event: IpcMainEvent, data: string , idSource : number, paramsOther : {id_wareHouse : number , status: string, date: string, date_created_at: string,date_updated_at: string}) => {
+    async (
+      event: IpcMainEvent,
+      data: string,
+      idSource: number,
+      paramsOther: {
+        id_wareHouse: number;
+        status: string;
+        date: string;
+        date_created_at: string;
+        date_updated_at: string;
+      }
+    ) => {
       const newData = JSON.parse(data);
-      const isCreated = await createWareHouseItemMultiple(newData, idSource, paramsOther);
+      const isCreated = await createWareHouseItemMultiple(
+        newData,
+        idSource,
+        paramsOther
+      );
       return isCreated;
     }
   );
@@ -71,16 +88,16 @@ const wareHouseItem = () => {
       const { pageSize, currentPage, paramsSearch, idRecipient, idWareHouse } =
         data;
       if (idWareHouse) {
-        console.log('here  vao day');
-        
+        console.log("here  vao day");
+
         return await getAllWarehouseItembyWareHouseId(
           idWareHouse,
           pageSize,
           currentPage,
           paramsSearch
-          );
-        }
-        console.log('here  vao ngoai');
+        );
+      }
+      console.log("here  vao ngoai");
       return await getAllWarehouseItembyReceivingId(
         idRecipient,
         pageSize,
@@ -141,8 +158,7 @@ const wareHouseItem = () => {
         nameSource: string;
       }
     ) => {
-      const { items, name, note, nature, total, date, title, nameSource } =
-        data;
+      const { items, name, note, nature, total, date, title } = data;
       startPrint(
         {
           htmlString: await formExportBill(data),
@@ -155,6 +171,7 @@ const wareHouseItem = () => {
       currentNature = nature;
       currentDate = date;
       currentItems = items;
+      currentTitle = title;
       isForm = "export";
       return null;
     }
@@ -174,8 +191,7 @@ const wareHouseItem = () => {
         nameSource: string;
       }
     ) => {
-      const { items, name, note, nature, total, date, title, nameSource } =
-        data;
+      const { items, name, note, nature, total, date, title } = data;
       startPrint(
         {
           htmlString: await formImportBill(data),
@@ -204,6 +220,7 @@ const wareHouseItem = () => {
 
   ipcMain.on("save-pdf", async () => {
     const isComplete = await printPreview.saveFilePdf();
+    if(isForm === "") return
     if (isComplete) {
       if (isForm === "export") {
         const isSuccess = await exportWarehouse(
@@ -212,20 +229,22 @@ const wareHouseItem = () => {
           currentNote,
           currentNature,
           currentTotal,
+          currentTitle,
           currentDate
         );
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (mainWindow) {
           mainWindow.webContents.send("export-warehouse", { isSuccess });
         }
-      } else {
+      } else if (isForm === "import"){
         const isSuccess = await importWarehouse(
           currentItems,
           currentName,
           currentNote,
           currentNature,
           currentTotal,
-          currentDate,
+          currentTitle,
+          currentDate
         );
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (mainWindow) {
@@ -233,6 +252,16 @@ const wareHouseItem = () => {
         }
       }
     }
+  });
+
+  ipcMain.on("export-report-warehouseitem", async (event, id: number) => {
+    const items: any = await getAllWarehouseItemandWHName(id);
+    startPrint(
+      {
+        htmlString: formReport({ items, warehouse: items[0].warehouseName }),
+      },
+      undefined
+    );
   });
 };
 

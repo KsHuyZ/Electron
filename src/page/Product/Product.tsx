@@ -144,7 +144,7 @@ const Product = () => {
 
   useEffect(() => {
     if (isSearch) {
-      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+      getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
     }
   }, [isSearch])
 

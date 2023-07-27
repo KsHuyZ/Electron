@@ -43,17 +43,23 @@ const History = () => {
         rows: [],
     };
 
+
+    const [tableData, setTableData] = useState<TableData<CountDeliveryType[]>>(defaultTable)
+
+    const location = useLocation()
+
+    const isExport = location.pathname.startsWith("/history/export")
     const columns: ColumnsType<CountDeliveryType> = [
         {
             title: "Số phiếu",
             dataIndex: "ID",
             render(value) {
-                return <Link to={`/history/export/${value}`}>{value}</Link>
+                return <Link to={`/history/${isExport ? "export" : "import"}/${value}`}>{value}</Link>
             },
         },
         {
-            title: "Đơn vị nhận",
-            dataIndex: "nameReceiving"
+            title: isExport ? "Đơn vị nhận" : "Nhập vào Kho",
+            dataIndex: isExport ? "nameReceiving" : "nameSource"
         },
         {
             title: "Tính chất",
@@ -65,14 +71,14 @@ const History = () => {
         },
         {
             title: "Tổng tiền (Bằng số)",
-            dataIndex: "TotalPrice",
+            dataIndex: "Totalprice",
             render: (record) => (
                 `${new Intl.NumberFormat().format(record)} VNĐ`
             )
         },
         {
             title: "Tổng tiền (Bằng chữ)",
-            dataIndex: "TotalPrice",
+            dataIndex: "Totalprice",
             render: (value) => (
                 `${docso(value)} Đồng`
             )
@@ -84,14 +90,9 @@ const History = () => {
         },
     ]
 
-    const [tableData, setTableData] = useState<TableData<CountDeliveryType[]>>(defaultTable)
-
-    const location = useLocation()
-
-    const isExport = location.pathname.startsWith("/history/export")
-
     const handleGetData = async () => {
         const result = await ipcRenderer.invoke(`get-history-${isExport ? "export" : "import"}`, { current: current ? current : 1, pageSize: pageSize ? pageSize : 5 })
+        console.log(result)
         return setTableData(result)
     }
 
@@ -102,7 +103,7 @@ const History = () => {
 
     useEffect(() => {
         handleGetData()
-    }, [current, pageSize])
+    }, [current, pageSize, isExport])
 
     return (
         <>
