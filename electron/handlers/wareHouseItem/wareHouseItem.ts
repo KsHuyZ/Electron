@@ -4,6 +4,7 @@ import { DataType, Intermediary, WarehouseItem } from "../../types";
 import { startPrint } from "../../module/print";
 import { formExportBill } from "../../utils/formExportBill";
 import { formImportBill } from "../../utils/formImportBill";
+import formReport from "../../utils/formReport";
 import moment, { Moment } from "moment";
 import printPreview from "../../module/print/printPreview";
 
@@ -30,6 +31,7 @@ const wareHouseItem = () => {
     importWarehouse,
     getAllWarehouseItembyReceivingId,
     createWareHouseItemMultiple,
+    getAllWarehouseItemandWHName,
   } = wareHouseItemDB;
 
   //  listen create warehouse item request
@@ -249,6 +251,16 @@ const wareHouseItem = () => {
         }
       }
     }
+  });
+
+  ipcMain.on("export-report-warehouseitem", async (event, id: number) => {
+    const items: any = await getAllWarehouseItemandWHName(id);
+    startPrint(
+      {
+        htmlString: formReport({ items, warehouse: items[0].warehouseName }),
+      },
+      undefined
+    );
   });
 };
 

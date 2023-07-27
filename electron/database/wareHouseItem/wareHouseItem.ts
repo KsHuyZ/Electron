@@ -5,7 +5,7 @@ import {
   ISearchWareHouseItem,
   IPostMultipleItem,
 } from "../../types";
-import { runQuery, runQueryReturnID } from "../../utils";
+import { runQuery, runQueryGetAllData, runQueryReturnID } from "../../utils";
 import countDelivery from "../countDelivery/countDelivery";
 import countCoupon from "../countCoupon/countCoupon";
 import { Moment } from "moment";
@@ -923,6 +923,18 @@ const wareHouseItem = {
       console.log(error);
       return false;
     }
+  },
+  getAllWarehouseItemandWHName: async (id: number) => {
+    const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
+    wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+     i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
+      i.date,w.name AS warehouseName 
+     FROM warehouseItem wi
+     JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
+     JOIN warehouse w ON id_WareHouse = w.ID
+     WHERE status IN (1,3,5) AND id_WareHouse = ?`;
+    const rows = runQueryGetAllData(selectQuery, [id]);
+    return rows;
   },
 };
 
