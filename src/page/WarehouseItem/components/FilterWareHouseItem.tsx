@@ -103,7 +103,8 @@ const FilterWareHouseItem = (props: PropsFilter) => {
 
   const handleRemoveItemSearch = () => {
     formFilter.resetFields();
-    other.handleChangeName('')
+    other.handleChangeName('');
+    setSearchParams(stringifyParams({ params: {  } }));
   }
 
   const onFinish = (value: ISearch) => {

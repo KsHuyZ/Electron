@@ -135,8 +135,7 @@ if(timeDiff > 0){
   days =  `Còn ${daysRemaining} ngày nữa là đến ngày ${date}.`;
 
 }else{
-  const daysPassed = timeDiff < 0 ? Math.abs(timeDiff) : 0;
-  if( daysPassed < 0){
+  if( timeDiff < 0){
     days = `Đã hết hạn từ ngày ${date}.`
   }else{
     days = `Đây là ngày cuối từ ngày ${date}.`
