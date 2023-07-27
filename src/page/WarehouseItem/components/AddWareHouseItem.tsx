@@ -28,7 +28,7 @@ interface PropsAddWareHouseItem {
   idWareHouse?: string;
   isEdit: boolean;
   itemEdit:
-    | Omit<DataType, "date_created_at" | "date_updated_at" | "status">
+    | Omit<DataType, "date_created_at" | "date_updated_at">
     | undefined;
   setIsEdit: (status: boolean) => void;
   fetching: () => Promise<void>;
@@ -223,7 +223,7 @@ const AddWareHouseItem = React.memo(
                   },
                 ]}
               >
-                <Input disabled={itemEdit.status === 3 ? true : false} />
+                <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -239,7 +239,7 @@ const AddWareHouseItem = React.memo(
                   value={price}
                   onChange={handleInputPrice}
                   addonAfter="vnđ"
-                  disabled={itemEdit.status === 3 ? true : false}
+                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
               {/* <InputPrice name="price" label="Gias"/> */}
@@ -257,7 +257,7 @@ const AddWareHouseItem = React.memo(
               >
                 <Select
                   options={defaultQuality}
-                  disabled={itemEdit.status === 3 ? true : false}
+                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>
@@ -280,7 +280,7 @@ const AddWareHouseItem = React.memo(
               >
                 <Input
                   style={{ width: "100%" }}
-                  disabled={itemEdit.status === 3 ? true : false}
+                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>
@@ -303,7 +303,7 @@ const AddWareHouseItem = React.memo(
               >
                 <Input
                   style={{ width: "100%" }}
-                  disabled={itemEdit.status === 3 ? true : false}
+                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>
@@ -321,7 +321,7 @@ const AddWareHouseItem = React.memo(
                 <Select
                   showSearch
                   optionFilterProp="children"
-                  disabled={itemEdit.status === 3 ? true : false}
+                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
                   filterOption={(input, option) =>
                     (option?.label ?? "")
                       .toLowerCase()
@@ -356,14 +356,14 @@ const AddWareHouseItem = React.memo(
                   },
                 ]}
               >
-                <Input disabled={itemEdit.status === 3 ? true : false} />
+                <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item label="Chú thích" name="note">
                 <Input.TextArea
                   rows={4}
-                  disabled={itemEdit.status === 3 ? true : false}
+                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>

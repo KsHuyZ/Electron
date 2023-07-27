@@ -296,12 +296,12 @@ const WareHouseItem = () => {
                   <Button type="primary" onClick={handleSearchName}><UilSearch /></Button>
                 </Col>
                 <Col span={12}>
-                  <Space direction="horizontal" size={24}>
+                  <Space direction="horizontal" size={24} wrap>
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
                     <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
                     <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
                     <Button className="default" onClick={handleExportReport} type="primary">Xuất báo cáo hàng tồn</Button>
-                    <Link to={`/upload-multiple/${idWareHouse}`}>Upload</Link>
+                    <Link className="btn btn-upload" to={`/upload-multiple/${idWareHouse}`}>Thêm Sản Phẩm từ File</Link>
                   </Space>
 
                 </Col>
