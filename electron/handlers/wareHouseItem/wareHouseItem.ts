@@ -220,6 +220,7 @@ const wareHouseItem = () => {
 
   ipcMain.on("save-pdf", async () => {
     const isComplete = await printPreview.saveFilePdf();
+    if(isForm === "") return
     if (isComplete) {
       if (isForm === "export") {
         const isSuccess = await exportWarehouse(
@@ -235,7 +236,7 @@ const wareHouseItem = () => {
         if (mainWindow) {
           mainWindow.webContents.send("export-warehouse", { isSuccess });
         }
-      } else {
+      } else if (isForm === "import"){
         const isSuccess = await importWarehouse(
           currentItems,
           currentName,

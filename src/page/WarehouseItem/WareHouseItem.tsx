@@ -157,7 +157,7 @@ const WareHouseItem = () => {
             setItemEdit(record)
             setIsShowModal(true)
           }} />
-          <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />
+         {record.status !== 3 && <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />}
         </Space>
       ),
     }
