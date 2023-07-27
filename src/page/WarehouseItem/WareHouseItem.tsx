@@ -126,6 +126,11 @@ const WareHouseItem = () => {
       width: 200,
     },
     {
+      title: 'Chú thích',
+      dataIndex: 'note',
+      width: 200,
+    },
+    {
       title: "Trạng thái",
       dataIndex: "status",
       fixed: 'right',
@@ -134,13 +139,11 @@ const WareHouseItem = () => {
         const { text, color } = renderTextStatus(confirm)
         return (
           <div style={{ display: 'flex' }}>
-            {new Date(value.date_expried) < new Date() ? <Tag color={'error'}>
-              Đã hết hạn
-            </Tag> : (
+            {
               <Tag color={color}>
-                {text}
-              </Tag>
-            )}
+              {text}
+            </Tag>
+            }
           </div>
         )
       }
@@ -229,14 +232,15 @@ const WareHouseItem = () => {
     if (result) {
       message.success('Xóa sản phẩm thành công');
       await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
-
+      setListItemHasChoose([]);
+      setIsListenChange(true);
     }
   }
 
   const handleRemoveItem = (data: DataType) => {
     confirm({
       closable: true,
-      title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,
+      title: `Bạn chắc chắn sẽ xóa MH${data.IDWarehouseItem} ?`,
       icon: <UilExclamationCircle />,
       okText: 'Đồng ý',
       okType: 'danger',
@@ -264,9 +268,11 @@ const WareHouseItem = () => {
     setIsSearch(true);
   }
 
+
   const handleExportReport = () => {
     ipcRenderer.send('export-report-warehouseitem', idWareHouse)
   }
+
 
   return (
     <Row className="filter-bar">
