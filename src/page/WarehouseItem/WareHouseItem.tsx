@@ -11,7 +11,7 @@ import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "./types";
 import TableWareHouse from "./components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import AddWareHouseItem from "./components/AddWareHouseItem";
-import { ResponseIpc, TableData } from "@/types";
+import { ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
 import { Link, useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "./components/TransferModal";
@@ -53,7 +53,7 @@ const WareHouseItem = () => {
   const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
   const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
   const [isShowModal, setIsShowModal] = useState<boolean>(false);
-  const { idWareHouse } = useParams();
+  const { idWareHouse, nameWareHouse } = useParams();
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [itemEdit, setItemEdit] = useState<DataType>();
   const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
@@ -67,7 +67,7 @@ const WareHouseItem = () => {
   const columns: ColumnsType<DataType> = [
     {
       title: 'Mã mặt hàng',
-      dataIndex: 'IDWarehouseItem',
+      dataIndex: 'IDIntermediary',
       width: 150,
       render: (record) => {
         return `MH${record < 10 ? "0" : ""}${record}`
@@ -113,6 +113,17 @@ const WareHouseItem = () => {
       width: 200,
     },
     {
+      title: 'Chất lượng mặt hàng',
+      dataIndex: 'quality',
+      width: 200,
+      render : (record) => {
+        const findItem = QUALITY_PRODUCT.find((item) => item.value == record);
+        return (
+          <span>{findItem?.label}</span>
+        )
+      }
+    },
+    {
       title: 'Thời gian hết hạn',
       dataIndex: 'date_expried',
       render: (record) => (
@@ -126,11 +137,6 @@ const WareHouseItem = () => {
       width: 200,
     },
     {
-      title: 'Chú thích',
-      dataIndex: 'note',
-      width: 200,
-    },
-    {
       title: "Trạng thái",
       dataIndex: "status",
       fixed: 'right',
@@ -139,11 +145,13 @@ const WareHouseItem = () => {
         const { text, color } = renderTextStatus(confirm)
         return (
           <div style={{ display: 'flex' }}>
-            {
+            {new Date(value.date_expried) < new Date() ? <Tag color={'error'}>
+              Đã hết hạn
+            </Tag>:(
               <Tag color={color}>
               {text}
             </Tag>
-            }
+            )}
           </div>
         )
       }
@@ -160,7 +168,7 @@ const WareHouseItem = () => {
             setItemEdit(record)
             setIsShowModal(true)
           }} />
-         {record.status !== 3 && <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />}
+          <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />
         </Space>
       ),
     }
@@ -168,12 +176,16 @@ const WareHouseItem = () => {
 
 
   useEffect(() => {
-    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+    new Promise(async () => {
+      await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+    })
   }, []);
 
   useEffect(() => {
     if (isSearch) {
-      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+      new Promise(async () => {
+        await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+      })
     }
   }, [isSearch]);
 
@@ -188,6 +200,9 @@ const WareHouseItem = () => {
       },
       loading: true
     });
+
+    console.log(parsedSearchParams);
+
 
     const paramsSearch: ISearchWareHouseItem = {
       name: parsedSearchParams.name || nameSearch,
@@ -224,7 +239,10 @@ const WareHouseItem = () => {
   };
 
   const handleDataRowSelected = (listRows: DataType[]) => {
-    setListItemHasChoose(listRows);
+    setListItemHasChoose(listRows.map((item) =>({
+      ...item,
+      newQuantity: item.quantity!
+    })));
   }
 
   const removeItem = async (IDIntermediary: number, IDWarehouseItem: number) => {
@@ -232,15 +250,15 @@ const WareHouseItem = () => {
     if (result) {
       message.success('Xóa sản phẩm thành công');
       await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
-      setListItemHasChoose([]);
-      setIsListenChange(true);
+
     }
   }
 
   const handleRemoveItem = (data: DataType) => {
+
     confirm({
       closable: true,
-      title: `Bạn chắc chắn sẽ xóa MH${data.IDWarehouseItem} ?`,
+      title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,
       icon: <UilExclamationCircle />,
       okText: 'Đồng ý',
       okType: 'danger',
@@ -259,6 +277,7 @@ const WareHouseItem = () => {
   }
 
   const removeItemList = (IDIntermediary: string[]) => {
+    console.log('remove item list', IDIntermediary);
     const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
     setListItemHasChoose(filterNewList);
     setIsListenChange(true);
@@ -268,17 +287,14 @@ const WareHouseItem = () => {
     setIsSearch(true);
   }
 
-
-  const handleExportReport = () => {
-    ipcRenderer.send('export-report-warehouseitem', idWareHouse)
-  }
-
+  console.log(listData);
+  
 
   return (
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
         <Col span={12}>
-          <h2 style={{ margin: 0 }}>Kho {idWareHouse ?? ''}</h2>
+          <h2 style={{ margin: 0 }}>{nameWareHouse ?? ''}</h2>
         </Col>
       </Row>
       <Col span={24}>
@@ -286,7 +302,7 @@ const WareHouseItem = () => {
           <div>
 
             <Card style={{ margin: '16px 0' }}>
-
+          
               <Row className="filter-bar">
                 <Col span={12} className="col-item-filter">
                   <div className="form-item" style={{ width: '60%' }}>
@@ -296,14 +312,13 @@ const WareHouseItem = () => {
                   <Button type="primary" onClick={handleSearchName}><UilSearch /></Button>
                 </Col>
                 <Col span={12}>
-                  <Space direction="horizontal" size={24} wrap>
+                  <Space direction="horizontal" size={24}>
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
                     <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
                     <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
-                    <Button className="default" onClick={handleExportReport} type="primary">Xuất báo cáo hàng tồn</Button>
-                    <Link className="btn btn-upload" to={`/upload-multiple/${idWareHouse}`}>Thêm Sản Phẩm từ File</Link>
+                    <Link to={`/upload-multiple/${idWareHouse}`}>Upload</Link>
                   </Space>
-
+                  
                 </Col>
               </Row>
               {isShowSearch && (

@@ -103,7 +103,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
   if (editable) {
     childNode = editing ? (
-      <Tooltip placement="top" title={`Số lượng hiện có ${record.quantity}`}>
+      <Tooltip placement="top" title={`Số lượng hiện có ${record.newQuantity}`}>
         <Form.Item
           style={{ margin: 0 }}
           name={dataIndex}
@@ -114,8 +114,8 @@ const EditableCell: React.FC<EditableCellProps> = ({
                 if (!value) {
                   return Promise.reject(`${title} bắt buộc nhập.`);
                 }
-                if (value > record.quantity!) {
-                  return Promise.reject(`Số lượng tối đa có thể chuyển là ${record.quantity}.`);
+                if (value > record.newQuantity!) {
+                  return Promise.reject(`Số lượng tối đa có thể chuyển là ${record.newQuantity}.`);
                 }
                 return Promise.resolve();
               },
@@ -326,7 +326,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
   };
 
   const handleSave = (data: DataType) => {
-    console.log(data);
+
     const newList = listItemTransfer.map(item => item.IDIntermediary === data.IDIntermediary ? data : item)
     setListItemTransfer(newList);
   }

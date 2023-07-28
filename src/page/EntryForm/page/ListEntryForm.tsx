@@ -4,7 +4,7 @@ import { Row, Col, Card, Input, Button, Space, Tag, Select } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "@/page/WarehouseItem/types";
 import { formatNumberWithCommas, getDateExpried, renderTextStatus, createFormattedTable, removeItemChildrenInTable } from "@/utils";
-import { ResponseIpc,TableData,FormatTypeTable,OptionSelect } from "@/types";
+import { ResponseIpc,TableData,FormatTypeTable,OptionSelect, QUALITY_PRODUCT } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import { useSearchParams, useParams } from "react-router-dom";
 import { ipcRenderer } from "electron";
@@ -54,7 +54,7 @@ const ListEntryForm = () =>{
     const columns: ColumnsType<DataType> = [
         {
           title: 'Mã mặt hàng',
-          dataIndex: 'IDWarehouseItem',
+          dataIndex: 'IDIntermediary',
           width: 150,
           render: (record) => {
             return `MH${record < 10 ? "0" : ""}${record}`
@@ -121,6 +121,17 @@ const ListEntryForm = () =>{
           title: 'Đơn vị tính',
           dataIndex: 'unit',
           width: 200,
+        },
+        {
+          title: 'Chất lượng mặt hàng',
+          dataIndex: 'quality',
+          width: 200,
+          render : (record) => {
+            const findItem = QUALITY_PRODUCT.find((item) => item.value == record);
+            return (
+              <span>{findItem?.label}</span>
+            )
+          }
         },
         {
           title: 'Thời gian hết hạn',

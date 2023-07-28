@@ -41,14 +41,17 @@ const Warehouse = () => {
             title: 'Mã kho hàng',
             dataIndex: 'ID',
             key: 'ID',
-            render: (record) => {
-                return <Link to={`/home/${record}`}>K{record < 10 ? "0" : ""}{record}</Link>
+            render: (record, value: DataType) => {
+                return <Link to={`/home/${record}/${value.name}`}>K{record < 10 ? "0" : ""}{record}</Link>
             }
         },
         {
             title: 'Tên kho',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            render: (record, value: DataType) => {
+                return <Link to={`/home/${value.ID}/${record}`}>{record}</Link>
+            }
         },
         {
             title: "Hành động",

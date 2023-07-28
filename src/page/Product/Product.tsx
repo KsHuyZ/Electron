@@ -7,7 +7,7 @@ import { renderTextStatus, formatNumberWithCommas } from "@/utils";
 import { DataType, FormWareHouseItem, ISearchWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
 import TableWareHouse from "../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
-import { ItemSource, ResponseIpc, TableData } from "@/types";
+import { ItemSource, ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "../WarehouseItem/components/TransferModal";
 import FilterWareHouseItem from "../WarehouseItem/components/FilterWareHouseItem";
@@ -106,6 +106,17 @@ const Product = () => {
       title: 'Đơn vị tính',
       dataIndex: 'unit',
       width: 200,
+    },
+    {
+      title: 'Chất lượng mặt hàng',
+      dataIndex: 'quality',
+      width: 200,
+      render : (record) => {
+        const findItem = QUALITY_PRODUCT.find((item) => item.value == record);
+        return (
+          <span>{findItem?.label}</span>
+        )
+      }
     },
     {
       title: 'Thời gian hết hạn',
