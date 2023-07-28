@@ -11,7 +11,7 @@ import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "./types";
 import TableWareHouse from "./components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import AddWareHouseItem from "./components/AddWareHouseItem";
-import { ResponseIpc, TableData } from "@/types";
+import { ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
 import { Link, useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "./components/TransferModal";
@@ -53,7 +53,7 @@ const WareHouseItem = () => {
   const [isShowPopUp, setIsShowPopUp] = useState<Boolean>(false);
   const [listData, setListData] = useState<TableData<DataType[]>>(defaultTable);
   const [isShowModal, setIsShowModal] = useState<boolean>(false);
-  const { idWareHouse } = useParams();
+  const { idWareHouse, nameWareHouse } = useParams();
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [itemEdit, setItemEdit] = useState<DataType>();
   const [statusModal, setStatusModal] = useState<STATUS_MODAL>(STATUS_MODAL.CLOSE);
@@ -67,7 +67,7 @@ const WareHouseItem = () => {
   const columns: ColumnsType<DataType> = [
     {
       title: 'Mã mặt hàng',
-      dataIndex: 'IDWarehouseItem',
+      dataIndex: 'IDIntermediary',
       width: 150,
       render: (record) => {
         return `MH${record < 10 ? "0" : ""}${record}`
@@ -111,6 +111,17 @@ const WareHouseItem = () => {
       title: 'Đơn vị tính',
       dataIndex: 'unit',
       width: 200,
+    },
+    {
+      title: 'Chất lượng mặt hàng',
+      dataIndex: 'quality',
+      width: 200,
+      render : (record) => {
+        const findItem = QUALITY_PRODUCT.find((item) => item.value == record);
+        return (
+          <span>{findItem?.label}</span>
+        )
+      }
     },
     {
       title: 'Thời gian hết hạn',
@@ -224,7 +235,10 @@ const WareHouseItem = () => {
   };
 
   const handleDataRowSelected = (listRows: DataType[]) => {
-    setListItemHasChoose(listRows);
+    setListItemHasChoose(listRows.map((item) =>({
+      ...item,
+      newQuantity: item.quantity!
+    })));
   }
 
   const removeItem = async (IDIntermediary: number, IDWarehouseItem: number) => {
@@ -240,7 +254,7 @@ const WareHouseItem = () => {
   const handleRemoveItem = (data: DataType) => {
     confirm({
       closable: true,
-      title: `Bạn chắc chắn sẽ xóa MH${data.IDWarehouseItem} ?`,
+      title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,
       icon: <UilExclamationCircle />,
       okText: 'Đồng ý',
       okType: 'danger',
@@ -278,7 +292,7 @@ const WareHouseItem = () => {
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
         <Col span={12}>
-          <h2 style={{ margin: 0 }}>Kho {idWareHouse ?? ''}</h2>
+          <h2 style={{ margin: 0 }}>{nameWareHouse ?? ''}</h2>
         </Col>
       </Row>
       <Col span={24}>

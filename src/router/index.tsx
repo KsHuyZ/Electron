@@ -33,7 +33,7 @@ const Routers = () => {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path='/home' element={<Warehouse />} />
-          <Route path='/home/:idWareHouse' element={<WareHouseItem />} />
+          <Route path='/home/:idWareHouse/:nameWareHouse' element={<WareHouseItem />} />
           <Route path='/products' element={<Product />} />
           <Route path='/recipient' element={<Recipient />} />
           <Route path='/recipient/:idRecipient/:nameReceiving' element={<RecipientItem />} />

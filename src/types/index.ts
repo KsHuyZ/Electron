@@ -92,3 +92,22 @@ export type IFileUpload = {
   total?: any,
   note?: string
 }
+
+export const QUALITY_PRODUCT: OptionSelect[] = [
+  {
+    label: "Chất lượng loại 1",
+    value: QUALITY.QUALITY_1,
+  },
+  {
+    label: "Chất lượng loại 2",
+    value: QUALITY.QUALITY_2,
+  },
+  {
+    label: "Chất lượng loại 3",
+    value: QUALITY.QUALITY_3,
+  },
+  {
+    label: "Chất lượng loại 4",
+    value: QUALITY.QUALITY_4,
+  },
+];
