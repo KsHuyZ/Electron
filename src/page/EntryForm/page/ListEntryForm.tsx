@@ -54,7 +54,7 @@ const ListEntryForm = () =>{
     const columns: ColumnsType<DataType> = [
         {
           title: 'Mã mặt hàng',
-          dataIndex: 'IDIntermediary',
+          dataIndex: 'IDWarehouseItem',
           width: 150,
           render: (record) => {
             return `MH${record < 10 ? "0" : ""}${record}`

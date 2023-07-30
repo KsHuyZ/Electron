@@ -3,7 +3,7 @@ import { UilPlus, UilImport, UilFileExport, UilSearch, UilFilter } from '@iconsc
 import type { ColumnsType } from 'antd/es/table';
 
 import { useEffect, useState } from "react";
-import { renderTextStatus, formatNumberWithCommas } from "@/utils";
+import { renderTextStatus, formatNumberWithCommas, getDateExpried } from "@/utils";
 import { DataType, FormWareHouseItem, ISearchWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
 import TableWareHouse from "../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
@@ -121,6 +121,9 @@ const Product = () => {
     {
       title: 'Thời gian hết hạn',
       dataIndex: 'date_expried',
+      render: (record) => (
+        <span>{getDateExpried(record)}</span>
+      ),
       width: 200,
     },
     {
@@ -140,9 +143,6 @@ const Product = () => {
             <Tag color={color}>
               {text}
             </Tag>
-            {new Date(value.date_expried) < new Date() && <Tag color={'error'}>
-              Đã hết hạn
-            </Tag>}
           </div>
         )
       }
@@ -212,6 +212,13 @@ const Product = () => {
     setIsListenChange(true);
   }
 
+  const handleDataRowSelected = (listRows: DataType[]) => {
+    setDataRowSelected(listRows.map((item) =>({
+      ...item,
+      newQuantity: item.quantity!
+    })));
+  }
+
   return (
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
@@ -261,7 +268,7 @@ const Product = () => {
             isListenChange={isListenChange}
             setIsListenChange={(status: boolean) => setIsListenChange(status)}
             listRowSelected={dataRowSelected}
-            setRowsSelect={setDataRowSelected}
+            setRowsSelect={handleDataRowSelected as any}
           />
         </div>
       </Col>

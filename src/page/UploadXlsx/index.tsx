@@ -44,11 +44,11 @@ interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
             rules={[
                 ({ getFieldValue }) => ({
                   validator(_, value) {
+                    if(dataIndex === 'quality' && (Number(value) <= 0 || Number(value) > 4 )){
+                      return Promise.reject(`${title} thuộc 1 - 4.`);
+                    }
                     if(dataIndex !== 'note' && !value){
                         return Promise.reject(`${title} bắt buộc nhập.`);
-                    }
-                    if(dataIndex === 'quality' && Number(value) <= 0 || Number(value) > 4 ){
-                      return Promise.reject(`${title} thuộc 1 - 4.`);
                     }
                     if(listTypeNumberValidate.includes(dataIndex) && !/^[^a-zA-Z\W]*\.?\d*$/.test(value)){
                         return Promise.reject(`${title} phải là số.`);
