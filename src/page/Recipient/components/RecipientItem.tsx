@@ -69,6 +69,29 @@ const RecipientItem = () => {
       }
     },
     {
+      title: 'Tên Kho Hàng',
+      dataIndex: 'nameWareHouse',
+      render: (value, row, index) => {
+        const trueIndex =
+        index + listData.pagination.pageSize * (1 - 1);
+        const obj = {
+          children : (<b>{value?.toUpperCase() ?? ''}</b>),
+          props : {} as any
+        };
+        if(index > 0 && row.id_WareHouse === listData.rows[trueIndex -1].id_WareHouse){
+          obj.props.rowSpan = 0;
+          // obj.props.colSpan = 2;
+        }
+        else{
+          for (let i = 0; trueIndex + i !== listData.rows.length && row.id_WareHouse === listData.rows[trueIndex + i].id_WareHouse; i+=1) {
+           obj.props.rowSpan = i+1; 
+          }
+        }
+        return obj;
+      },
+      width: 200,
+    },
+    {
       title: 'Tên mặt hàng',
       dataIndex: 'name',
       width: 200,

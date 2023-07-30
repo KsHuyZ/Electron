@@ -67,7 +67,7 @@ const WareHouseItem = () => {
   const columns: ColumnsType<DataType> = [
     {
       title: 'Mã mặt hàng',
-      dataIndex: 'IDIntermediary',
+      dataIndex: 'IDWarehouseItem',
       width: 150,
       render: (record) => {
         return `MH${record < 10 ? "0" : ""}${record}`
@@ -254,7 +254,7 @@ const WareHouseItem = () => {
   const handleRemoveItem = (data: DataType) => {
     confirm({
       closable: true,
-      title: `Bạn chắc chắn sẽ xóa MH${data.IDIntermediary} ?`,
+      title: `Bạn chắc chắn sẽ xóa MH [${data.name}] ?`,
       icon: <UilExclamationCircle />,
       okText: 'Đồng ý',
       okType: 'danger',
