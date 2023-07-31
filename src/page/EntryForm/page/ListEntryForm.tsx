@@ -213,7 +213,6 @@ const ListEntryForm = () =>{
 
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, id: id, paramsSearch: paramsSearch });
     if (result) {
-      // const responseRow = createFormattedTable(result.rows);
       setListData((prev) => (
         {
           ...prev,
@@ -239,7 +238,6 @@ const ListEntryForm = () =>{
       };
     
       const handleDataRowSelected = (listRows: DataType[]) => {
-        console.log('chon', listRows);
        setListItemHasChoose(listRows);      
       };
       

@@ -28,8 +28,8 @@ interface PropsAddWareHouseItem {
   idWareHouse?: string;
   isEdit: boolean;
   itemEdit:
-    | Omit<DataType, "date_created_at" | "date_updated_at">
-    | undefined;
+  | Omit<DataType, "date_created_at" | "date_updated_at">
+  | undefined;
   setIsEdit: (status: boolean) => void;
   fetching: () => Promise<void>;
 }
@@ -232,7 +232,6 @@ const AddWareHouseItem = React.memo(
                 name="price"
                 rules={[
                   { required: true, message: getMessage(ERROR.ERROR_1, "Giá") },
-                  // {validator:  createRegexValidator(priceRegex, getMessage(ERROR.ERROR_2, 'Giá'))}
                 ]}
               >
                 <Input

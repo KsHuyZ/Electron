@@ -41,20 +41,18 @@ const countDelivery = {
   },
   createDeliveryItem: async (
     idCoutDelivery: number | unknown,
-    idWarehouseItem: number,
+    idIntermediary: number,
     quantity: number,
     quality: number,
-    idWarehouse: number
   ) => {
     const createQuery =
-      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_warehouse_item, quantity, quality, id_Warehouse) VALUES(?,?,?,?,?)";
+      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermidary, quantity, quality, id_Warehouse) VALUES(?,?,?,?)";
     try {
       await runQuery(createQuery, [
         idCoutDelivery,
-        idWarehouseItem,
+        idIntermediary,
         quantity,
         quality,
-        idWarehouse,
       ]);
       return true;
     } catch (error) {
