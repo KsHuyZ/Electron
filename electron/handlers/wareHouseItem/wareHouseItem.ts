@@ -7,15 +7,23 @@ import { formImportBill } from "../../utils/formImportBill";
 import formReport from "../../utils/formReport";
 import moment, { Moment } from "moment";
 import printPreview from "../../module/print/printPreview";
+import countCouponDB from "../../database/countCoupon/countCoupon";
+
+const { editCountCoupon } = countCouponDB;
 
 let currentName = "";
 let currentNote = "";
 let currentNature = "";
 let currentTotal = 0;
-let currentDate = moment.now();
+let currentDate: any = moment.now();
 let currentItems = [];
 let isForm = "";
 let currentTitle = "";
+let currentNewItem = [];
+let currentRemoveItem = [];
+let currentEditItem = [];
+let currentID;
+let currentIDSource;
 
 const wareHouseItem = () => {
   const {
@@ -88,8 +96,6 @@ const wareHouseItem = () => {
       const { pageSize, currentPage, paramsSearch, idRecipient, idWareHouse } =
         data;
       if (idWareHouse) {
-        console.log("here  vao day");
-
         return await getAllWarehouseItembyWareHouseId(
           idWareHouse,
           pageSize,
@@ -97,7 +103,6 @@ const wareHouseItem = () => {
           paramsSearch
         );
       }
-      console.log("here  vao ngoai");
       return await getAllWarehouseItembyReceivingId(
         idRecipient,
         pageSize,
@@ -218,9 +223,66 @@ const wareHouseItem = () => {
     }
   );
 
+  ipcMain.handle(
+    "print-import-edit",
+    async (
+      event,
+      data: {
+        ID: number;
+        itemEditList: DataType[];
+        newItemList: DataType[];
+        removeItemList: DataType[];
+        items: DataType[];
+        name: string;
+        note: string;
+        nature: string;
+        total: number;
+        date: any;
+        title: string;
+        nameSource: string;
+        idSource: number;
+      }
+    ) => {
+      const {
+        ID,
+        itemEditList,
+        newItemList,
+        removeItemList,
+        items,
+        name,
+        note,
+        nature,
+        total,
+        date,
+        nameSource,
+        title,
+        idSource,
+      } = data;
+      startPrint(
+        {
+          htmlString: await formImportBill(data),
+        },
+        undefined
+      );
+      currentName = name;
+      currentEditItem = itemEditList;
+      currentNewItem = newItemList;
+      currentDate = date;
+      currentItems = items;
+      currentNature = nature;
+      currentNote = note;
+      currentRemoveItem = removeItemList;
+      currentTitle = title;
+      currentTotal = total;
+      currentID = ID;
+      currentIDSource = idSource;
+      isForm = "edit-import";
+    }
+  );
+
   ipcMain.on("save-pdf", async () => {
     const isComplete = await printPreview.saveFilePdf();
-    if(isForm === "") return
+    if (isForm === "") return;
     if (isComplete) {
       if (isForm === "export") {
         const isSuccess = await exportWarehouse(
@@ -236,7 +298,7 @@ const wareHouseItem = () => {
         if (mainWindow) {
           mainWindow.webContents.send("export-warehouse", { isSuccess });
         }
-      } else if (isForm === "import"){
+      } else if (isForm === "import") {
         const isSuccess = await importWarehouse(
           currentItems,
           currentName,
@@ -249,6 +311,23 @@ const wareHouseItem = () => {
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (mainWindow) {
           mainWindow.webContents.send("import-warehouse", { isSuccess });
+        }
+      } else if (isForm === "edit-import") {
+        await editCountCoupon(
+          currentEditItem,
+          currentNewItem,
+          currentRemoveItem,
+          currentID,
+          currentIDSource,
+          currentName,
+          currentNature,
+          currentTotal,
+          currentDate,
+          currentTitle
+        );
+        const mainWindow = BrowserWindow.getFocusedWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send("edit-import");
         }
       }
     }

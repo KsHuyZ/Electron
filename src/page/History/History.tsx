@@ -3,10 +3,12 @@ import { ipcRenderer } from 'electron'
 import React, { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import { DataType } from '../WarehouseItem/types'
-import { Table, TablePaginationConfig } from 'antd'
+import { Button, Col, Form, Input, Modal, Row, Space, Table, TablePaginationConfig } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import docso from '@/utils/toVietnamese'
-
+import { UilPen } from '@iconscout/react-unicons'
+import ModalCreateEntry from './components/ModalCreateEntry'
+import toastify from '@/lib/toastify'
 const dataTab = [
     {
         tabName: 'import',
@@ -24,13 +26,21 @@ type CountDeliveryType = {
     ID: number;
     Nature: string;
     Note: string;
+    name: string;
+    title: string;
     TotalPrice: number;
     date: string;
     nameReceiving: string;
+    nameSource: string;
+    id_Source: number | string
 }
 
 const History = () => {
+    const [canUpdate, setCanUpdate] = useState(false)
+    const [isShowModal, setIsShowModal] = useState(false)
+    const [showUpdateModal, setShowUpdateModal] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams();
+    const [currentSelect, setCurrentSelect] = useState<CountDeliveryType>()
     const current = searchParams.get("current");
     const pageSize = searchParams.get("pageSize");
     const defaultTable: TableData<CountDeliveryType[]> = {
@@ -42,11 +52,13 @@ const History = () => {
         loading: false,
         rows: [],
     };
-
+    const [form] = Form.useForm()
 
     const [tableData, setTableData] = useState<TableData<CountDeliveryType[]>>(defaultTable)
 
     const location = useLocation()
+
+    const { notifyError, notifySuccess } = toastify
 
     const isExport = location.pathname.startsWith("/history/export")
     const columns: ColumnsType<CountDeliveryType> = [
@@ -88,11 +100,38 @@ const History = () => {
             title: "Ghi chú",
             dataIndex: "Note"
         },
+        canUpdate ? {
+            title: "Cập nhật",
+            render: (_, value) => (
+                <Space size="middle">
+                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleShowModalUpdate(value)} />
+                </Space>
+            )
+        } : {}
     ]
+
+    const handleClean = () => {
+        form.resetFields()
+        setIsShowModal(false)
+    }
+
+    const handleShowModalUpdate = (value: CountDeliveryType) => {
+        setCurrentSelect(value)
+        setShowUpdateModal(true)
+    }
+
+    const onFinish = async () => {
+        const password = form.getFieldValue('password')
+        if (password !== "admin") return form.setFields([{
+            name: 'password',
+            errors: ['Sai mật khẩu']
+        }])
+        setCanUpdate(true)
+        handleClean()
+    }
 
     const handleGetData = async () => {
         const result = await ipcRenderer.invoke(`get-history-${isExport ? "export" : "import"}`, { current: current ? current : 1, pageSize: pageSize ? pageSize : 5 })
-        console.log(result)
         return setTableData(result)
     }
 
@@ -100,6 +139,19 @@ const History = () => {
         const { current, pageSize } = pagination
         setSearchParams(prev => ({ ...prev, current, pageSize }))
     };
+
+    const onUpdateSuccessCallback = (event: Electron.IpcRendererEvent) => {
+        handleGetData()
+        setShowUpdateModal(false)
+        notifySuccess("Sửa phiếu thành công")
+    }
+
+    useEffect(() => {
+        ipcRenderer.on("edit-import", onUpdateSuccessCallback)
+        return () => {
+            ipcRenderer.removeListener("edit-import", onUpdateSuccessCallback)
+        }
+    }, [])
 
     useEffect(() => {
         handleGetData()
@@ -120,8 +172,15 @@ const History = () => {
                     </ul>
                 </section>
             </div>
+            <Row style={{ margin: '0 0 10px 0 ' }}>
+                <Col span={24}>
+                    <Space>
+                        <Button className="default" type="primary" onClick={() => setIsShowModal(true)}>Chỉnh sửa</Button>
+                    </Space>
+                </Col>
+            </Row>
             <Table
-                dataSource={tableData.rows}
+                dataSource={tableData.rows.map((item, index) => ({ ...item, key: index }))}
                 pagination={
                     {
                         ...tableData.pagination,
@@ -132,6 +191,29 @@ const History = () => {
                 loading={tableData.loading}
                 onChange={handleTableChange}
                 columns={columns}
+            />
+            <Modal
+                title={`Nhập đúng mật khẩu để được phép chỉnh sửa`}
+                centered
+                open={isShowModal}
+                onCancel={handleClean}
+                onOk={form.submit}
+            >
+                <Form form={form} onFinish={onFinish}>
+                    <Form.Item label="Mật khẩu" name={'password'} rules={[
+                        {
+                            required: true,
+                            message: "Hãy nhập mật khẩu để sửa phiếu",
+                        },
+                    ]}>
+                        <Input.Password />
+                    </Form.Item>
+                </Form>
+            </Modal>
+            <ModalCreateEntry
+                isShowModal={showUpdateModal}
+                onCloseModal={() => setShowUpdateModal(false)}
+                select={currentSelect}
             />
         </>
 

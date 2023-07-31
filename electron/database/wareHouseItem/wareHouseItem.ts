@@ -32,9 +32,6 @@ const wareHouseItem = {
       const whereConditions: string[] = [];
       const queryParams: any[] = [id, pageSize, offsetValue];
 
-      console.log("offsetValue", offsetValue);
-      console.log("pageSize", pageSize);
-
       // Add query conditions based on the provided search parameters
       if (name) {
         whereConditions.unshift(`wi.name LIKE ?`);
@@ -69,8 +66,10 @@ const wareHouseItem = {
 
       const whereClause =
         whereConditions.length > 0
-          ? `WHERE ${whereConditions.join(" AND ")} AND i.id_WareHouse = ?`
-          : "WHERE i.id_WareHouse = ?";
+          ? `WHERE ${whereConditions.join(
+              " AND "
+            )} AND i.id_WareHouse = ? AND i.quantity > 0`
+          : "WHERE i.id_WareHouse = ? AND i.quantity > 0";
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity,
@@ -133,8 +132,10 @@ const wareHouseItem = {
 
       const whereClause =
         whereConditions.length > 0
-          ? `WHERE ${whereConditions.join(" AND ")} AND i.id_WareHouse = ?`
-          : "WHERE i.id_WareHouse = ?";
+          ? `WHERE ${whereConditions.join(
+              " AND "
+            )} AND i.id_WareHouse = ?  AND i.quantity > 0`
+          : "WHERE i.id_WareHouse = ?  AND i.quantity > 0";
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity, w.name AS nameWareHouse,
@@ -210,8 +211,10 @@ const wareHouseItem = {
     }
     const whereClause =
       whereConditions.length > 0
-        ? `WHERE ${whereConditions.join(" AND ")} AND i.status IN(1,3)`
-        : "AND i.status IN(1,3)";
+        ? `WHERE ${whereConditions.join(
+            " AND "
+          )} AND i.status IN(1,3) AND i.quantity > 0`
+        : "AND i.status IN(1,3) AND i.quantity > 0";
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
      i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
@@ -400,7 +403,7 @@ const wareHouseItem = {
       return [];
     }
   },
-
+  // Bug maybe
   updateWareHouseItem: async (data: WarehouseItem & Intermediary) => {
     const {
       name,
@@ -577,8 +580,6 @@ const wareHouseItem = {
       return false;
     }
   },
-
-  //ChangeWareHouse
   changeWareHouse: async (
     id_newWareHouse: number,
     intermediary: Intermediary[]
@@ -586,7 +587,7 @@ const wareHouseItem = {
     try {
       const promises = intermediary.map(async (item) => {
         const ID = await new Promise((resolve, reject) => {
-          const query = `SELECT ID from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ?`;
+          const query = `SELECT ID from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? AND quantity > 0`;
           db.get(
             query,
             [id_newWareHouse, item.id_wareHouse_item],
@@ -622,7 +623,7 @@ const wareHouseItem = {
             throw new Error(
               "Can't change warehouseitem to new warehouse. Is too large"
             );
-          } else if (Number(quantity) > item.quantity) {
+          } else {
             const updateQuery1 = `UPDATE Intermediary SET  quantity = quantity + ? WHERE ID = ?`;
             const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
 
@@ -633,20 +634,8 @@ const wareHouseItem = {
               item.id_wareHouse_item,
               item.id_wareHouse,
             ]);
-          } else {
-            const changeWareHouseQuery = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
-            const deleteWareHouseQuery = `DELETE FROM Intermediary WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
-
-            await runQuery(changeWareHouseQuery, [item.quantity, ID]);
-
-            await runQuery(deleteWareHouseQuery, [
-              item.id_wareHouse_item,
-              item.id_wareHouse,
-            ]);
           }
         } else {
-          console.log("worker here");
-
           const changeWareHouseQuery = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`;
           const updateWareHouseQuery = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? AND id_WareHouse = ?`;
           const quantity = await new Promise((resolve, reject) => {
@@ -669,7 +658,7 @@ const wareHouseItem = {
             throw new Error(
               "Can't change warehouseitem to new warehouse. Is too large"
             );
-          } else if (Number(quantity) > item.quantity) {
+          } else {
             await runQuery(changeWareHouseQuery, [
               id_newWareHouse,
               item.id_wareHouse_item,
@@ -683,30 +672,6 @@ const wareHouseItem = {
               item.idIntermediary,
               item.id_wareHouse,
             ]);
-          } else {
-            const insertQuery = `
-          INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, quality, quantity, date)
-          VALUES (?, ?, ?, ?, ?, ?)`;
-
-            const deleteQuery = `
-          DELETE FROM Intermediary WHERE ID = ?`;
-
-            try {
-              await runQuery(insertQuery, [
-                id_newWareHouse,
-                item.id_wareHouse_item,
-                item.status,
-                item.quality,
-                item.quantity,
-                item.date,
-              ]);
-
-              await runQuery(deleteQuery, [item.idIntermediary]);
-              console.log("Transaction committed successfully");
-            } catch (err) {
-              console.log("Transaction rolled back:", err);
-              // Handle error
-            }
           }
         }
       });
@@ -719,7 +684,6 @@ const wareHouseItem = {
       return false;
     }
   },
-  //export warehouse item
   tempExportWareHouse: async (
     id_newWareHouse: number,
     intermediary: Intermediary[]
@@ -727,7 +691,7 @@ const wareHouseItem = {
     try {
       const promises = intermediary.map(async (item) => {
         const row: any = await new Promise((resolve, reject) => {
-          const query = `SELECT ID,quantity, status from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? and quality = ? and prev_idwarehouse = ? AND status IN (2,5)`;
+          const query = `SELECT ID,quantity, status from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? and quality = ? and prev_idwarehouse = ? AND status IN (2,5) AND quantity > 0`;
           db.all(
             query,
             [
@@ -747,8 +711,6 @@ const wareHouseItem = {
           );
         });
         if (row.length > 0) {
-          // If have warehouseitem already export
-          console.log("Warehouseitem is already export");
           await row.forEach(async (element) => {
             console.log("This is row data", element);
             const { quantity, status, ID } = element;
@@ -756,7 +718,7 @@ const wareHouseItem = {
               throw new Error(
                 "Can't export warehouseitem to receiving. Is too large"
               );
-            } else if (Number(quantity) > item.quantity) {
+            } else {
               console.log(
                 "update quantity in new warehouse and remove quantity in old warehouse"
               );
@@ -769,23 +731,9 @@ const wareHouseItem = {
                 item.id_wareHouse_item,
                 item.id_wareHouse,
               ]);
-            } else {
-              console.log("update and remove old warehouse item!");
-              const changeWareHouseQuery = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
-              const deleteWareHouseQuery = `DELETE FROM Intermediary WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
-
-              await runQuery(changeWareHouseQuery, [item.quantity, ID]);
-
-              await runQuery(deleteWareHouseQuery, [
-                item.id_wareHouse_item,
-                item.id_wareHouse,
-              ]);
             }
           });
         } else {
-          // Chưa tồn tại
-          console.log("Nahh, Is a first time!");
-
           const changeWareHouseQuery = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, prev_idwarehouse, status, quality, quantity, date) VALUES (?, ?,?,?, ?, ?, ?)`;
           const updateWareHouseQuery = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? `;
           const quantity = await new Promise((resolve, reject) => {
@@ -804,7 +752,7 @@ const wareHouseItem = {
             throw new Error(
               "Can't change warehouseitem to new warehouse. Is too large"
             );
-          } else if (Number(quantity) > item.quantity) {
+          } else {
             await runQuery(changeWareHouseQuery, [
               id_newWareHouse,
               item.id_wareHouse_item,
@@ -818,31 +766,6 @@ const wareHouseItem = {
               item.quantity,
               item.idIntermediary,
             ]);
-          } else {
-            const insertQuery = `
-          INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, quality, quantity, date)
-          VALUES (?, ?, ?, ?, ?, ?)`;
-
-            const deleteQuery = `
-          DELETE FROM Intermediary WHERE ID = ?`;
-
-            try {
-              await runQuery(changeWareHouseQuery, [
-                id_newWareHouse,
-                item.id_wareHouse_item,
-                item.id_wareHouse,
-                item.status === 1 ? 5 : 2,
-                item.quality,
-                item.quantity,
-                item.date,
-              ]);
-
-              await runQuery(deleteQuery, [item.idIntermediary]);
-              console.log("Transaction committed successfully");
-            } catch (err) {
-              console.log("Transaction rolled back:", err);
-              // Handle error
-            }
           }
         }
       });
@@ -911,7 +834,7 @@ const wareHouseItem = {
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
         await createCouponItem(
           idCoutCoupon,
-          item["IDWarehouseItem"],
+          item["IDIntermediary"],
           item.quantity,
           item.quality,
           item["id_WareHouse"]
@@ -932,9 +855,30 @@ const wareHouseItem = {
      FROM warehouseItem wi
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID
-     WHERE status IN (1,3,5) AND id_WareHouse = ?`;
-    const rows = runQueryGetAllData(selectQuery, [id]);
+     WHERE status IN (1,3,5) AND id_WareHouse = ? and i.quantity > 0`;
+    const rows = await runQueryGetAllData(selectQuery, [id]);
     return rows;
+  },
+  updateWarehouseItemField: async (
+    price: number,
+    idSource: number | string,
+    dateExpried: string,
+    quantityPlane: number,
+    quantity: number,
+    idWareHouseItem: number | string,
+    idIntermediary: number | string
+  ) => {
+    const updateQuery = `UPDATE warehouseItem SET price = ?, id_Source = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
+    const updateIntMediary = `UPDATE Intermediary SET quantity = ? WHERE ID = ?`;
+    await runQuery(updateQuery, [
+      price,
+      idSource,
+      dateExpried,
+      quantityPlane,
+      idWareHouseItem,
+    ]);
+    await runQuery(updateIntMediary, [quantity, idIntermediary]);
+    return true;
   },
 };
 
