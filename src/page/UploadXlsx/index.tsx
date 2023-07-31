@@ -45,7 +45,7 @@ interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if(dataIndex === 'quality' && (Number(value) <= 0 || Number(value) > 4 )){
-                      return Promise.reject(`${title} thuộc 1 - 4.`);
+                      return Promise.reject(`${title} thuộc 1 - 4`);
                     }
                     if(dataIndex !== 'note' && !value){
                         return Promise.reject(`${title} bắt buộc nhập.`);
@@ -87,7 +87,7 @@ const UploadXlsx = () => {
     const refInputFile = useRef<any>(null);
     const [item, setItem] = useState<number>();
     const [isErrorSelect, setIsErrorSelect] = useState(false);
-    const {idWareHouse} = useParams();
+    const {idWareHouse, nameWareHouse} = useParams();
     const navigate = useNavigate();
 
     const columns: CustomColumnType<IFileUpload>[] = [
@@ -341,7 +341,7 @@ const UploadXlsx = () => {
   
           const response  = await ipcRenderer.invoke('create-multiple-product-item', JSON.stringify(excelData) , item , paramsOther);
           if(response){
-            navigate(`/home/${idWareHouse}`,{replace: true});
+            navigate(`/home/${idWareHouse}/${nameWareHouse}`,{replace: true});
           }
           
         }

@@ -45,7 +45,7 @@ const Routers = () => {
           <Route path="/history/import" element={<History />} />
           <Route path="/history/import/:id" element={<HistoryItem />} />
           <Route path="/history/export/:id" element={<HistoryItem />} />
-          <Route path='/upload-multiple/:idWareHouse' element={<UploadXlsx />} />
+          <Route path='/upload-multiple/:idWareHouse/:nameWareHouse' element={<UploadXlsx />} />
           {/* <Route path='/entry-form/:id' element={<EntryForm />} /> */}
         </Route>
         <Route path='/' element={<Login />} />

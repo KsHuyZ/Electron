@@ -315,7 +315,7 @@ const WareHouseItem = () => {
                     <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
                     <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
                     <Button className="default" onClick={handleExportReport} type="primary">Xuất báo cáo hàng tồn</Button>
-                    <Link className="btn btn-upload" to={`/upload-multiple/${idWareHouse}`}>Thêm Sản Phẩm từ File</Link>
+                    <Link className="btn btn-upload" to={`/upload-multiple/${idWareHouse}/${nameWareHouse}`}>Thêm Sản Phẩm từ File</Link>
                   </Space>
 
                 </Col>
