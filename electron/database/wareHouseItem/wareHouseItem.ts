@@ -133,8 +133,8 @@ const wareHouseItem = {
 
       const whereClause =
         whereConditions.length > 0
-          ? `WHERE ${whereConditions.join(" AND ")} AND i.id_WareHouse = ?`
-          : "WHERE i.id_WareHouse = ?";
+          ? `WHERE ${whereConditions.join(" AND ")} AND i.id_WareHouse = ? AND i.status IN(2,4,5)`
+          : "WHERE i.id_WareHouse = ? AND i.status IN(2,4,5)";
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity, w.name AS nameWareHouse,

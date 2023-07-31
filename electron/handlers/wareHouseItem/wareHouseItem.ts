@@ -247,7 +247,7 @@ const wareHouseItem = () => {
           currentDate
         );
         const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
+        if (isSuccess && mainWindow) {
           mainWindow.webContents.send("import-warehouse", { isSuccess });
         }
       }

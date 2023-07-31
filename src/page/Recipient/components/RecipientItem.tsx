@@ -41,7 +41,7 @@ const defaultTable: TableData<DataType[]> = {
     total: 0,
   },
   loading: false,
-  rows: defaultRows,
+  rows: [],
 };
 
 const RecipientItem = () => {
@@ -78,12 +78,12 @@ const RecipientItem = () => {
           children : (<b>{value?.toUpperCase() ?? ''}</b>),
           props : {} as any
         };
-        if(index > 0 && row.id_WareHouse === listData.rows[trueIndex -1].id_WareHouse){
+        if(index > 0 && row.nameWareHouse === listData.rows[trueIndex -1].nameWareHouse){
           obj.props.rowSpan = 0;
           // obj.props.colSpan = 2;
         }
         else{
-          for (let i = 0; trueIndex + i !== listData.rows.length && row.id_WareHouse === listData.rows[trueIndex + i].id_WareHouse; i+=1) {
+          for (let i = 0; trueIndex + i !== listData.rows.length && row.nameWareHouse === listData.rows[trueIndex + i].nameWareHouse; i+=1) {
            obj.props.rowSpan = i+1; 
           }
         }
@@ -253,7 +253,11 @@ const RecipientItem = () => {
     return () => {
       ipcRenderer.removeListener("export-warehouse", exportWarehouseCallBack)
     }
-  }, [])
+  }, []);
+
+  console.log('====================================');
+  console.log(listData);
+  console.log('====================================');
 
   return (
     <Row className="filter-bar">

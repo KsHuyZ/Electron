@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { UilFilter, UilSearch } from '@iconscout/react-unicons'
 import { Row, Col, Card, Input, Button, Space, Tag, Select } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "@/page/WarehouseItem/types";
 import { formatNumberWithCommas, getDateExpried, renderTextStatus, createFormattedTable, removeItemChildrenInTable } from "@/utils";
-import { ResponseIpc,TableData,FormatTypeTable,OptionSelect, QUALITY_PRODUCT } from "@/types";
+import { ResponseIpc,TableData,FormatTypeTable,OptionSelect, QUALITY_PRODUCT, STATUS } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import { useSearchParams, useParams } from "react-router-dom";
 import { ipcRenderer } from "electron";
@@ -62,26 +62,49 @@ const ListEntryForm = () =>{
         },
         {
           title: 'Tên Kho Hàng',
-          dataIndex: 'nameWareHouse',
-          render: (value, row, index) => {
+          dataIndex: 'prev_idwarehouse',
+          render: (value, row : DataType, index) => {
             const trueIndex =
             index + listData.pagination.pageSize * (1 - 1);
             const obj = {
-              children : (<b>{value.toUpperCase() ?? ''}</b>),
+              children : (<b>{!value ? row.nameWareHouse  : listWareHouse[Number(value) - 1]?.label}</b>),
               props : {} as any
             };
-            if(index > 0 && row.id_WareHouse === listData.rows[trueIndex -1].id_WareHouse){
-              obj.props.rowSpan = 0;
-              // obj.props.colSpan = 2;
+            if (!row.prev_idwarehouse) {
+              if(index > 0  && row.id_WareHouse === listData.rows[trueIndex -1].id_WareHouse){
+                obj.props.rowSpan = 0;
+                // obj.props.colSpan = 2;
+              }
+              else{
+                for (let i = 0; trueIndex + i !== listData.rows.length && row.id_WareHouse === listData.rows[trueIndex + i].id_WareHouse; i+=1) {
+                 obj.props.rowSpan = i+1; 
+                }
+              }
             }
-            else{
-              for (let i = 0; trueIndex + i !== listData.rows.length && row.id_WareHouse === listData.rows[trueIndex + i].id_WareHouse; i+=1) {
-               obj.props.rowSpan = i+1; 
+            else {
+              if(index > 0  && row.prev_idwarehouse === listData.rows[trueIndex -1].prev_idwarehouse){
+                obj.props.rowSpan = 0;
+                // obj.props.colSpan = 2;
+              }
+              else{
+                for (let i = 0; trueIndex + i !== listData.rows.length && row.prev_idwarehouse === listData.rows[trueIndex + i].prev_idwarehouse; i+=1) {
+                 obj.props.rowSpan = i+1; 
+                }
               }
             }
             return obj;
           },
           width: 200,
+        },
+      {
+        title: 'Đơn Vị Nhận ',
+        dataIndex: 'nameWareHouse',
+        width: 200,
+        render: (record, value: DataType) => {
+          return (
+            <span>{!value.prev_idwarehouse ? ''  : record}</span>
+          )
+        }
         },
         {
           title: 'Tên mặt hàng',
@@ -213,6 +236,9 @@ const ListEntryForm = () =>{
 
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, id: id, paramsSearch: paramsSearch });
     if (result) {
+      console.log('====================================');
+      console.log('result',result);
+      console.log('====================================');
       // const responseRow = createFormattedTable(result.rows);
       setListData((prev) => (
         {
@@ -266,7 +292,14 @@ const ListEntryForm = () =>{
 
       const handleSearchName = () => {
         setIsSearch(true);
-      }
+  }
+  
+  const checkingStatus = useCallback(() => {
+    if (listItemHasChoose.length > 0 && listItemHasChoose.filter((item) => item.status === STATUS.IMPORT).length <= 0) {
+      return true;
+    }
+    return false;
+  }, [listItemHasChoose]);
   
       console.log(listData);
       
@@ -304,7 +337,7 @@ const ListEntryForm = () =>{
                 <Col span={4}>
                   <Space direction="horizontal" size={24}>
                     {/* <Button className={true ? `default active-search` : `default`} icon={<UilFilter />}>Lọc</Button> */}
-                    <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(true)}>Làm Phiếu Nhập</Button>
+                    <Button className={checkingStatus() ? 'active-border' : ''} disabled={checkingStatus() ? false : true} onClick={() => setStatusModal(true)}>Làm Phiếu Nhập</Button>
                     {/* <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button> */}
                   </Space>
                 </Col>
@@ -344,7 +377,8 @@ const ListEntryForm = () =>{
             idSource={id}
             nameSource={nameSource}
             removeItemList={removeItemList}
-            fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
+              fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
+              listWareHouse={listWareHouse}
           />
         )
       }
