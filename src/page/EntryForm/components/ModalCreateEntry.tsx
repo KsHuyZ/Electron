@@ -69,6 +69,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     removeItemList,
     nameSource,
     fetching,
+    idSource,
     idReceiving,
     listWareHouse
   } = props;
@@ -100,48 +101,38 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     {
       title: 'Tên Kho Hàng',
       dataIndex: 'prev_idwarehouse',
-      render: (value, row : DataType, index) => {
+      render: (value, row: DataType, index) => {
         const trueIndex =
-      index + paginationInfo.pageSize * (paginationInfo.current - 1);
+          index + paginationInfo.pageSize * (paginationInfo.current - 1);
         const obj = {
-          children : (<b>{!value ? row.nameWareHouse  : listWareHouse[Number(value) - 1]?.label}</b>),
-          props : {} as any
+          children: (<b>{!value ? row.nameWareHouse : listWareHouse[Number(value) - 1]?.label}</b>),
+          props: {} as any
         };
         if (!row.prev_idwarehouse) {
-          if(index > 0  && row.id_WareHouse === listItemEntryForm[trueIndex -1].id_WareHouse){
+          if (index > 0 && row.id_WareHouse === listItemEntryForm[trueIndex - 1].id_WareHouse) {
             obj.props.rowSpan = 0;
             // obj.props.colSpan = 2;
           }
-          else{
-            for (let i = 0; trueIndex + i !== listItemEntryForm.length && row.id_WareHouse === listItemEntryForm[trueIndex + i].id_WareHouse; i+=1) {
-             obj.props.rowSpan = i+1; 
+          else {
+            for (let i = 0; trueIndex + i !== listItemEntryForm.length && row.id_WareHouse === listItemEntryForm[trueIndex + i].id_WareHouse; i += 1) {
+              obj.props.rowSpan = i + 1;
             }
           }
         }
         else {
-          if(index > 0  && row.prev_idwarehouse === listItemEntryForm[trueIndex -1].prev_idwarehouse){
+          if (index > 0 && row.prev_idwarehouse === listItemEntryForm[trueIndex - 1].prev_idwarehouse) {
             obj.props.rowSpan = 0;
             // obj.props.colSpan = 2;
           }
-          else{
-            for (let i = 0; trueIndex + i !== listItemEntryForm.length && row.prev_idwarehouse === listItemEntryForm[trueIndex + i].prev_idwarehouse; i+=1) {
-             obj.props.rowSpan = i+1; 
+          else {
+            for (let i = 0; trueIndex + i !== listItemEntryForm.length && row.prev_idwarehouse === listItemEntryForm[trueIndex + i].prev_idwarehouse; i += 1) {
+              obj.props.rowSpan = i + 1;
             }
           }
         }
         return obj;
       },
       width: 200,
-    },
-  {
-    title: 'Đơn Vị Nhận ',
-    dataIndex: 'nameWareHouse',
-    width: 200,
-    render: (record, value: DataType) => {
-      return (
-        <span>{!value.prev_idwarehouse ? ''  : record}</span>
-      )
-    }
     },
     {
       title: "Mã mặt hàng",
@@ -297,6 +288,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       total: totalPrice,
       title: values.title,
       nameSource: nameSource,
+      idSource,
     };
 
     const result = await ipcRenderer.invoke(!idReceiving ? "print-form-import" : "print-form-export", { ...params });
@@ -411,7 +403,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           <h3>SẢN PHẨM THUỘC {nameSource?.toLocaleUpperCase() ?? ""}</h3>
         </Space>
         <Table
-          // isShowSelection={false}
           columns={columns}
           dataSource={listItemEntryForm as any}
           bordered
