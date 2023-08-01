@@ -102,7 +102,7 @@ const wareHouseItem = {
     currentPage: number,
     paramsSearch: ISearchWareHouseItem
   ) => {
-    const { name, idSource, startDate, endDate, status } = paramsSearch;
+    const { name, idSource, startDate, endDate, status, itemWareHouse } = paramsSearch;
 
     try {
       const offsetValue = (currentPage - 1) * pageSize;
@@ -128,6 +128,11 @@ const wareHouseItem = {
       if (status) {
         whereConditions.unshift(`i.status = ?`);
         queryParams.unshift(status);
+      }
+
+      if (itemWareHouse) {
+        whereConditions.unshift(`i.prev_idwarehouse = ?`);
+        queryParams.unshift(itemWareHouse);
       }
 
       const whereClause =
@@ -831,7 +836,7 @@ const wareHouseItem = {
         date
       );
       const promises = intermediary.map(async (item) => {
-        const insertQuery = `UPDATE Intermediary SET status = 3 WHERE ID = ?`;
+        const insertQuery = `UPDATE Intermediary SET status = ${item.status == 5 ? 2 : 3} WHERE ID = ?`;
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
         await createCouponItem(
           idCoutCoupon,

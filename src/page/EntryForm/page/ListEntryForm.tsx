@@ -265,11 +265,11 @@ const ListEntryForm = () =>{
       };
       
 
-      const removeItemList = (IDIntermediary: string) => {
+      const removeItemList = (IDIntermediary: string[]) => {
         
         const newList = removeItemChildrenInTable(listItemHasChoose);
         
-        const filterNewList = newList.filter(item => item.IDIntermediary !== IDIntermediary);
+        const filterNewList = newList.filter(item => !IDIntermediary.includes(item.IDIntermediary));
         setListItemHasChoose(filterNewList);
         setIsListenChange(true);
       }

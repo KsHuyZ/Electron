@@ -63,6 +63,11 @@ const Product = () => {
       }
     },
     {
+      title: 'Kho Hàng',
+      dataIndex: 'warehouseName',
+      width: 200,
+    },
+    {
       title: 'Tên mặt hàng',
       dataIndex: 'name',
       width: 200,
@@ -218,6 +223,10 @@ const Product = () => {
       newQuantity: item.quantity!
     })));
   }
+
+  console.log('====================================');
+  console.log(listData);
+  console.log('====================================');
 
   return (
     <Row className="filter-bar">

@@ -22,6 +22,7 @@ import {
   getDateExpried,
   removeItemChildrenInTable,
   formatDate,
+  convertDataHasReceiving
 } from "@/utils";
 import { getMessage, ERROR } from "@/page/WarehouseItem/constants/messValidate";
 import { UilMultiply } from "@iconscout/react-unicons";
@@ -37,7 +38,7 @@ interface PropsModal {
   idReceiving?: string;
   listItem: FormatTypeTable<DataType> | [];
   fetching: () => Promise<void>;
-  removeItemList: (IDIntermediary: string) => void;
+  removeItemList: (IDIntermediary: string[]) => void;
   listWareHouse?: OptionSelect[];
 }
 
@@ -71,7 +72,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     idReceiving,
     listWareHouse
   } = props;
-  console.log("list item: ", listItem)
+
   const [loadingButton, setLoadingButton] = useState<boolean>(false);
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(
     removeItemChildrenInTable(listItem as any)
@@ -216,7 +217,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
         <Space size="middle">
           <UilMultiply
             style={{ cursor: "pointer" }}
-            onClick={() => handleRemoveItem(record.IDIntermediary)}
+            onClick={() => handleRemoveItem(record)}
           />
         </Space>
       ),
@@ -285,9 +286,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       message.error("Không có sản phẩm để làm phiếu");
       return;
     }
+
     const params: any = {
       ...values,
-      items: listItemEntryForm,
+      items: convertDataHasReceiving(listItemEntryForm, listWareHouse!),
       name: values.name,
       note: values.note,
       nature: values.nature,
@@ -298,15 +300,18 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
 
     const result = await ipcRenderer.invoke(!idReceiving ? "print-form-import" : "print-form-export", { ...params });
-    setLoadingButton(true);
+    if (result) {
+      removeItemList(listItemEntryForm.map(i => i.IDIntermediary))
+    }
+    // setLoadingButton(true);
   };
 
-  const handleRemoveItem = (id: string) => {
+  const handleRemoveItem = (item: DataType) => {
     const filterItem = listItemEntryForm.filter(
-      (cur) => cur.IDIntermediary !== id
+      (cur) => cur.IDIntermediary !== item.IDIntermediary
     );
     setListItemEntryForm(filterItem);
-    removeItemList(id);
+    removeItemList([item.IDIntermediary]);
   };
 
   const totalPrice = useMemo(() => {

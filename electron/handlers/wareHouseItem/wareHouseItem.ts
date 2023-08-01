@@ -211,7 +211,7 @@ const wareHouseItem = () => {
       currentItems = items;
       isForm = "import";
       currentTitle = title;
-      return null;
+      return true;
     }
   );
 

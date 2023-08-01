@@ -1,4 +1,4 @@
-import { STATUS, COLOR_STATUS, FormatTypeTable } from "@/types";
+import { STATUS, COLOR_STATUS, FormatTypeTable, OptionSelect } from "@/types";
 import { RuleObject } from "antd/lib/form";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -253,4 +253,19 @@ export function formatDateUploadFile(dateString: any) {
   const newDateString = `${year}/${month}/${day}`;
 
   return newDateString;
+}
+
+export const convertDataHasReceiving = (listData: DataType[], listNameWareHouse: OptionSelect[]) => {
+  const warehouseMapping: { [key: string]: string } = {};
+  let newArray: DataType[] = JSON.parse(JSON.stringify(listData));
+  listNameWareHouse.forEach((warehouse) => {
+    warehouseMapping[warehouse.value] = warehouse.label;
+  });
+
+  return newArray.map((element) => {
+    if (element.prev_idwarehouse) {
+      element.nameWareHouse = warehouseMapping[element.prev_idwarehouse] || null;
+    }
+    return element;
+  });
 }

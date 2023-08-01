@@ -4,11 +4,11 @@ import { UilSearch, UilFilter } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
 import { useEffect, useState } from "react";
-import { renderTextStatus, formatNumberWithCommas } from "@/utils";
+import { renderTextStatus, formatNumberWithCommas, removeItemChildrenInTable } from "@/utils";
 import { DataType, ISearchWareHouseItem } from "../../WarehouseItem/types/index";
 import TableWareHouse from "../../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
-import { ResponseIpc, STATUS, TableData } from "@/types";
+import { ResponseIpc, STATUS, TableData, OptionSelect } from "@/types";
 import { useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
 import { useSearchParams } from "react-router-dom";
@@ -56,6 +56,8 @@ const RecipientItem = () => {
   const [nameSearch, setNameSearch] = useState('');
   const [isSearch, setIsSearch] = useState<boolean>(false);
   const [isReadyExport, setIsReadyExport] = useState<boolean>(false)
+  const [listWareHouse, setListWareHouse] = useState<OptionSelect[]>([]);
+  const [selectSearch, setSelectSearch] = useState<{select: string}>();
 
   const { notifyError, notifySuccess } = toasitify
 
@@ -159,7 +161,10 @@ const RecipientItem = () => {
   ];
 
   useEffect(() => {
-    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+    new Promise(async () => {
+      await getListWareHouse();
+      await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+    })
   }, []);
 
   useEffect(() => {
@@ -186,7 +191,8 @@ const RecipientItem = () => {
       idSource: Number(parsedSearchParams.idSource) || null,
       startDate: parsedSearchParams.startDate || '',
       endDate: parsedSearchParams.endDate || '',
-      status: Number(parsedSearchParams.status) || null
+      status: Number(parsedSearchParams.status) || null,
+      itemWareHouse : selectSearch?.select ?? ''
     };
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: currentPage, idRecipient, paramsSearch: paramsSearch });
     if (result) {
@@ -223,8 +229,12 @@ const RecipientItem = () => {
     return setIsReadyExport(true)
   }
 
-  const removeItemList = (IDIntermediary: string) => {
-    const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
+
+  const removeItemList = (IDIntermediary: string[]) => {
+        
+    const newList = removeItemChildrenInTable(listItemHasChoose);
+    
+    const filterNewList = newList.filter(item => !IDIntermediary.includes(item.IDIntermediary));
     setListItemHasChoose(filterNewList);
     setIsListenChange(true);
   }
@@ -255,9 +265,28 @@ const RecipientItem = () => {
     }
   }, []);
 
-  console.log('====================================');
-  console.log(listData);
-  console.log('====================================');
+  const getListWareHouse = async () => {
+    const result = await ipcRenderer.invoke("get-warehouse-no-pagination");
+    if (result as any) {
+      const option: OptionSelect[] = result.rows.map((item: any) => ({
+        label: item.name,
+        value: item.ID
+      }));
+
+      setListWareHouse(option);
+    }
+  }
+
+  const handleChangeInput = (key: string,event : any) =>{
+    if(key === 'select'){
+      setSelectSearch({
+        select : event
+      });
+      setIsSearch(true);
+    }else{
+      setNameSearch(event.target.value);
+    }
+  }
 
   return (
     <Row className="filter-bar">
@@ -271,14 +300,30 @@ const RecipientItem = () => {
           <div>
             <Card style={{ margin: '16px 0' }}>
               <Row className="filter-bar">
-                <Col span={12} className="col-item-filter">
-                  <div className="form-item" style={{ width: '60%' }}>
+                <Col span={8} className="col-item-filter">
+                  <div className="form-item" style={{ width: '70%' }}>
                     <label htmlFor="">Tên mặt hàng</label>
-                    <Input value={nameSearch} onChange={(event) => setNameSearch(event.target.value)} />
+                    <Input value={nameSearch} onChange={(event) => handleChangeInput('select',event.target.value)} />
                   </div>
                   <Button type="primary" onClick={handleSearchName}><UilSearch /></Button>
                 </Col>
-                <Col span={12}>
+                <Col span={8} className="col-item-filter">
+                  <div className="form-item" style={{ width: '90%' }}>
+                    <label htmlFor="">Kho Hàng</label>
+                    <Select
+                    style={{width : '100%'}}
+                    allowClear
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                    options={listWareHouse}
+                    onChange={(value) => handleChangeInput('select',value)}
+                    />
+                  </div>
+                </Col>
+                <Col span={8}>
                   <Space direction="horizontal" size={24}>
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
                     <Button className="default" onClick={handleOpenExportBill} disabled={listItemHasChoose.length > 0 ? false : true} type="primary">Tạo Phiếu Xuất Kho</Button>
@@ -330,6 +375,7 @@ const RecipientItem = () => {
             nameSource={nameReceiving}
             removeItemList={removeItemList}
             fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
+            listWareHouse={listWareHouse}
           />
         )
       }
