@@ -348,9 +348,6 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     };
   });
 
-  console.log(listItemTransfer);
-  
-
   return (
     <CheckingErrorContext.Provider value={contextValue}>
       <Modal

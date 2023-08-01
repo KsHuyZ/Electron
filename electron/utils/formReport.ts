@@ -92,10 +92,6 @@ const formReport = ({
                     <th>NHSX</th>
                     <th>NHSD</th>
                     <th>Giá lẻ</th>
-                    <th>Tồn đầu</th>
-                    <th>Chờ nhập</th>
-                    <th>Chờ xuất</th>
-                    <th>Tồn cuối</th>
                 </tr>
             </thead>
             <tbody>
@@ -123,10 +119,6 @@ const formReport = ({
                     <td></td>
                     <td>${date_expried}</td>
                     <td>${price}</td>
-                    <td>${quantity_plane}</td>
-                    <td>${status === 1 ? quantity : ""}</td>
-                    <td>${status === 5 ? quantity : ""}</td>
-                    <td>${quantity}</td>
                 </tr>`
                 )}
             </tbody>

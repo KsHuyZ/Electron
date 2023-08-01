@@ -2,7 +2,6 @@ import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input, Uplo
 import "./styles/wareHouseItem.scss";
 import { UilFilter, UilSearch } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
-import { UilUpload } from '@iconscout/react-unicons'
 
 import { useEffect, useState } from "react";
 import { UilMultiply, UilPen, UilExclamationCircle } from '@iconscout/react-unicons';

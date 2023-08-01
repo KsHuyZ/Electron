@@ -1,7 +1,21 @@
 import { ipcMain } from "electron";
 import countCouponDB from "../../database/countCoupon/countCoupon";
+import wareHouseItem from "../../database/wareHouseItem/wareHouseItem";
+import { DataType } from "../../types";
+import { startPrint } from "../../module/print";
+import { formImportBill } from "../../utils/formImportBill";
 
-const { getCountCoupon, getCouponItem } = countCouponDB;
+const {
+  getCountCoupon,
+  getCouponItem,
+  getCouponItembyCouponID,
+  updateCouponItem,
+  updateCountCoupon,
+  importWarehouseEdit,
+  backtoTempImport,
+} = countCouponDB;
+
+const { updateWarehouseItemField } = wareHouseItem;
 
 const countCoupon = () => {
   ipcMain.handle(
@@ -17,5 +31,9 @@ const countCoupon = () => {
   ipcMain.handle("get-coupon-item", async (event, id: number) => {
     return await getCouponItem(id);
   });
+  ipcMain.handle("get-coupon-item-by-coupon-id", async (event, ID: number) => {
+    return await getCouponItembyCouponID(ID);
+  });
+
 };
 export default countCoupon;
