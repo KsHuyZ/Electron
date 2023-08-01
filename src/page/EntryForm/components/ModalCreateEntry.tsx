@@ -15,7 +15,6 @@ import {
 } from "antd";
 import { ModalEntryForm } from "../types";
 import { nameOf, OptionSelect, FormatTypeTable } from "@/types";
-import TableTree from "@/components/TreeTable/TreeTable";
 import { ColumnsType } from "antd/es/table";
 import { DataType } from "@/page/WarehouseItem/types";
 import {
@@ -23,6 +22,7 @@ import {
   getDateExpried,
   removeItemChildrenInTable,
   formatDate,
+  convertDataHasReceiving
 } from "@/utils";
 import { getMessage, ERROR } from "@/page/WarehouseItem/constants/messValidate";
 import { UilMultiply } from "@iconscout/react-unicons";
@@ -38,7 +38,8 @@ interface PropsModal {
   idReceiving?: string;
   listItem: FormatTypeTable<DataType> | [];
   fetching: () => Promise<void>;
-  removeItemList: (IDIntermediary: string) => void;
+  removeItemList: (IDIntermediary: string[]) => void;
+  listWareHouse?: OptionSelect[];
 }
 
 const defaultOptionNature: OptionSelect[] = [
@@ -68,9 +69,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     removeItemList,
     nameSource,
     fetching,
-    idReceiving
+    idReceiving,
+    listWareHouse
   } = props;
-  console.log("list item: ", listItem)
+
   const [loadingButton, setLoadingButton] = useState<boolean>(false);
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(
     removeItemChildrenInTable(listItem as any)
@@ -96,34 +98,50 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
 
   const columns: ColumnsType<DataType> = [
     {
-      title: "Tên Kho Hàng",
-      dataIndex: "nameWareHouse",
-      render: (value, row, index) => {
+      title: 'Tên Kho Hàng',
+      dataIndex: 'prev_idwarehouse',
+      render: (value, row : DataType, index) => {
         const trueIndex =
-          index + paginationInfo.pageSize * (paginationInfo.current - 1);
+      index + paginationInfo.pageSize * (paginationInfo.current - 1);
         const obj = {
-          children: <b>{value.toUpperCase() ?? ""}</b>,
-          props: {} as any,
+          children : (<b>{!value ? row.nameWareHouse  : listWareHouse[Number(value) - 1]?.label}</b>),
+          props : {} as any
         };
-        if (
-          index > 0 &&
-          row.id_WareHouse === listItemEntryForm[trueIndex - 1].id_WareHouse
-        ) {
-          obj.props.rowSpan = 0;
-          // obj.props.colSpan = 2;
-        } else {
-          for (
-            let i = 0;
-            trueIndex + i !== listItemEntryForm.length &&
-            row.id_WareHouse === listItemEntryForm[trueIndex + i].id_WareHouse;
-            i += 1
-          ) {
-            obj.props.rowSpan = i + 1;
+        if (!row.prev_idwarehouse) {
+          if(index > 0  && row.id_WareHouse === listItemEntryForm[trueIndex -1].id_WareHouse){
+            obj.props.rowSpan = 0;
+            // obj.props.colSpan = 2;
+          }
+          else{
+            for (let i = 0; trueIndex + i !== listItemEntryForm.length && row.id_WareHouse === listItemEntryForm[trueIndex + i].id_WareHouse; i+=1) {
+             obj.props.rowSpan = i+1; 
+            }
+          }
+        }
+        else {
+          if(index > 0  && row.prev_idwarehouse === listItemEntryForm[trueIndex -1].prev_idwarehouse){
+            obj.props.rowSpan = 0;
+            // obj.props.colSpan = 2;
+          }
+          else{
+            for (let i = 0; trueIndex + i !== listItemEntryForm.length && row.prev_idwarehouse === listItemEntryForm[trueIndex + i].prev_idwarehouse; i+=1) {
+             obj.props.rowSpan = i+1; 
+            }
           }
         }
         return obj;
       },
       width: 200,
+    },
+  {
+    title: 'Đơn Vị Nhận ',
+    dataIndex: 'nameWareHouse',
+    width: 200,
+    render: (record, value: DataType) => {
+      return (
+        <span>{!value.prev_idwarehouse ? ''  : record}</span>
+      )
+    }
     },
     {
       title: "Mã mặt hàng",
@@ -199,7 +217,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
         <Space size="middle">
           <UilMultiply
             style={{ cursor: "pointer" }}
-            onClick={() => handleRemoveItem(record.IDIntermediary)}
+            onClick={() => handleRemoveItem(record)}
           />
         </Space>
       ),
@@ -268,9 +286,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       message.error("Không có sản phẩm để làm phiếu");
       return;
     }
+
     const params: any = {
       ...values,
-      items: listItemEntryForm,
+      items: convertDataHasReceiving(listItemEntryForm, listWareHouse!),
       name: values.name,
       note: values.note,
       nature: values.nature,
@@ -281,15 +300,18 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
 
     const result = await ipcRenderer.invoke(!idReceiving ? "print-form-import" : "print-form-export", { ...params });
-    setLoadingButton(true);
+    if (result) {
+      removeItemList(listItemEntryForm.map(i => i.IDIntermediary))
+    }
+    // setLoadingButton(true);
   };
 
-  const handleRemoveItem = (id: string) => {
+  const handleRemoveItem = (item: DataType) => {
     const filterItem = listItemEntryForm.filter(
-      (cur) => cur.IDIntermediary !== id
+      (cur) => cur.IDIntermediary !== item.IDIntermediary
     );
     setListItemEntryForm(filterItem);
-    removeItemList(id);
+    removeItemList([item.IDIntermediary]);
   };
 
   const totalPrice = useMemo(() => {

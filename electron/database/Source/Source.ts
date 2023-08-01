@@ -139,7 +139,7 @@ const Source = {
           : "WHERE wi.id_Source = ? AND status IN(1,3,5)";
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
-        i.ID as IDIntermediary, i.id_WareHouse, i.status, i.quality, i.quantity,
+        i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity,
         h.name as nameWareHouse,
         i.date, COUNT(i.ID) OVER() AS total 
         FROM warehouseItem wi

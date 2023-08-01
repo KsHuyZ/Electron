@@ -211,7 +211,7 @@ const wareHouseItem = () => {
       currentItems = items;
       isForm = "import";
       currentTitle = title;
-      return null;
+      return true;
     }
   );
 
@@ -309,7 +309,7 @@ const wareHouseItem = () => {
           currentDate
         );
         const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
+        if (isSuccess && mainWindow) {
           mainWindow.webContents.send("import-warehouse", { isSuccess });
         }
       } else if (isForm === "edit-import") {

@@ -70,6 +70,7 @@ export type ISearchWareHouseItem = {
   status: number | null;
   now_date_ex: string;
   after_date_ex: string;
+  itemWareHouse: string;
 };
 
 export type IPostMultipleItem = {

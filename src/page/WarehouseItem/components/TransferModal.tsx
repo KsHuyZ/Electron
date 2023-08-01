@@ -296,7 +296,8 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
           await props.fetching();
           setIsShow();
           props.removeItemList(newList.map(i => i.idIntermediary));
-          message.success('Chuyển kho thành công');
+          if(isShow === STATUS_MODAL.TRANSFER) return message.success('Chuyển kho thành công');
+          return message.success('Tạm xuất kho thành công');
         }
       } catch (error) {
         message.error('Loi server')

@@ -102,7 +102,7 @@ const wareHouseItem = {
     currentPage: number,
     paramsSearch: ISearchWareHouseItem
   ) => {
-    const { name, idSource, startDate, endDate, status } = paramsSearch;
+    const { name, idSource, startDate, endDate, status, itemWareHouse } = paramsSearch;
 
     try {
       const offsetValue = (currentPage - 1) * pageSize;
@@ -130,12 +130,18 @@ const wareHouseItem = {
         queryParams.unshift(status);
       }
 
+      if (itemWareHouse) {
+        whereConditions.unshift(`i.prev_idwarehouse = ?`);
+        queryParams.unshift(itemWareHouse);
+      }
+
       const whereClause =
         whereConditions.length > 0
           ? `WHERE ${whereConditions.join(
               " AND "
-            )} AND i.id_WareHouse = ?  AND i.quantity > 0`
-          : "WHERE i.id_WareHouse = ?  AND i.quantity > 0";
+            )} AND i.id_WareHouse = ? AND i.status IN(2,4,5)  AND i.quantity > 0`
+          : "WHERE i.id_WareHouse = ? AND i.status IN(2,4,5)  AND i.quantity > 0";
+
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity, w.name AS nameWareHouse,
@@ -830,7 +836,7 @@ const wareHouseItem = {
         date
       );
       const promises = intermediary.map(async (item) => {
-        const insertQuery = `UPDATE Intermediary SET status = 3 WHERE ID = ?`;
+        const insertQuery = `UPDATE Intermediary SET status = ${item.status == 5 ? 2 : 3} WHERE ID = ?`;
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
         await createCouponItem(
           idCoutCoupon,
