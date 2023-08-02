@@ -60,8 +60,13 @@ const wareHouseItem = {
       }
 
       if (after_date_ex) {
-        whereConditions.unshift(`wi.date_expried <= ?`);
+        if (now_date_ex !== after_date_ex) {
+          whereConditions.unshift(`wi.date_expried <= ?`);
         queryParams.unshift(after_date_ex);
+        } else {
+          whereConditions.unshift(`wi.date_expried < ?`);
+        queryParams.unshift(after_date_ex);
+        }
       }
 
       const whereClause =
@@ -207,7 +212,7 @@ const wareHouseItem = {
       queryParams.unshift(status);
     }
 
-    if (now_date_ex !== after_date_ex) {
+    if (now_date_ex) {
       whereConditions.unshift(`wi.date_expried >= ?`);
       queryParams.unshift(now_date_ex);
     }

@@ -47,9 +47,9 @@ interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
                     if(dataIndex === 'quality' && (Number(value) <= 0 || Number(value) > 4 )){
                       return Promise.reject(`${title} thuộc 1 - 4`);
                     }
-                    if(dataIndex !== 'note' && !value){
-                        return Promise.reject(`${title} bắt buộc nhập.`);
-                    }
+                    if ((dataIndex !== 'note' && dataIndex !== 'date_expried') && !value) {
+                      return Promise.reject(`${title} bắt buộc nhập.`);
+                  }                  
                     if(listTypeNumberValidate.includes(dataIndex) && !/^[^a-zA-Z\W]*\.?\d*$/.test(value)){
                         return Promise.reject(`${title} phải là số.`);
                     }
@@ -91,15 +91,15 @@ const UploadXlsx = () => {
     const navigate = useNavigate();
 
     const columns: CustomColumnType<IFileUpload>[] = [
-        {
-          title: 'Mã mặt hàng',
-          dataIndex: 'key',
-          editable: true,
-          width: 150,
-          render: (record) => {
-            return `${record}`
-          }
-        },
+        // {
+        //   title: 'Mã mặt hàng',
+        //   dataIndex: 'key',
+        //   editable: true,
+        //   width: 150,
+        //   render: (record) => {
+        //     return `${record}`
+        //   }
+        // },
         {
           title: 'Tên mặt hàng',
           dataIndex: 'name',
@@ -219,16 +219,20 @@ const UploadXlsx = () => {
   const edit = (record: Partial<IFileUpload> & { key: React.Key }) => {
 
     dayjs.locale('vi');
-    if(!record['date_expried']){
+    // if(!record['date_expried']){
 
-    }else
+    // }else
 
-    if(typeof record['date_expried'] === 'string') {
+    // if(typeof record['date_expried'] === 'string') {
         
-        const newDate = formatDateUploadFile(record['date_expried']);
-        record['date_expried'] = dayjs(newDate);
-    } else{
-        record['date_expried'] = dayjs(record['date_expried']);
+    //     const newDate = formatDateUploadFile(record['date_expried']);
+    //     record['date_expried'] = dayjs(newDate);
+    // } else{
+    //     record['date_expried'] = dayjs(record['date_expried']);
+    // }
+
+    if (record['date_expried']) {
+      record['date_expried'] = dayjs(record['date_expried']);
     }
     
     form.setFieldsValue({ name: '', unit : '', quality : '', date_expried : '', price : '' , quantity_plane: '' , quantity_real: '', total : '', note: '', ...record });
@@ -243,7 +247,7 @@ const UploadXlsx = () => {
     try {
       let row = (await form.validateFields()) as IFileUpload;
 
-      row['date_expried'] =  formatDate(row['date_expried'], false, 'no_date')
+      row['date_expried'] =  row['date_expried'] ? formatDate(row['date_expried'], false, 'no_date') : ''
 
       const newData = [...excelData as any];
       const index = newData.findIndex((item) => key === item.key);
@@ -306,31 +310,13 @@ const UploadXlsx = () => {
         
        try {
         await form.validateFields();
-        let errorEncountered = false;
-
-        excelData?.forEach((items: IFileUpload, index) => {
-        if (errorEncountered) return; 
-
-        if (!items.date_expried) {
-            message.error('Không để trống cột HD');
-            errorEncountered = true; 
-            return;
-        }
-        if (items.date_expried && /^\d{2}\/\d{2}$/.test(items.date_expried)) {
-            message.error('Định dạng ngày của HD không đúng định dạng YYYY/MM/DD');
-            errorEncountered = true; 
-            console.log(items.date_expried);
-            
-            return;
-        }
-        });
         if (!item) {
           refError.current.focus();
           setIsErrorSelect(true);
           return;
         }
         // submit
-        if(!errorEncountered){
+
           const paramsOther = {
             id_wareHouse : Number(idWareHouse),
             status: STATUS.TEMPORARY_IMPORT,
@@ -343,8 +329,7 @@ const UploadXlsx = () => {
           if(response){
             navigate(`/home/${idWareHouse}/${nameWareHouse}`,{replace: true});
           }
-          
-        }
+
 
 
        } catch (error: any) {
@@ -369,7 +354,7 @@ const UploadXlsx = () => {
             const data = XLSX.utils.sheet_to_json(worksheet);
             
             const dataSlice: any = data.slice(4);
-            console.log(dataSlice);
+
             if(dataSlice.length > 0){
               const key = Object.keys(dataSlice && dataSlice[0])?.map((key) => {
                 return key;
@@ -503,32 +488,34 @@ const UploadXlsx = () => {
                         </Card>
                     </div>
                 </div>
-            </Col>
-            
+        </Col>
+
            {
-            excelData && excelData.length < 100 ? (
+          excelData && (
+             excelData.length < 100 ? (
                 
 
-                <Form form={form} component={false}>
-                    <Table
-                        components={{
-                        body: {
-                            cell: EditableCell,
-                        },
-                        }}
-                        bordered
-                        dataSource={excelData as any}
-                    scroll={{ y: 500 }}
-                        columns={mergedColumns as any}
-                        rowClassName="editable-row"
-                        pagination={{
-                        onChange: cancel,
-                        }}
-                    />
-                    </Form>
-                ) : (
-                    <span>Dữ liệu của bạn không trùng khớp, hoặc dữ liệu quá lớn</span>
-                )
+              <Form form={form} component={false}>
+                  <Table
+                      components={{
+                      body: {
+                          cell: EditableCell,
+                      },
+                      }}
+                      bordered
+                      dataSource={excelData as any}
+                  scroll={{ y: 500 }}
+                      columns={mergedColumns as any}
+                      rowClassName="editable-row"
+                      pagination={{
+                      onChange: cancel,
+                      }}
+                  />
+                  </Form>
+              ) : (
+                  <span>Dữ liệu của bạn không trùng khớp, hoặc dữ liệu quá lớn</span>
+              )
+            )
            }
 
         </Row>
