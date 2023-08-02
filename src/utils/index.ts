@@ -121,7 +121,9 @@ export const stringifyParams = (data: any) => {
   });
 };
 
-export const getDateExpried = (date: string) =>{
+export const getDateExpried = (date: string) => {
+  
+  if(!date) return
   dayjs.locale('vi')
 
   const currentDate = dayjs();
@@ -129,7 +131,9 @@ export const getDateExpried = (date: string) =>{
 
 // Chênh lệch thời gian giữa hai ngày
 const timeDiff = specificDate.diff(currentDate, 'day');
-let days = '';
+  let days = '';
+  console.log(specificDate);
+  
 if(timeDiff > 0){
   const daysRemaining = timeDiff > 0 ? timeDiff : 0;
   days =  `Còn ${daysRemaining} ngày nữa là đến ngày ${date}.`;
@@ -137,8 +141,13 @@ if(timeDiff > 0){
 }else{
   if( timeDiff < 0){
     days = `Đã hết hạn từ ngày ${date}.`
-  }else{
-    days = `Đây là ngày cuối từ ngày ${date}.`
+  } else {
+    let isSpecialDateToday = specificDate.isSame(currentDate, 'day');
+    if (isSpecialDateToday) {
+      days = `Hôm nay là ngày cuối ${date}.`
+    } else {
+      days = `Còn 1 ngày nữa sẽ đến ngày ${date}.`
+    }
   }
 }
 return days;
