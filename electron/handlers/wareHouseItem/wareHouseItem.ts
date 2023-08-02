@@ -194,9 +194,10 @@ const wareHouseItem = () => {
         date: any;
         title: string;
         nameSource: string;
+        idSource: string | number;
       }
     ) => {
-      const { items, name, note, nature, total, date, title } = data;
+      const { items, name, note, nature, total, date, title, idSource } = data;
       startPrint(
         {
           htmlString: await formImportBill(data),
@@ -211,6 +212,7 @@ const wareHouseItem = () => {
       currentItems = items;
       isForm = "import";
       currentTitle = title;
+      currentIDSource = idSource;
       return true;
     }
   );
@@ -306,7 +308,8 @@ const wareHouseItem = () => {
           currentNature,
           currentTotal,
           currentTitle,
-          currentDate
+          currentDate,
+          currentIDSource
         );
         const mainWindow = BrowserWindow.getFocusedWindow();
         if (isSuccess && mainWindow) {

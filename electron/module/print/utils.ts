@@ -21,6 +21,7 @@ export const getPrinterListAsync = async (e: IpcMainInvokeEvent) => {
     retArr.push({
       name: list[index].name,
       isDefault: list[index].isDefault,
+      type: list[index].options
     });
   }
   return {
@@ -111,7 +112,6 @@ export const generatePdfFile = async (
   await writeFile(pdfPath, data);
   return pdfPath;
 };
-
 
 export const webContentsPrint = async (
   webContens: WebContents,

@@ -17,7 +17,7 @@ const countDelivery = {
     date: Moment | null
   ) => {
     const createQuery =
-      "INSERT INTO CoutDelivery(id_WareHouse, name, Nature, Note,Total,title,date) VALUES (?,?,?,?,?,?)";
+      "INSERT INTO CoutDelivery(id_WareHouse, name, Nature, Note,Total,title,date) VALUES (?,?,?,?,?,?,?)";
     try {
       const ID = await runQueryReturnID(createQuery, [
         idWarehouse,
@@ -41,19 +41,12 @@ const countDelivery = {
   },
   createDeliveryItem: async (
     idCoutDelivery: number | unknown,
-    idIntermediary: number,
-    quantity: number,
-    quality: number,
+    idIntermediary: number
   ) => {
     const createQuery =
-      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermidary, quantity, quality, id_Warehouse) VALUES(?,?,?,?)";
+      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermediary) VALUES(?,?)";
     try {
-      await runQuery(createQuery, [
-        idCoutDelivery,
-        idIntermediary,
-        quantity,
-        quality,
-      ]);
+      await runQuery(createQuery, [idCoutDelivery, idIntermediary]);
       return true;
     } catch (error) {
       console.log(error);
@@ -73,9 +66,10 @@ const countDelivery = {
     return { rows, total: countResult };
   },
   getDeliveryItem: async (id: number) => {
-    const selectQuery = `select di.ID,wi.name, wi.ID as IDWarehouseItem, wi.price, di.quality, di.quantity, w.name as nameWarehouse from Delivery_Item di
-    join warehouse w on w.ID = di.id_Warehouse
-    join warehouseitem wi on wi.ID = di.id_warehouse_item
+    const selectQuery = `select di.ID,wi.name, wi.ID as IDWarehouseItem, wi.price, i.quality, i.quantity, w.name as nameWareHouse from Delivery_Item di
+    join Intermediary i on i.ID = di.id_intermediary
+    join warehouseitem wi on wi.ID = i.id_WareHouseItem
+    join warehouse w on w.ID = i.prev_idwarehouse
     where id_Cout_Delivery = ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [id]);
     return rows;

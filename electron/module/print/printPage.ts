@@ -247,7 +247,7 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
                         <iframe></iframe>
                         <div class="container-loading">
                             <div class="loader">
-                                Đang tải bản xẻm trước
+                                Đang tải bản xem trước
                                 <span class="dot dot-1">.</span>
                                 <span class="dot dot-2">.</span>
                                 <span class="dot dot-3">.</span>
@@ -427,7 +427,6 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
             
                         } else {
                             printerDevices.add(new Option(printer.name, printer.name))
-            
                         }
                     });
                 })

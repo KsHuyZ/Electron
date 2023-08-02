@@ -10,7 +10,7 @@ import wareHouseItem from "../wareHouseItem/wareHouseItem";
 const { updateWarehouseItemField } = wareHouseItem;
 const countCoupon = {
   createCountCoupon: async (
-    id_Source: number,
+    id_Source: number | string,
     name: string,
     title: string,
     nature: string,

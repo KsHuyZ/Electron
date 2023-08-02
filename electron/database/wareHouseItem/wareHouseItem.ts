@@ -102,7 +102,8 @@ const wareHouseItem = {
     currentPage: number,
     paramsSearch: ISearchWareHouseItem
   ) => {
-    const { name, idSource, startDate, endDate, status, itemWareHouse } = paramsSearch;
+    const { name, idSource, startDate, endDate, status, itemWareHouse } =
+      paramsSearch;
 
     try {
       const offsetValue = (currentPage - 1) * pageSize;
@@ -794,8 +795,8 @@ const wareHouseItem = {
     date: Moment | null | any
   ) => {
     try {
-      const { createCountDelivery } = countDelivery;
-      await createCountDelivery(
+      const { createCountDelivery, createDeliveryItem } = countDelivery;
+      const ID = await createCountDelivery(
         intermediary[0]["id_WareHouse"],
         name,
         nature,
@@ -807,6 +808,7 @@ const wareHouseItem = {
       const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
+        await createDeliveryItem(ID, item["IDIntermediary"]);
       });
       await Promise.all(promises);
       return true;
@@ -822,12 +824,13 @@ const wareHouseItem = {
     nature: string,
     total: number,
     title: string,
-    date: Moment | null | any
+    date: Moment | null | any,
+    idSource: string | number
   ) => {
     try {
       const { createCountCoupon, createCouponItem } = countCoupon;
       const idCoutCoupon = await createCountCoupon(
-        intermediary[0]["id_WareHouse"],
+        idSource,
         name,
         title,
         nature,
@@ -836,7 +839,9 @@ const wareHouseItem = {
         date
       );
       const promises = intermediary.map(async (item) => {
-        const insertQuery = `UPDATE Intermediary SET status = ${item.status == 5 ? 2 : 3} WHERE ID = ?`;
+        const insertQuery = `UPDATE Intermediary SET status = ${
+          item.status == 5 ? 2 : 3
+        } WHERE ID = ?`;
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
         await createCouponItem(
           idCoutCoupon,

@@ -4,12 +4,16 @@ import {
   IpcMainInvokeEvent,
   WebContentsPrintOptions,
   app,
+  webContents,
 } from "electron";
 import { closeWindow, getPrinterListAsync, translateMM } from "./utils";
 import { HtmlConstruct, PdfCreateOptions, PdfReloadOptions } from "./type";
+import * as path from "path";
+
 import printPreview from "./printPreview";
 ipcMain.handle("get-printer-list-async", getPrinterListAsync);
 ipcMain.handle("close-pdf-window", closeWindow);
+
 
 const print = async (e: IpcMainInvokeEvent, data: any) => {
   const margin = translateMM.toPixels(data.margin);
@@ -28,7 +32,15 @@ const print = async (e: IpcMainInvokeEvent, data: any) => {
     landscape: !!data.landscape,
     scaleFactor: data.scaleFactor,
   };
-  await printPreview.print(options);
+  const deviceName = options.deviceName
+  const deviceList = await getPrinterListAsync(e);
+  const index = deviceList.printDevices.findIndex(item => item.name === deviceName)
+  if(index > -1) {
+    if(deviceList[index].type) {}
+  }
+  // console.log(deviceList)
+  return
+  // await printPreview.print(options);
 };
 
 ipcMain.handle("print", print);

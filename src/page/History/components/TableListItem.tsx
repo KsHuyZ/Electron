@@ -74,7 +74,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
                     children: (<b>{value.toUpperCase() ?? ''}</b>),
                     props: {} as any
                 };
-                if (index > 0 && row.id_WareHouse === listData.rows[trueIndex - 1].id_WareHouse) {
+                    if (index > 0 && row.id_WareHouse === listData.rows[trueIndex - 1].id_WareHouse) {
                     obj.props.rowSpan = 0;
                     // obj.props.colSpan = 2;
                 }
