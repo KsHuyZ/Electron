@@ -18,15 +18,16 @@ const EntryForm = () =>{
                 navLink: '#index',
                 url: `/item-source/${id}/${nameSource}#index`,
                 component: Tab1Content,
-            },
-            {
-                tabName: 'show',
-                name: 'Danh sách đã làm phiếu',
-                hash: ['#list'],
-                navLink: '#list',
-                url: `/item-source/${id}/${nameSource}#list`,
-                component: Tab1Content,
             }
+            // ,
+            // {
+            //     tabName: 'show',
+            //     name: 'Danh sách đã làm phiếu',
+            //     hash: ['#list'],
+            //     navLink: '#list',
+            //     url: `/item-source/${id}/${nameSource}#list`,
+            //     component: Tab1Content,
+            // }
         ],
         [id]
     );

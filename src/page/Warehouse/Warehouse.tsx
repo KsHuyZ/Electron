@@ -5,6 +5,7 @@ import { UilPen } from '@iconscout/react-unicons'
 import { useEffect, useState } from "react";
 import { ipcRenderer } from "electron";
 import { Link } from "react-router-dom";
+import AuthModal from "@/components/AuthModal";
 
 import ModalWareHouse from "./components/ModalWareHouse";
 
@@ -35,6 +36,7 @@ const Warehouse = () => {
         },
     });
     const [formEdit, setFormEdit] = useState<{ idEdit: string, name: string }>();
+    const [canUpdate, setCanUpdate] = useState(false)
 
     const columns: ColumnsType<DataType> = [
         {
@@ -58,9 +60,9 @@ const Warehouse = () => {
             dataIndex: "action",
             width: 150,
             render: (_, record) => (
-                <Space size="middle">
-                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleOpenEditModal(record.ID, record.name)} />
-                </Space>
+                canUpdate ? <Space size="middle">
+                <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleOpenEditModal(record.ID, record.name)} />
+            </Space> : <></>
             ),
         }
     ];
@@ -132,9 +134,17 @@ const Warehouse = () => {
             {
                 showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} fetching={async () => await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)} />
             }
-            <div className="header">
-                <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>
-            </div>
+            {
+                canUpdate && (
+                    <div className="header">
+                        <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>
+                    </div>
+                )
+            }
+            <AuthModal
+                canUpdate={canUpdate}
+                setCanUpdate={(status) => setCanUpdate(status)}
+            />
             <Table
                 columns={columns}
                 dataSource={allWareHouse.map((item) => ({ ...item, key: item.ID }))}

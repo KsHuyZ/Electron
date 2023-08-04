@@ -1,13 +1,13 @@
-import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
-import { UilPlus, UilImport, UilFileExport, UilSearch, UilFilter } from '@iconscout/react-unicons'
+import { Row, Col, Card, Button, Space, Tag, Modal, message, Input } from "antd";
+import { UilSearch, UilFilter } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
 import { useEffect, useState } from "react";
 import { renderTextStatus, formatNumberWithCommas, getDateExpried } from "@/utils";
-import { DataType, FormWareHouseItem, ISearchWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
+import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
 import TableWareHouse from "../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
-import { ItemSource, ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
+import {  ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "../WarehouseItem/components/TransferModal";
 import FilterWareHouseItem from "../WarehouseItem/components/FilterWareHouseItem";
@@ -34,7 +34,7 @@ const defaultRows: DataType[] = [
 const defaultTable: TableData<DataType[]> = {
   pagination: {
     current: 1,
-    pageSize: 2,
+    pageSize: 10,
     total: 0,
   },
   loading: false,
@@ -243,7 +243,7 @@ const Product = () => {
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
-                    <Button className="button-bar" onClick={() => setStatusModal(STATUS_MODAL.RECEIPT)} icon={<UilFileExport />} type="primary" disabled={dataRowSelected!?.length > 0 ? false : true}>Tạm Xuất kho</Button>
+                    <Button onClick={() => setStatusModal(STATUS_MODAL.RECEIPT)} disabled={dataRowSelected!?.length > 0 ? false : true} type="primary">Tạm Xuất kho</Button>
                   </Space>
                 </Col>
               </Row>

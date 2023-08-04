@@ -2,14 +2,13 @@ import { TableData } from '@/types'
 import { ipcRenderer } from 'electron'
 import React, { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom'
-import { DataType } from '../WarehouseItem/types'
+import AuthModal from "@/components/AuthModal";
 import { Button, Col, Form, Input, Modal, Row, Space, Table, TablePaginationConfig } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import docso from '@/utils/toVietnamese'
 import { UilPen } from '@iconscout/react-unicons'
 import ModalCreateEntry from './components/ModalCreateEntry'
 import toastify from '@/lib/toastify'
-import { LockOutlined, UnlockOutlined } from '@ant-design/icons'
 
 const dataTab = [
     {
@@ -40,7 +39,6 @@ export type CountDeliveryType = {
 
 const History = () => {
     const [canUpdate, setCanUpdate] = useState(false)
-    const [isShowModal, setIsShowModal] = useState(false)
     const [showUpdateModal, setShowUpdateModal] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams();
     const [currentSelect, setCurrentSelect] = useState<CountDeliveryType>()
@@ -55,7 +53,6 @@ const History = () => {
         loading: false,
         rows: [],
     };
-    const [form] = Form.useForm()
 
     const [tableData, setTableData] = useState<TableData<CountDeliveryType[]>>(defaultTable)
 
@@ -103,34 +100,19 @@ const History = () => {
             title: "Ghi chú",
             dataIndex: "Note"
         },
-        canUpdate ? {
+        {
             title: "Cập nhật",
             render: (_, value) => (
-                <Space size="middle">
+                canUpdate ? <Space size="middle">
                     <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleShowModalUpdate(value)} />
-                </Space>
+                </Space> : <></>
             )
-        } : {}
+        }
     ]
-
-    const handleClean = () => {
-        form.resetFields()
-        setIsShowModal(false)
-    }
 
     const handleShowModalUpdate = (value: CountDeliveryType) => {
         setCurrentSelect(value)
         setShowUpdateModal(true)
-    }
-
-    const onFinish = async () => {
-        const password = form.getFieldValue('password')
-        if (password !== "admin") return form.setFields([{
-            name: 'password',
-            errors: ['Sai mật khẩu']
-        }])
-        setCanUpdate(true)
-        handleClean()
     }
 
     const handleGetData = async () => {
@@ -149,16 +131,11 @@ const History = () => {
         notifySuccess("Sửa phiếu thành công")
     }
 
-    const handleShowForm = () => {
-        if (canUpdate) return setCanUpdate(false)
-        setIsShowModal(true)
-    }
-
     useEffect(() => {
-        ipcRenderer.on("edit-import", onUpdateSuccessCallback)
+        ipcRenderer.on("edit-import-success", onUpdateSuccessCallback)
         ipcRenderer.on("edit-export-success",onUpdateSuccessCallback)
         return () => {
-            ipcRenderer.removeListener("edit-import", onUpdateSuccessCallback)
+            ipcRenderer.removeListener("edit-import-success", onUpdateSuccessCallback)
             ipcRenderer.removeListener("edit-export-success", onUpdateSuccessCallback)
         }
     }, [])
@@ -182,13 +159,10 @@ const History = () => {
                     </ul>
                 </section>
             </div>
-            <Row style={{ margin: '0 0 10px 0 ' }}>
-                <Col span={24}>
-                    <Space>
-                        <Button className="default" type="primary" onClick={handleShowForm} icon={canUpdate ? <LockOutlined /> : <UnlockOutlined />}>{!canUpdate ? "Chỉnh sửa" : "Khóa chỉnh sửa"}</Button>
-                    </Space>
-                </Col>
-            </Row>
+            <AuthModal
+                canUpdate={canUpdate}
+                setCanUpdate={(status) => setCanUpdate(status)}
+            />
             <Table
                 dataSource={tableData.rows.map((item, index) => ({ ...item, key: index }))}
                 pagination={
@@ -202,24 +176,6 @@ const History = () => {
                 onChange={handleTableChange}
                 columns={columns}
             />
-            <Modal
-                title={`Nhập đúng mật khẩu để được phép chỉnh sửa`}
-                centered
-                open={isShowModal}
-                onCancel={handleClean}
-                onOk={form.submit}
-            >
-                <Form form={form} onFinish={onFinish}>
-                    <Form.Item label="Mật khẩu" name={'password'} rules={[
-                        {
-                            required: true,
-                            message: "Hãy nhập mật khẩu để sửa phiếu",
-                        },
-                    ]}>
-                        <Input.Password />
-                    </Form.Item>
-                </Form>
-            </Modal>
             <ModalCreateEntry
                 isShowModal={showUpdateModal}
                 onCloseModal={() => {

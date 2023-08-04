@@ -243,7 +243,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
         <Button
           type="primary"
           htmlType="submit"
-          loading={loadingButton}
           onClick={handleSubmitForm}
         >
           Làm phiếu
@@ -262,7 +261,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       await fetching();
       message.success("Nhập kho thành công");
       handleClean();
-      setLoadingButton(false);
       return;
     }
   };
@@ -295,7 +293,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     if (result) {
       removeItemList(listItemEntryForm.map(i => i.IDIntermediary))
     }
-    // setLoadingButton(true);
   };
 
   const handleRemoveItem = (item: DataType) => {
