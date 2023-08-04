@@ -6,10 +6,7 @@ import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "@/page/WarehouseIt
 import { formatNumberWithCommas, getDateExpried, renderTextStatus, createFormattedTable, removeItemChildrenInTable } from "@/utils";
 import { ResponseIpc, TableData, FormatTypeTable, OptionSelect } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
-import { useSearchParams, useParams } from "react-router-dom";
 import { ipcRenderer } from "electron";
-import TableTree from "@/components/TreeTable/TreeTable";
-import ModalCreateEntry from "../components/ModalCreateEntry";
 import TableWareHouse from "@/page/WarehouseItem/components/TableWareHouse";
 
 const defaultRows: DataType[] = [
@@ -39,14 +36,14 @@ const defaultTable: TableData<DataType[]> = {
     loading: false,
     rows: defaultRows,
 };
-
 interface TableListProps {
     id?: string | number;
     isShow: boolean; onCloseModal: () => void;
     setListItem: Dispatch<SetStateAction<DataType[]>>;
+    isExport: boolean;
 }
 
-const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps) => {
+const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport }: TableListProps) => {
     const [nameSearch, setNameSearch] = useState("");
     const [isSearch, setIsSearch] = useState<Boolean>(false);
     const [listData, setListData] = useState<TableData<FormatTypeTable<DataType>[]>>(defaultTable);
@@ -54,7 +51,6 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
     const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
     const [listWareHouse, setListWareHouse] = useState<OptionSelect[]>([]);
     const [selectSearch, setSelectSearch] = useState<{ select: string }>();
-
     const columns: ColumnsType<DataType> = [
         {
             title: 'Mã mặt hàng',
@@ -74,7 +70,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
                     children: (<b>{value.toUpperCase() ?? ''}</b>),
                     props: {} as any
                 };
-                    if (index > 0 && row.id_WareHouse === listData.rows[trueIndex - 1].id_WareHouse) {
+                if (index > 0 && row.id_WareHouse === listData.rows[trueIndex - 1].id_WareHouse) {
                     obj.props.rowSpan = 0;
                     // obj.props.colSpan = 2;
                 }
@@ -158,22 +154,18 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
     ];
 
     useEffect(() => {
-        new Promise(async () => {
-            await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-            await getListWareHouse();
-        })
-    }, []);
+        getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+        getListWareHouse();
+    }, [isExport]);
 
     useEffect(() => {
         if (isSearch) {
-            new Promise(async () => {
-                await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-            })
+            getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
         }
-    }, [isSearch, selectSearch]);
+    }, [isSearch, isExport, selectSearch]);
 
     const getListWareHouse = async () => {
-        const result = await ipcRenderer.invoke("get-warehouse-no-pagination");
+        const result = await ipcRenderer.invoke(isExport ? "receiving-list" : "get-warehouse-no-pagination");
         if (result as any) {
             const option: OptionSelect[] = result.rows.map((item: any) => ({
                 label: item.name,
@@ -185,7 +177,6 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
     }
 
     const getListItem = async (pageSize: number, currentPage: number, total: number) => {
-
         setListData({
             ...listData,
             pagination: {
@@ -196,13 +187,12 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
             loading: true
         });
 
-
         const paramsSearch: { name: string, itemWareHouse: any } = {
             name: nameSearch ?? '',
             itemWareHouse: selectSearch?.select ?? ''
         };
 
-        const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, id: id, paramsSearch: paramsSearch });
+        const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, id: id, paramsSearch: paramsSearch, isEdit: true, isExport });
         if (result) {
             setListData((prev) => (
                 {
@@ -238,15 +228,19 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
         } else {
             setNameSearch(event.target.value);
         }
+
     }
 
     const handleSearchName = () => {
         setIsSearch(true);
     }
     const handleClean = () => {
-        onCloseModal()
         setListItemHasChoose([])
         setListItem([])
+        setListWareHouse([])
+        setNameSearch("")
+        setSelectSearch({ select: "" })
+        onCloseModal()
     }
 
     const handleSubmit = () => {
@@ -263,7 +257,6 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
             onCancel={handleClean}
             width={"90%"}
             onOk={() => handleSubmit()}
-        // footer={<Footer />}
         >
             <Row className="filter-bar">
                 <Col span={24}>
@@ -280,7 +273,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem }: TableListProps
                                     </Col>
                                     <Col span={10} className="col-item-filter">
                                         <div className="form-item" style={{ width: '70%' }}>
-                                            <label htmlFor="">Kho Hàng</label>
+                                            <label htmlFor="">{isExport ? "Đơn vị nhận" : "Kho Hàng"}</label>
                                             <Select
                                                 style={{ width: '100%' }}
                                                 allowClear

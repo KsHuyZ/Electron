@@ -8,14 +8,12 @@ import {
 } from "electron";
 import { closeWindow, getPrinterListAsync, translateMM } from "./utils";
 import { HtmlConstruct, PdfCreateOptions, PdfReloadOptions } from "./type";
-import * as path from "path";
 
 import printPreview from "./printPreview";
 ipcMain.handle("get-printer-list-async", getPrinterListAsync);
 ipcMain.handle("close-pdf-window", closeWindow);
 
-
-const print = async (e: IpcMainInvokeEvent, data: any) => {
+export const print = async (e: IpcMainInvokeEvent, data: any) => {
   const margin = translateMM.toPixels(data.margin);
   const options: WebContentsPrintOptions = {
     silent: data.silent,
@@ -32,18 +30,15 @@ const print = async (e: IpcMainInvokeEvent, data: any) => {
     landscape: !!data.landscape,
     scaleFactor: data.scaleFactor,
   };
-  const deviceName = options.deviceName
-  const deviceList = await getPrinterListAsync(e);
-  const index = deviceList.printDevices.findIndex(item => item.name === deviceName)
-  if(index > -1) {
-    if(deviceList[index].type) {}
-  }
-  // console.log(deviceList)
-  return
-  // await printPreview.print(options);
+  // const deviceName = options.deviceName
+  // const deviceList = await getPrinterListAsync(e);
+  // const index = deviceList.printDevices.findIndex(item => item.name === deviceName)
+
+  const result = await printPreview.print(options);
+  return result;
 };
 
-ipcMain.handle("print", print);
+
 
 // @ts-ignore
 ipcMain.on(
@@ -93,8 +88,6 @@ ipcMain.on(
     await printPreview.reloadByPrintOptions(e, reloadOptions);
   }
 );
-
-
 
 const startPrint: (
   pdfOptions: PdfCreateOptions,

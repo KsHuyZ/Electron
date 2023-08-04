@@ -1,4 +1,9 @@
-import { BrowserWindow, IpcMainEvent, ipcMain } from "electron";
+import {
+  BrowserWindow,
+  IpcMainEvent,
+  WebContentsPrintOptions,
+  ipcMain,
+} from "electron";
 import wareHouseItemDB from "../../database/wareHouseItem/wareHouseItem";
 import { DataType, Intermediary, WarehouseItem } from "../../types";
 import { startPrint } from "../../module/print";
@@ -8,8 +13,11 @@ import formReport from "../../utils/formReport";
 import moment, { Moment } from "moment";
 import printPreview from "../../module/print/printPreview";
 import countCouponDB from "../../database/countCoupon/countCoupon";
-
+import { print } from "pdf-to-printer";
 const { editCountCoupon } = countCouponDB;
+const { editCountDelivery } = countDelivery;
+import fs from "fs";
+import countDelivery from "../../database/countDelivery/countDelivery";
 
 let currentName = "";
 let currentNote = "";
@@ -24,6 +32,7 @@ let currentRemoveItem = [];
 let currentEditItem = [];
 let currentID;
 let currentIDSource;
+let currentReceivingID;
 
 const wareHouseItem = () => {
   const {
@@ -41,7 +50,6 @@ const wareHouseItem = () => {
     createWareHouseItemMultiple,
     getAllWarehouseItemandWHName,
   } = wareHouseItemDB;
-
   //  listen create warehouse item request
   ipcMain.handle(
     "create-product-item",
@@ -256,7 +264,6 @@ const wareHouseItem = () => {
         nature,
         total,
         date,
-        nameSource,
         title,
         idSource,
       } = data;
@@ -281,59 +288,136 @@ const wareHouseItem = () => {
       isForm = "edit-import";
     }
   );
-
-  ipcMain.on("save-pdf", async () => {
-    const isComplete = await printPreview.saveFilePdf();
-    if (isForm === "") return;
-    if (isComplete) {
-      if (isForm === "export") {
-        const isSuccess = await exportWarehouse(
-          currentItems,
-          currentName,
-          currentNote,
-          currentNature,
-          currentTotal,
-          currentTitle,
-          currentDate
-        );
-        const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
-          mainWindow.webContents.send("export-warehouse", { isSuccess });
-        }
-      } else if (isForm === "import") {
-        const isSuccess = await importWarehouse(
-          currentItems,
-          currentName,
-          currentNote,
-          currentNature,
-          currentTotal,
-          currentTitle,
-          currentDate,
-          currentIDSource
-        );
-        const mainWindow = BrowserWindow.getFocusedWindow();
-        if (isSuccess && mainWindow) {
-          mainWindow.webContents.send("import-warehouse", { isSuccess });
-        }
-      } else if (isForm === "edit-import") {
-        await editCountCoupon(
-          currentEditItem,
-          currentNewItem,
-          currentRemoveItem,
-          currentID,
-          currentIDSource,
-          currentName,
-          currentNature,
-          currentTotal,
-          currentDate,
-          currentTitle
-        );
-        const mainWindow = BrowserWindow.getFocusedWindow();
-        if (mainWindow) {
-          mainWindow.webContents.send("edit-import");
-        }
+  ipcMain.handle(
+    "print-export-edit",
+    async (
+      event,
+      data: {
+        ID: number;
+        itemEditList: DataType[];
+        newItemList: DataType[];
+        removeItemList: DataType[];
+        items: DataType[];
+        name: string;
+        note: string;
+        Nature: string;
+        total: number;
+        date: any;
+        title: string;
+        nameSource: string;
+        id_WareHouse: number;
       }
+    ) => {
+      const {
+        ID,
+        itemEditList,
+        newItemList,
+        removeItemList,
+        items,
+        name,
+        note,
+        Nature,
+        total,
+        date,
+        title,
+        id_WareHouse,
+        nameSource,
+      } = data;
+      startPrint(
+        {
+          htmlString: await formExportBill({ ...data, nature: Nature }),
+        },
+        undefined
+      );
+      console.log("du lieu ahihi");
+      console.log(data);
+      currentName = name;
+      currentEditItem = itemEditList;
+      currentNewItem = newItemList;
+      currentDate = date;
+      currentItems = items;
+      currentNature = Nature;
+      currentNote = note;
+      currentRemoveItem = removeItemList;
+      currentTitle = title;
+      currentTotal = total;
+      currentID = ID;
+      currentReceivingID = id_WareHouse; // undefined
+      isForm = "edit-export";
     }
+  );
+
+  ipcMain.handle("print", async (event, options: WebContentsPrintOptions) => {
+    const url = await printPreview.saveFilePdf();
+    await print(url, options)
+      .then(async () => {
+        if (isForm === "export") {
+          const isSuccess = await exportWarehouse(
+            currentItems,
+            currentName,
+            currentNote,
+            currentNature,
+            currentTotal,
+            currentTitle,
+            currentDate
+          );
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (mainWindow) {
+            mainWindow.webContents.send("export-warehouse", { isSuccess });
+          }
+        } else if (isForm === "import") {
+          const isSuccess = await importWarehouse(
+            currentItems,
+            currentName,
+            currentNote,
+            currentNature,
+            currentTotal,
+            currentTitle,
+            currentDate,
+            currentIDSource
+          );
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (isSuccess && mainWindow) {
+            mainWindow.webContents.send("import-warehouse", { isSuccess });
+          }
+        } else if (isForm === "edit-import") {
+          await editCountCoupon(
+            currentEditItem,
+            currentNewItem,
+            currentRemoveItem,
+            currentID,
+            currentIDSource,
+            currentName,
+            currentNature,
+            currentTotal,
+            currentDate,
+            currentTitle
+          );
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (mainWindow) {
+            mainWindow.webContents.send("edit-import");
+          }
+        } else if (isForm === "edit-export") {
+          editCountDelivery(
+            currentEditItem,
+            currentNewItem,
+            currentRemoveItem,
+            currentID,
+            currentReceivingID,
+            currentName,
+            currentNature,
+            currentTotal,
+            currentDate,
+            currentTitle
+          );
+          const mainWindow = BrowserWindow.getFocusedWindow();
+          if (mainWindow) {
+            mainWindow.webContents.send("edit-export-success");
+          }
+        }
+      })
+      .catch((error) => console.log(error));
+    fs.unlinkSync(url);
   });
 
   ipcMain.on("export-report-warehouseitem", async (event, id: number) => {

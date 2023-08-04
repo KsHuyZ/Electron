@@ -21,7 +21,7 @@ export const getPrinterListAsync = async (e: IpcMainInvokeEvent) => {
     retArr.push({
       name: list[index].name,
       isDefault: list[index].isDefault,
-      type: list[index].options
+      type: list[index].options,
     });
   }
   return {
@@ -116,29 +116,23 @@ export const generatePdfFile = async (
 export const webContentsPrint = async (
   webContens: WebContents,
   options: WebContentsPrintOptions
-): Promise<boolean> => {
-  return await new Promise((res, rej) => {
-    try {
-      if (!webContens) {
-        return res(false);
-      }
-      webContens.print(options, (success: boolean, failureReason: any) => {
-        console.log("is success: ", success);
-        console.log("err: ", failureReason);
-        if (success) {
-          return res(true);
-        } else {
-          if (failureReason !== "Print job canceled") {
-            dialog.showErrorBox("print", failureReason);
-          }
-          return res(false);
+) => {
+  if (!webContens) {
+    return false;
+  }
+  webContens.print(
+    options,
+    (success: boolean, failureReason: any) => {
+      if (success) {
+     
+      } else {
+        if (failureReason !== "Print job canceled") {
+          dialog.showErrorBox("print", failureReason);
         }
-      });
-    } catch (error) {
-      console.log("error in catch case:", error);
-      rej(error);
+
+      }
     }
-  });
+  );
 };
 
 export const cleanBrowserView = (targetWin: BrowserWindow) => {

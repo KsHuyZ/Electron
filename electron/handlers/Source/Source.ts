@@ -2,8 +2,14 @@ import { ipcMain } from "electron";
 import SourceDB from "../../database/Source/Source";
 import { Source } from "../../types";
 const Source = () => {
-  const { createItemSource, getAllItemSource, updateSource, deleteItemSource,getAllItemSourceNoPagination,getAllEntryForm } =
-    SourceDB;
+  const {
+    createItemSource,
+    getAllItemSource,
+    updateSource,
+    deleteItemSource,
+    getAllItemSourceNoPagination,
+    getAllEntryForm,
+  } = SourceDB;
 
   // listen create Source request
   ipcMain.handle("create-new-source", async (event, data: Source) => {
@@ -11,10 +17,10 @@ const Source = () => {
     return response;
   });
 
-  ipcMain.handle("get-all-no-pagination", async(event) =>{
+  ipcMain.handle("get-all-no-pagination", async (event) => {
     const response = await getAllItemSourceNoPagination();
     return response;
-  })
+  });
 
   // listen get all Source request
   ipcMain.handle(
@@ -51,22 +57,29 @@ const Source = () => {
     "source-entry-form-request-read",
     async (
       event,
-      data: { pageSize: number; currentPage: number; id?: number; paramsSearch?: any; } = {
+      data: {
+        pageSize: number;
+        currentPage: number;
+        id?: number;
+        paramsSearch?: any;
+        isEdit?: boolean;
+        isExport?: boolean;
+      } = {
         pageSize: 10,
         currentPage: 1,
       }
     ) => {
-      const { pageSize, currentPage, paramsSearch } = data;
+      const { pageSize, currentPage, paramsSearch, isEdit, isExport } = data;
       const response = await getAllEntryForm(
         data.id,
         pageSize,
         currentPage,
-        paramsSearch
+        paramsSearch,
+        isEdit,
+        isExport
       );
       return response;
     }
   );
-
-  // ipcMain.on("get-product-nguonHang")
 };
 export default Source;
