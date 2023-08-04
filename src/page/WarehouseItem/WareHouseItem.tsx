@@ -200,7 +200,7 @@ const WareHouseItem = () => {
     });
 
     const paramsSearch: ISearchWareHouseItem = {
-      name: parsedSearchParams.name || nameSearch,
+      name: nameSearch,
       idSource: Number(parsedSearchParams.idSource) || null,
       startDate: parsedSearchParams.startDate || '',
       endDate: parsedSearchParams.endDate || '',
@@ -208,6 +208,7 @@ const WareHouseItem = () => {
       now_date_ex: parsedSearchParams.now_date_ex || '',
       after_date_ex: parsedSearchParams.after_date_ex || ''
     };
+    
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, idWareHouse: idWareHouse, paramsSearch: paramsSearch });
     if (result) {
       setListData((prev) => (
@@ -321,7 +322,6 @@ const WareHouseItem = () => {
               </Row>
               {isShowSearch && (
                 <FilterWareHouseItem
-                  name={nameSearch}
                   isSearch={isSearch}
                   handleIsSearch={(envSearch) => setIsSearch(envSearch)}
                   handleChangeName={(value) => setNameSearch(value)}

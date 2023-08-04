@@ -11,7 +11,6 @@ import { STATUS_MODAL } from "../types";
 const { RangePicker } = DatePicker;
 
 interface PropsFilter {
-  name?: string;
   isSearch?: Boolean;
   handleIsSearch: (envSearch: boolean) => void;
   handleChangeName: (value: string) => void;
@@ -19,7 +18,6 @@ interface PropsFilter {
 }
 
 type ISearch = {
-  name?: string;
   idSource: string;
   date: any;
   status: number | null;
@@ -53,7 +51,7 @@ const listTimeExpried: OptionSelect[] = [
 
 const FilterWareHouseItem = (props: PropsFilter) => {
   const [listSource, setListSource] = useState<OptionSelect[]>([]);
-  const { name, page, ...other } = props;
+  const { page, ...other } = props;
   const [formFilter] = Form.useForm();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -119,7 +117,6 @@ const FilterWareHouseItem = (props: PropsFilter) => {
     }
 
     const objSearch = {
-      name: name ?? '',
       status: value.status ?? '',
       startDate: value.date && value.date[0] ? dayjs(value.date[0]).format('YYYY/MM/DD') : undefined,
       endDate: value.date && value.date[1] ? dayjs(value.date[1]).format('YYYY/MM/DD') : undefined,

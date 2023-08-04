@@ -176,7 +176,7 @@ const Product = () => {
       loading: true
     })
     const paramsSearch: ISearchWareHouseItem = {
-      name: parsedSearchParams.name || nameSearch,
+      name: nameSearch,
       idSource: Number(parsedSearchParams.idSource) || null,
       startDate: parsedSearchParams.startDate || '',
       endDate: parsedSearchParams.endDate || '',
@@ -253,7 +253,6 @@ const Product = () => {
               </Row>
               {isShowSearch && (
                 <FilterWareHouseItem
-                  name={nameSearch}
                   isSearch={isSearch}
                   handleIsSearch={(envSearch) => setIsSearch(envSearch)}
                   handleChangeName={(value) => setNameSearch(value)}
