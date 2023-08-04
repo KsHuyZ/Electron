@@ -222,7 +222,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     isExport
   } = props;
 
-  const [loadingButton, setLoadingButton] = useState<boolean>(false);
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>([]);
   const [itemEditList, setItemEditList] = useState<DataType[]>([])
   const [removeItemList, setRemoveItemList] = useState<DataType[]>([])
@@ -428,7 +427,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
         <Button
           type="primary"
           htmlType="submit"
-          loading={loadingButton}
           onClick={handleSubmitForm}
         >
           Làm lại phiếu
@@ -468,7 +466,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
 
     const result = await ipcRenderer.invoke(`print-${isExport ? "export" : "import"}-edit`, { ...params });
-    setLoadingButton(true);
   };
 
   const handleRemoveItem = (id: string) => {

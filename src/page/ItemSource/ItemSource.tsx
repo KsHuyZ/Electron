@@ -7,6 +7,7 @@ import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/inte
 import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 import { Link } from 'react-router-dom';
+import AuthModal from "@/components/AuthModal";
 
 type DataType = {
   ID: number;
@@ -75,6 +76,7 @@ const ItemSource = () => {
     total: 0,
   });
   const [showModalDelete, setShowModalDelete] = useState(false)
+  const [canUpdate, setCanUpdate] = useState(false)
 
   const columns: ColumnsType<DataType> = [
     {
@@ -103,9 +105,9 @@ const ItemSource = () => {
       title: "Hành động",
       dataIndex: "action",
       render: (_, data) => (
-        <Space size="middle">
-          <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
-        </Space>
+        canUpdate ? <Space size="middle">
+        <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
+      </Space> : <></>
       ),
     }
   ];
@@ -184,9 +186,13 @@ const ItemSource = () => {
     <div className="form-table">
       {showAddModal && <ModalItemSource closeModal={handleCloseModal} setLoading={setLoading} data={currentItemSource} reload={handleGetAllItemSource} setAllItemSource={setAllItemSource} />}
       {showModalDelete && <ModalDelete data={currentItemSource} deleteFunc={handleDeleteItemSource} closeModal={handleCloseModalDelete} />}
-      <div className="header">
+      {canUpdate && <div className="header">
         <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm nguồn hàng</Button></div>
-      </div>
+      </div>}
+      <AuthModal
+                canUpdate={canUpdate}
+                setCanUpdate={(status) => setCanUpdate(status)}
+            />
       <Table
         columns={columns}
         dataSource={allItemSource.map(item => ({ ...item, key: item.ID }))}

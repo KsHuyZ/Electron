@@ -2,7 +2,7 @@ import { UilMultiply, UilPen } from '@iconscout/react-unicons';
 import { Table, Space, Button } from 'antd';
 import { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useState } from 'react'
-import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
+import AuthModal from "@/components/AuthModal";
 import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 import ModalRecipient from './components/ModalRecipient';
@@ -63,6 +63,7 @@ const Recipient = () => {
         total: 0,
     });
     const [showModalDelete, setShowModalDelete] = useState(false)
+    const [canUpdate, setCanUpdate] = useState(false)
 
     const columns: ColumnsType<DataType> = [
         {
@@ -91,10 +92,9 @@ const Recipient = () => {
             title: "Hành động",
             dataIndex: "action",
             render: (_, data) => (
-                <Space size="middle">
+                canUpdate ? <Space size="middle">
                     <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
-                    {/* <UilMultiply style={{ cursor: "pointer", color: "#ed5e68" }} onClick={() => handleSelectRowDelete(data)} /> */}
-                </Space>
+                </Space> : <></>
             ),
         }
     ];
@@ -175,9 +175,13 @@ const Recipient = () => {
         <div className="form-table">
             {showAddModal && <ModalRecipient closeModal={handleCloseModal} data={currentRecipient} reload={handleGetAllRecipient} setAllRecipient={setAllRecipient} />}
             {showModalDelete && <ModalDelete data={currentRecipient} deleteFunc={handleDeleteRecipient} closeModal={handleCloseModalDelete} />}
-            <div className="header">
+            {canUpdate && <div className="header">
                 <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm đơn vị nhận</Button></div>
-            </div>
+            </div>}
+            <AuthModal
+                canUpdate={canUpdate}
+                setCanUpdate={(status) => setCanUpdate(status)}
+            />
             <Table
                 columns={columns}
                 dataSource={allRecipient.map(item => ({ ...item, key: item.ID }))}

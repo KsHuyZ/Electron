@@ -395,7 +395,7 @@ const wareHouseItem = () => {
           );
           const mainWindow = BrowserWindow.getFocusedWindow();
           if (mainWindow) {
-            mainWindow.webContents.send("edit-import");
+            mainWindow.webContents.send("edit-import-success");
           }
         } else if (isForm === "edit-export") {
           editCountDelivery(
