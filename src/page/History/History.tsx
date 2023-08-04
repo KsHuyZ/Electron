@@ -9,6 +9,8 @@ import docso from '@/utils/toVietnamese'
 import { UilPen } from '@iconscout/react-unicons'
 import ModalCreateEntry from './components/ModalCreateEntry'
 import toastify from '@/lib/toastify'
+import { LockOutlined, UnlockOutlined } from '@ant-design/icons'
+
 const dataTab = [
     {
         tabName: 'import',
@@ -22,7 +24,7 @@ const dataTab = [
     }
 ]
 
-type CountDeliveryType = {
+export type CountDeliveryType = {
     ID: number;
     Nature: string;
     Note: string;
@@ -32,7 +34,8 @@ type CountDeliveryType = {
     date: string;
     nameReceiving: string;
     nameSource: string;
-    id_Source: number | string
+    id_Source: number | string;
+    id_WareHouse: number | string;
 }
 
 const History = () => {
@@ -146,10 +149,17 @@ const History = () => {
         notifySuccess("Sửa phiếu thành công")
     }
 
+    const handleShowForm = () => {
+        if (canUpdate) return setCanUpdate(false)
+        setIsShowModal(true)
+    }
+
     useEffect(() => {
         ipcRenderer.on("edit-import", onUpdateSuccessCallback)
+        ipcRenderer.on("edit-export-success",onUpdateSuccessCallback)
         return () => {
             ipcRenderer.removeListener("edit-import", onUpdateSuccessCallback)
+            ipcRenderer.removeListener("edit-export-success", onUpdateSuccessCallback)
         }
     }, [])
 
@@ -175,7 +185,7 @@ const History = () => {
             <Row style={{ margin: '0 0 10px 0 ' }}>
                 <Col span={24}>
                     <Space>
-                        <Button className="default" type="primary" onClick={() => setIsShowModal(true)}>Chỉnh sửa</Button>
+                        <Button className="default" type="primary" onClick={handleShowForm} icon={canUpdate ? <LockOutlined /> : <UnlockOutlined />}>{!canUpdate ? "Chỉnh sửa" : "Khóa chỉnh sửa"}</Button>
                     </Space>
                 </Col>
             </Row>
@@ -212,11 +222,15 @@ const History = () => {
             </Modal>
             <ModalCreateEntry
                 isShowModal={showUpdateModal}
-                onCloseModal={() => setShowUpdateModal(false)}
+                onCloseModal={() => {
+                    setCurrentSelect(undefined)
+                    setShowUpdateModal(false)
+                }}
                 select={currentSelect}
+                isExport={isExport}
+
             />
         </>
-
     )
 }
 

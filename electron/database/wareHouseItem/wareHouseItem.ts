@@ -876,6 +876,7 @@ const wareHouseItem = {
     return rows;
   },
   updateWarehouseItemField: async (
+    name: string,
     price: number,
     idSource: number | string,
     dateExpried: string,
@@ -884,9 +885,10 @@ const wareHouseItem = {
     idWareHouseItem: number | string,
     idIntermediary: number | string
   ) => {
-    const updateQuery = `UPDATE warehouseItem SET price = ?, id_Source = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
+    const updateQuery = `UPDATE warehouseItem SET name = ?, price = ?, id_Source = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
     const updateIntMediary = `UPDATE Intermediary SET quantity = ? WHERE ID = ?`;
     await runQuery(updateQuery, [
+      name,
       price,
       idSource,
       dateExpried,
@@ -895,6 +897,32 @@ const wareHouseItem = {
     ]);
     await runQuery(updateIntMediary, [quantity, idIntermediary]);
     return true;
+  },
+  updateWarehouseItemExport: async (
+    name: string,
+    price: number,
+    idWarehouse: number | string,
+    dateExpried: string,
+    quantityPlane: number,
+    quantity: number,
+    idWareHouseItem: number | string,
+    idIntermediary: number | string
+  ) => {
+    const updateQuery = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
+    const updateIntMediary = `UPDATE Intermediary SET quantity = ?,id_WareHouse = ? WHERE ID = ?`;
+    const result1 = await runQuery(updateQuery, [
+      name,
+      price,
+      dateExpried,
+      quantityPlane,
+      idWareHouseItem,
+    ]);
+    const result2 = await runQuery(updateIntMediary, [
+      quantity,
+      idWarehouse,
+      idIntermediary,
+    ]);
+    return result1 && result2;
   },
 };
 

@@ -30,24 +30,13 @@ import docso from "@/utils/toVietnamese";
 import { ipcRenderer } from "electron";
 import dayjs from "dayjs";
 import TableListItem from "./TableListItem";
-
-type CountDeliveryType = {
-  ID: number;
-  Nature: string;
-  Note: string;
-  name: string;
-  title: string;
-  TotalPrice: number;
-  date: string;
-  nameReceiving: string;
-  nameSource: string;
-  id_Source: number | string
-}
+import { CountDeliveryType } from "../History";
 
 interface PropsModal {
   isShowModal: boolean;
   onCloseModal: () => void;
-  select?: CountDeliveryType
+  select?: CountDeliveryType;
+  isExport: boolean;
 }
 
 const defaultOptionNature: OptionSelect[] = [
@@ -116,50 +105,11 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef>, record: D
           }),
         ]}
       >
-
         <DatePicker ref={ref} onOk={save} onChange={save} />
       </Form.Item>
       break;
     case 'quantity_plane':
-      return <Tooltip placement="top" title={`Số lượng hiện có ${record[dataIndex]}`}>
-        <Form.Item
-          style={{ margin: 0 }}
-          name={dataIndex}
-          rules={[
-            { validator: numberValidator },
-            ({ getFieldValue }) => ({
-              validator(_, value) {
-                if (!value) {
-                  return Promise.reject(`${title} bắt buộc nhập.`);
-                }
-                return Promise.resolve();
-              },
-            }),
-          ]}
-        >
-          <Input ref={ref} onPressEnter={save} onBlur={save} />
-        </Form.Item>
-      </Tooltip>
     case 'quantity':
-      return <Tooltip placement="top" title={`Số lượng hiện có ${record[dataIndex]}`}>
-        <Form.Item
-          style={{ margin: 0 }}
-          name={dataIndex}
-          rules={[
-            { validator: numberValidator },
-            ({ getFieldValue }) => ({
-              validator(_, value) {
-                if (!value) {
-                  return Promise.reject(`${title} bắt buộc nhập.`);
-                }
-                return Promise.resolve();
-              },
-            }),
-          ]}
-        >
-          <Input ref={ref} onPressEnter={save} onBlur={save} />
-        </Form.Item>
-      </Tooltip>
     case 'price':
       return <Tooltip placement="top" title={`Số lượng hiện có ${record[dataIndex]}`}>
         <Form.Item
@@ -180,6 +130,26 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef>, record: D
           <Input ref={ref} onPressEnter={save} onBlur={save} />
         </Form.Item>
       </Tooltip>
+    case 'name':
+      return (
+        <Form.Item
+          style={{ margin: 0 }}
+          name={dataIndex}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.reject(`${title} bắt buộc nhập.`);
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
+          <Input ref={ref} onPressEnter={save} onBlur={save} />
+        </Form.Item>
+      )
+
     default:
       break;
   }
@@ -248,7 +218,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const {
     isShowModal,
     onCloseModal,
-    select
+    select,
+    isExport
   } = props;
 
   const [loadingButton, setLoadingButton] = useState<boolean>(false);
@@ -273,9 +244,14 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     }
   ));
   const handleGetCouponItemByCouponId = async () => {
-    const result = await ipcRenderer.invoke("get-coupon-item-by-coupon-id", select?.ID)
-    setListItemEntryForm(removeItemChildrenInTable(result as any))
+    if (select) {
+      const result = await ipcRenderer.invoke(isExport ? "get-delivery-item-by-delivery-id" : "get-coupon-item-by-coupon-id", select?.ID)
+      setListItemEntryForm(removeItemChildrenInTable(result as any))
+      formRef.current?.setFieldsValue(select)
+      formRef.current?.setFieldValue("date", dayjs(select?.date))
+    }
   }
+
   const handleSave = (data: DataType) => {
     console.log(data);
     const newList = listItemEntryForm.map(item => item.IDIntermediary === data.IDIntermediary ? data : item)
@@ -292,9 +268,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     setListItemEntryForm(removeItemChildrenInTable(newList));
   }
   const handleGetAllSource = async () => {
-    const result = await ipcRenderer.invoke("get-all-no-pagination")
+    const result = await ipcRenderer.invoke(isExport ? "receiving-list" : "get-all-no-pagination")
     setListSource(result.rows)
   }
+
   useEffect(() => {
     if (listItemHasChoose.length !== 0) {
       setNewItemList(listItemHasChoose)
@@ -309,7 +286,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
 
   useEffect(() => {
     handleGetAllSource()
-  }, [])
+  }, [isExport])
 
   const columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
@@ -327,7 +304,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           row.id_WareHouse === listItemEntryForm[trueIndex - 1].id_WareHouse
         ) {
           obj.props.rowSpan = 0;
-          // obj.props.colSpan = 2;
+
         } else {
           for (
             let i = 0;
@@ -353,6 +330,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     {
       title: "Tên mặt hàng",
       dataIndex: "name",
+      editable: true,
       width: 200,
     },
     {
@@ -453,7 +431,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           loading={loadingButton}
           onClick={handleSubmitForm}
         >
-          Làm phiếu
+          Làm lại phiếu
         </Button>
       </Space>
     );
@@ -469,6 +447,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       message.error("Không có sản phẩm để làm phiếu");
       return;
     }
+    const idWarehouse = formRef.current?.getFieldValue(isExport ? "id_WareHouse" : "id_Source")
+    const item = listSource.find(src => src.ID === idWarehouse)
     const params: any = {
       ...values,
       ID: select?.ID,
@@ -482,10 +462,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       date: formatDate(values.date, false, "no_date"),
       total: totalPrice,
       title: values.title,
-      nameSource: select?.nameSource,
+      nameSource: item?.name,
+      id_WareHouse: idWarehouse,
+      idSource: idWarehouse
     };
 
-    const result = await ipcRenderer.invoke("print-import-edit", { ...params });
+    const result = await ipcRenderer.invoke(`print-${isExport ? "export" : "import"}-edit`, { ...params });
     setLoadingButton(true);
   };
 
@@ -517,6 +499,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       0
     );
   }, [listItemEntryForm]);
+
   const newColumn = columns.map((col) => {
     if (!col.editable) {
       return col;
@@ -532,6 +515,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       }),
     };
   });
+
   const handleSetError = (params: boolean) => {
     setIsError(params)
   }
@@ -542,7 +526,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   return (
     <CheckingErrorContext.Provider value={contextValue}>
       <Modal
-        title={`Sửa phiếu nhập`}
+        title={`Sửa phiếu ${isExport ? "xuất" : "nhập"}`}
         centered
         open={isShowModal}
         onCancel={handleClean}
@@ -555,7 +539,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
               <Form.Item
                 label="Tên đơn vị"
                 name={nameOfEntryForm("name")}
-                initialValue={select?.name}
                 rules={[
                   {
                     required: true,
@@ -568,13 +551,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             </Col>
             <Col span={8}>
               <Form.Item
-                label={"Tên loại phiếu"}
+                label={isExport ? "Cấp theo" : "Tên loại phiếu"}
                 name={nameOfEntryForm("title")}
-                initialValue={select?.title}
                 rules={[
                   {
                     required: true,
-                    message: "Tên loại phiếu",
+                    message: isExport ? "Cấp theo" : "Tên loại phiếu",
                   },
                 ]}
               >
@@ -582,15 +564,14 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label={"Nguồn nhập"} name={nameOfEntryForm("idSource")} initialValue={select?.id_Source}>
+              <Form.Item label={isExport ? "Đơn vị nhận" : "Nguồn nhập"} name={isExport ? "id_WareHouse" : "id_Source"}>
                 <Select options={optionSource} />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item
                 label="Loại nhập"
-                name={nameOfEntryForm("nature")}
-                initialValue={select?.Nature}
+                name="Nature"
                 rules={[
                   {
                     required: true,
@@ -604,8 +585,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             <Col span={8}>
               <Form.Item
                 label="Thời gian làm phiếu"
-                name={nameOfEntryForm("date")}
-                initialValue={dayjs(select?.date)}
+                name={"date"}
                 rules={[
                   {
                     required: true,
@@ -630,12 +610,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           </Row>
 
           <Space align="center" >
-            <h3>SẢN PHẨM THUỘC {select?.nameSource?.toLocaleUpperCase() ?? ""}</h3>
+            <h3>SẢN PHẨM THUỘC {isExport ? select?.nameReceiving?.toLocaleUpperCase() : select?.nameSource?.toLocaleUpperCase() ?? ""}</h3>
             <Button
               type="primary"
               onClick={() => setShowAddItem(true)}
             >
-              Thêm sản phẩm mới
+              Thay đổi sản phẩm
             </Button>
           </Space>
           <Table
@@ -649,7 +629,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             rowKey={(item: DataType) => item.IDIntermediary}
           />
         </Form>
-        <TableListItem id={select?.id_Source} isShow={showAddItem} onCloseModal={() => setShowAddItem(false)} setListItem={setListItemHasChoose} />
+        <TableListItem id={isExport ? select?.id_WareHouse : select?.id_Source} isShow={showAddItem} onCloseModal={() => setShowAddItem(false)} setListItem={setListItemHasChoose} isExport={isExport} />
       </Modal>
     </CheckingErrorContext.Provider>
   );

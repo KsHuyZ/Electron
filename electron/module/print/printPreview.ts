@@ -21,8 +21,6 @@ import {
 } from "./utils";
 import { HtmlConstruct, PdfCreateOptions, PdfReloadOptions } from "./type";
 import configInitPage from "./printPage";
-import fs from "fs";
-import path from "path";
 import { writeDataToHtml, print_page } from "./utils";
 
 class _Pdf {
@@ -101,6 +99,7 @@ class _Pdf {
     const result = await webContentsPrint(this.handleWin.webContents, options);
     this.isPrinting = false;
     this.handleWin.close();
+    return result;
   }
 
   /**
@@ -242,50 +241,14 @@ class _Pdf {
   };
 
   saveFilePdf = async () => {
-    let errMessage = "pdf transform failed, please restart app !";
-    let url = "";
-    try {
-      this.isPrintingToPdf = true;
-      this.pdfWin.close();
-      const pdfPath = await generatePdfFile(
-        this.handleWin.webContents,
-        this.getPrintToPdfOptions()
-      );
-      this.isPrintingToPdf = false;
-      url = getPdfPreviewUrl(pdfPath);
-      dialog
-        .showSaveDialog({
-          title: "Lựa chọn thư mục để lưu",
-          defaultPath: path.join(__dirname, pdfPath),
-          buttonLabel: "Lưu",
-          filters: [
-            { name: "Tệp tin PDF", extensions: ["pdf"] }, // Chỉ cho phép lưu tệp tin PDF
-            { name: "Tất cả các tệp", extensions: ["*"] },
-          ],
-          properties: [],
-        })
-        .then((file) => {
-          if (!file.canceled) {
-            fs.copyFile(pdfPath, file.filePath, (err) => {
-              if (err) {
-                console.log("Lỗi khi sao chép tệp tin:", err);
-              } else {
-                fs.unlinkSync(pdfPath);
-              }
-            });
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-      errMessage = "";
-      this.handleWin.close();
-      return true;
-    } catch (e) {
-      console.error(e);
-      dialog.showMessageBox(null, { message: errMessage });
-      return false;
-    }
+    this.isPrintingToPdf = true;
+    this.pdfWin.close();
+    const pdfPath = await generatePdfFile(
+      this.handleWin.webContents,
+      this.getPrintToPdfOptions()
+    );
+    this.isPrintingToPdf = false;
+    return pdfPath;
   };
 }
 

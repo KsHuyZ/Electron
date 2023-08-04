@@ -8,13 +8,15 @@ export const formExportBill = async (data: {
   items: DataType[];
   name: string;
   note: string;
-  nature: string;
+  nature?: string;
+  ID?: number;
   total: number;
   date: any;
   title: string;
   nameSource: string;
 }) => {
-  const { items, name, note, nature, total, date, title, nameSource } = data;
+  const { items, name, note, nature, total, date, title, nameSource, ID } =
+    data;
   const { countDeliveryRow } = countDelivery;
   const totalMoney = countMoney(items);
   const count = await countDeliveryRow();
@@ -162,7 +164,7 @@ export const formExportBill = async (data: {
         <h1>PHIẾU XUẤT KHO</h1>
       </div>
       <div class="right-top">
-        <p class="right">Số lệnh: ${Number(count) + 1}</p>
+        <p class="right">Số lệnh: ${ID ? ID : Number(count) + 1}</p>
       </div>
     </div>
     <div class="header-down">
@@ -224,7 +226,7 @@ export const formExportBill = async (data: {
         <td>${item.quality}</td>
         <td>${item.date_expried}</td>
         <td>${item.quantity_plane}</td>
-        <td>${item.quantity_real}</td>
+        <td>${item.quantity}</td>
         <td>${item.price}</td>
         <td>${new Intl.NumberFormat().format(item.price * item.quantity)}</td>
       </tr>`

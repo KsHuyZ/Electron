@@ -224,10 +224,6 @@ const Product = () => {
     })));
   }
 
-  console.log('====================================');
-  console.log(listData);
-  console.log('====================================');
-
   return (
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">

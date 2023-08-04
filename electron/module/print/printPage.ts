@@ -297,7 +297,6 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
                             </div>
                             <div class="btn">
                                 <button class="print" onclick="printTwo(true)">In</button>
-                                <button class="print" onclick="saveFile()">Lưu</button>
                                 <button class="cancel" onclick="cancel()">Quay lại</button>
                             </div>
                         </div>

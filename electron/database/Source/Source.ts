@@ -112,7 +112,9 @@ const Source = {
     id: number,
     pageSize: number,
     currentPage: number,
-    paramsSearch: { name: string; itemWareHouse: string }
+    paramsSearch: { name: string; itemWareHouse: string },
+    isEdit?: boolean,
+    isExport?: boolean
   ) => {
     const { name, itemWareHouse } = paramsSearch;
 
@@ -133,10 +135,16 @@ const Source = {
 
       const whereClause =
         whereConditions.length > 0
-          ? `WHERE ${whereConditions.join(
-              " AND "
-            )} AND wi.id_Source = ? AND status IN(1,3,5)`
-          : "WHERE wi.id_Source = ? AND status IN(1,3,5)";
+          ? `WHERE ${whereConditions.join(" AND ")} AND ${
+              isExport ? "i.id_WareHouse" : "wi.id_Source"
+            }= ? AND status ${
+              isExport ? "= 2" : `IN(${!isEdit ? "3," : ""}1,5)`
+            } AND i.quantity > 0`
+          : `WHERE ${
+              isExport ? "i.id_WareHouse" : "wi.id_Source"
+            } = ? AND status ${
+              isExport ? "= 2" : `IN(${!isEdit ? "3," : ""}1,5)`
+            } AND i.quantity > 0`;
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity,
@@ -144,7 +152,9 @@ const Source = {
         i.date, COUNT(i.ID) OVER() AS total 
         FROM warehouseItem wi
         JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
-        JOIN WareHouse h ON h.ID = i.id_WareHouse
+        JOIN WareHouse h ON h.ID = ${
+          isEdit ? "i.prev_idwarehouse" : "id_WareHouse"
+        }
         ${whereClause}
         ORDER BY i.ID DESC
         LIMIT ? OFFSET ?`;

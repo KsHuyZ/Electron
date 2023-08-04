@@ -28,6 +28,7 @@
     "electron-updater": "^5.3.0",
     "framer-motion": "^10.10.0",
     "moment": "^2.29.4",
+    "pdf-to-printer": "^5.6.0",
     "query-string": "^8.1.0",
     "react-router-dom": "^6.10.0",
     "react-toastify": "^9.1.2",
