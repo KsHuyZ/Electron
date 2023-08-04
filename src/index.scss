@@ -12,7 +12,32 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  scrollbar-width: none;
+  // scrollbar-color: linear-gradient(to right, #134e5e, #71b280) gray;
 }
+
+table::-webkit-scrollbar {
+    width: 12px;
+  }
+
+body::-webkit-scrollbar-track {
+  border-radius: 6px;
+}
+
+// .ant-table-container > table::-webkit-scrollbar {
+//   width: 12px;
+// }
+
+// .ant-table-container > table::-webkit-scrollbar-track {
+//   background-color: #fafafa;
+//   border-radius: 6px;
+// }
+
+// .ant-table-container > table::-webkit-scrollbar-thumb {
+//   background-color: linear-gradient(to right, #134e5e, #71b280);
+//   border-radius: 6px;
+// }
 
 a {
   font-weight: 500;

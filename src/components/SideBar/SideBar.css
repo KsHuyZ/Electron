@@ -53,6 +53,7 @@
 
 .menuItem:hover {
   cursor: pointer;
+  color: black;
 }
 
 .menu .menuItem:last-child {
