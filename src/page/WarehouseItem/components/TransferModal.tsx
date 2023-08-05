@@ -72,8 +72,6 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
   const toggleEdit = () => {
     setEditing(!editing);
-    console.log(record[dataIndex]);
-
     form.setFieldsValue({ [dataIndex]: record[dataIndex] });
 
   };
@@ -89,13 +87,11 @@ const EditableCell: React.FC<EditableCellProps> = ({
   const save = async () => {
     try {
       const values = await form.validateFields();
-      console.log('value', values);
       setIsError(false);
       toggleEdit();
       handleSave({ ...record, quantity: +values.quantity });
     } catch (errInfo) {
       setIsError(true);
-      console.log('Save failed:', errInfo);
     }
   };
 
@@ -235,8 +231,6 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     new Promise(async () => {
       const response = await ipcRenderer.invoke(eventRequest, idWareHouse);
       if (response) {
-        console.log('data', response);
-        
         const data: WareHouse[] = response.rows;
         const newListWareHouse = data.map((item) => ({
           label: item.name,
@@ -301,8 +295,6 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
         }
       } catch (error) {
         message.error('Loi server')
-        console.log(error);
-
       }
     }
   }
