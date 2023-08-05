@@ -49,6 +49,7 @@ const wareHouseItem = () => {
     getAllWarehouseItembyReceivingId,
     createWareHouseItemMultiple,
     getAllWarehouseItemandWHName,
+    getWarehouseItemByName,
   } = wareHouseItemDB;
   //  listen create warehouse item request
   ipcMain.handle(
@@ -428,6 +429,9 @@ const wareHouseItem = () => {
       },
       undefined
     );
+  });
+  ipcMain.handle("get-warehouse-by-name", async (event, name: string) => {
+    return await getWarehouseItemByName(name);
   });
 };
 

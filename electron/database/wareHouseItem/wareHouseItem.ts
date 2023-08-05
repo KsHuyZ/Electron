@@ -62,10 +62,10 @@ const wareHouseItem = {
       if (after_date_ex) {
         if (now_date_ex !== after_date_ex) {
           whereConditions.unshift(`wi.date_expried <= ?`);
-        queryParams.unshift(after_date_ex);
+          queryParams.unshift(after_date_ex);
         } else {
           whereConditions.unshift(`wi.date_expried < ?`);
-        queryParams.unshift(after_date_ex);
+          queryParams.unshift(after_date_ex);
         }
       }
 
@@ -923,6 +923,11 @@ const wareHouseItem = {
       idIntermediary,
     ]);
     return result1 && result2;
+  },
+  getWarehouseItemByName: async (name: string) => {
+    const selectQuery = `select * from warehouseitem where name like ? limit 3`;
+    const result: any = await runQueryGetAllData(selectQuery, [`%${name}%`]);
+    return result;
   },
 };
 
