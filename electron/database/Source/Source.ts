@@ -121,7 +121,7 @@ const Source = {
     try {
       const offsetValue = (currentPage - 1) * pageSize;
       const whereConditions: string[] = [];
-      const queryParams: any[] = [id, pageSize, offsetValue];
+      const queryParams: any[] = [pageSize, offsetValue];
 
       // Add query conditions based on the provided search parameters
       if (name) {
@@ -136,13 +136,11 @@ const Source = {
       const whereClause =
         whereConditions.length > 0
           ? `WHERE ${whereConditions.join(" AND ")} AND ${
-              isExport ? "i.id_WareHouse" : "wi.id_Source"
-            }= ? AND status ${
+              !isExport ? `wi.id_Source = ${id} AND ` : ""
+            }status ${
               isExport ? "= 2" : `IN(${!isEdit ? "3," : ""}1,5)`
             } AND i.quantity > 0`
-          : `WHERE ${
-              isExport ? "i.id_WareHouse" : "wi.id_Source"
-            } = ? AND status ${
+          : `WHERE ${!isExport ? `wi.id_Source = ${id} AND ` : ""}status ${
               isExport ? "= 2" : `IN(${!isEdit ? "3," : ""}1,5)`
             } AND i.quantity > 0`;
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
@@ -153,7 +151,7 @@ const Source = {
         FROM warehouseItem wi
         JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
         JOIN WareHouse h ON h.ID = ${
-          isEdit ? "i.prev_idwarehouse" : "id_WareHouse"
+          isEdit && isExport ? "i.prev_idwarehouse" : "id_WareHouse"
         }
         ${whereClause}
         ORDER BY i.ID DESC
