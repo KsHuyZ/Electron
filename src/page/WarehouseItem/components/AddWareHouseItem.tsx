@@ -20,6 +20,7 @@ import { useState, useEffect } from "react";
 import { ipcRenderer } from "electron";
 import dayjs from "dayjs";
 import React from "react";
+import useDebounce from "@/hook/useDebounce";
 
 interface PropsAddWareHouseItem {
   isShowModal: boolean;
@@ -67,9 +68,14 @@ const AddWareHouseItem = React.memo(
     const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>();
     const [loadingButton, setLoadingButton] = useState<boolean>(false);
     const [options, setOptions] = useState<{ value: string }[]>([]);
+    const [inputValue, setInputValue] = useState('');
 
-    const getPanelValue = async (searchText: string) =>
-      searchText.length < 3 ? [] : await handleGetWarehouseItemByName(searchText);
+    const debouncedInputValue = useDebounce<string>(inputValue, 500);
+
+
+    useEffect(() => {
+      if(debouncedInputValue) handleOnChangeSearch(debouncedInputValue);
+    }, [debouncedInputValue]);
 
     const onSelect = (data: string, option: any) => {
       formWareHouseItem.setFieldsValue({ ...option.data, date_expried: option.data.date_expried ? dayjs(option.data.date_expried) : null, idSource: option.data.id_Source, quality: 1 })
@@ -179,10 +185,22 @@ const AddWareHouseItem = React.memo(
     };
 
     const handleOnChangeSearch = async (name: string) => {
-      const result = await getPanelValue(name)
-      const filteredOptions = result.filter(item => item.name.toLowerCase().includes(name.toLowerCase()))
-        .map(item => ({ value: item.name, data: item }));
-      setOptions(filteredOptions)
+      if(!name.trim) return []
+      const result = await handleGetWarehouseItemByName(name);
+      if (result) {
+        const uniqueData = result.reduce((acc : any, item : any) => {
+          const lowercaseName = item.name.toLowerCase();
+          const isDuplicate = acc.some((existingItem : any) => existingItem.name.toLowerCase() === lowercaseName);
+    
+          if (!isDuplicate) {
+            acc.push(item);
+          }
+    
+          return acc;
+        }, []);
+
+        setOptions(uniqueData.map((item: any) => ({ value: item.name, data: item })));
+      };
     }
 
     const handleGetWarehouseItemByName = async (name: string) => {
@@ -246,7 +264,9 @@ const AddWareHouseItem = React.memo(
                   options={options}
                   disabled={itemEdit && itemEdit.status === 3 ? true : false}
                   onSelect={onSelect}
-                  onSearch={handleOnChangeSearch}
+                  value={inputValue}
+                  onChange={setInputValue}
+                  // onSearch={handleOnChangeSearch}
                 />
                 {/* <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} /> */}
               </Form.Item>

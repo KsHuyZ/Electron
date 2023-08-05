@@ -131,8 +131,7 @@ export const getDateExpried = (date: string) => {
 
 // Chênh lệch thời gian giữa hai ngày
 const timeDiff = specificDate.diff(currentDate, 'day');
-  let days = '';
-  console.log(specificDate);
+  let days = '';  
   
 if(timeDiff > 0){
   const daysRemaining = timeDiff > 0 ? timeDiff : 0;
