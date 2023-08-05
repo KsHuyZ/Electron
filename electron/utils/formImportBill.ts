@@ -12,7 +12,7 @@ export const formImportBill = async (data: {
   total: number;
   date: any;
   title: string;
-  ID: number;
+  ID?: number;
   nameSource: string;
 }) => {
   const { countCouponRow } = countCoupon;

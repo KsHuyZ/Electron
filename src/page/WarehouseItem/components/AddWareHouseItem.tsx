@@ -8,7 +8,7 @@ import {
   Col,
   Input,
   DatePicker,
-  InputNumber,
+  AutoComplete,
   message,
 } from "antd";
 import "../styles/wareHouseItem.scss";
@@ -20,7 +20,6 @@ import { useState, useEffect } from "react";
 import { ipcRenderer } from "electron";
 import dayjs from "dayjs";
 import React from "react";
-// import InputPrice from "@/components/InputPrice";
 
 interface PropsAddWareHouseItem {
   isShowModal: boolean;
@@ -67,6 +66,14 @@ const AddWareHouseItem = React.memo(
     const [price, setPrice] = useState<any>();
     const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>();
     const [loadingButton, setLoadingButton] = useState<boolean>(false);
+    const [options, setOptions] = useState<{ value: string }[]>([]);
+
+    const getPanelValue = async (searchText: string) =>
+      searchText.length < 3 ? [] : await handleGetWarehouseItemByName(searchText);
+
+    const onSelect = (data: string, option: any) => {
+      formWareHouseItem.setFieldsValue({ ...option.data, date_expried: option.data.date_expried ? dayjs(option.data.date_expried) : null, idSource: option.data.id_Source, quality: 1 })
+    };
 
     useEffect(() => {
       if (isEdit) {
@@ -171,6 +178,18 @@ const AddWareHouseItem = React.memo(
       }
     };
 
+    const handleOnChangeSearch = async (name: string) => {
+      const result = await getPanelValue(name)
+      const filteredOptions = result.filter(item => item.name.toLowerCase().includes(name.toLowerCase()))
+        .map(item => ({ value: item.name, data: item }));
+      setOptions(filteredOptions)
+    }
+
+    const handleGetWarehouseItemByName = async (name: string) => {
+      const result: DataType[] = await ipcRenderer.invoke("get-warehouse-by-name", name)
+      return result
+    }
+
     const Footer = () => {
       return (
         <Space
@@ -223,7 +242,13 @@ const AddWareHouseItem = React.memo(
                   },
                 ]}
               >
-                <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} />
+                <AutoComplete
+                  options={options}
+                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
+                  onSelect={onSelect}
+                  onSearch={handleOnChangeSearch}
+                />
+                {/* <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} /> */}
               </Form.Item>
             </Col>
             <Col span={8}>
