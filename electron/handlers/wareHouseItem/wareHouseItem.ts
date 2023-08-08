@@ -268,6 +268,7 @@ const wareHouseItem = () => {
         title,
         idSource,
       } = data;
+
       startPrint(
         {
           htmlString: await formImportBill(data),
@@ -301,7 +302,7 @@ const wareHouseItem = () => {
         items: DataType[];
         name: string;
         note: string;
-        Nature: string;
+        nature: string;
         total: number;
         date: any;
         title: string;
@@ -317,27 +318,25 @@ const wareHouseItem = () => {
         items,
         name,
         note,
-        Nature,
+        nature,
         total,
         date,
         title,
         id_WareHouse,
-        nameSource,
       } = data;
       startPrint(
         {
-          htmlString: await formExportBill({ ...data, nature: Nature }),
+          htmlString: await formExportBill(data),
         },
         undefined
       );
-      console.log("du lieu ahihi");
-      console.log(data);
+
       currentName = name;
       currentEditItem = itemEditList;
       currentNewItem = newItemList;
       currentDate = date;
       currentItems = items;
-      currentNature = Nature;
+      currentNature = nature;
       currentNote = note;
       currentRemoveItem = removeItemList;
       currentTitle = title;
@@ -386,6 +385,7 @@ const wareHouseItem = () => {
             currentEditItem,
             currentNewItem,
             currentRemoveItem,
+            currentItems,
             currentID,
             currentIDSource,
             currentName,
@@ -403,6 +403,7 @@ const wareHouseItem = () => {
             currentEditItem,
             currentNewItem,
             currentRemoveItem,
+            currentItems,
             currentID,
             currentReceivingID,
             currentName,

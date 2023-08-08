@@ -53,7 +53,7 @@ const Source = {
     return new Promise((resolve, reject) => {
       const { name, phone, address } = data;
       db.run(
-        "UPDATE WareHouse SET name = ?, phone = ?, address= ? WHERE is_receiving=0 AND ID = ?",
+        "UPDATE Source SET name = ?, phone = ?, address= ? WHERE ID = ?",
         [name, phone, address, ID],
         function (err) {
           if (err) {

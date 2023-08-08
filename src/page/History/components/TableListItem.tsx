@@ -154,9 +154,11 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport }: Tabl
     ];
 
     useEffect(() => {
-        getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-        getListWareHouse();
-    }, [isExport]);
+        if (isShow) {
+            getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+            getListWareHouse();
+        }
+    }, [isExport, isShow]);
 
     useEffect(() => {
         if (isSearch) {

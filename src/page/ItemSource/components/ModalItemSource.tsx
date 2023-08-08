@@ -19,9 +19,6 @@ interface ModalItemSourceProps {
     setAllItemSource: Dispatch<SetStateAction<DataType[]>>
 }
 
-
-
-
 const ModalItemSource = (props: ModalItemSourceProps) => {
     const { closeModal, setLoading, data, reload, setAllItemSource } = props
     const [isLoading, setIsLoading] = useState(false)

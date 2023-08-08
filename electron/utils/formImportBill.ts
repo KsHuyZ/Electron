@@ -29,8 +29,6 @@ export const formImportBill = async (data: {
     return acc;
   }, {});
 
-  console.log(groupByWarehouse);
-
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -67,7 +65,7 @@ export const formImportBill = async (data: {
                         }</p>
                     </div>
                     <div class="khachhang">
-                        <p>${data.nature ?? ""}: ${data.title}</p>
+                    <p>${data.nature ?? ""}: ${data.title}</p>
                     </div>
                     <p>Hợp đồng số:</p>
                 </div>
@@ -141,7 +139,7 @@ export const formImportBill = async (data: {
                 )}</td>
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${new Intl.NumberFormat().format(
                   item.totalPrice
-                )} đ</td>
+                )}</td>
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${
                   data.note ?? ""
                 }</td>

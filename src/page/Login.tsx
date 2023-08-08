@@ -4,7 +4,6 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Input, Button, InputRef } from 'antd';
 const { ipcRenderer } = window.require('electron');
 import { useNavigate } from 'react-router-dom';
-import toastify from "../lib/toastify"
 
 const Login = () => {
 
@@ -13,11 +12,8 @@ const Login = () => {
 
   const navigate = useNavigate()
 
-  const { notifySuccess } = toastify
-
   const passwordInput = useRef<InputRef | null>(null);
   const userNameInput = useRef<InputRef | null>(null);
-
 
   const handleDownInput = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.code === "ArrowDown") {
@@ -54,7 +50,6 @@ const Login = () => {
       newLoadings[0] = false;
       return newLoadings;
     });
-    notifySuccess("Đăng nhập thành công")// "Hello from main process!"
     navigate("/home")
   }
 

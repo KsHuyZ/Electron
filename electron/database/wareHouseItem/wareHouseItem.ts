@@ -847,13 +847,16 @@ const wareHouseItem = {
         const insertQuery = `UPDATE Intermediary SET status = ${
           item.status == 5 ? 2 : 3
         } WHERE ID = ?`;
+        const idWarehouse = item["prev_idwarehouse"]
+          ? item["prev_idwarehouse"]
+          : item["id_WareHouse"];
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
         await createCouponItem(
           idCoutCoupon,
           item["IDIntermediary"],
           item.quantity,
           item.quality,
-          item["id_WareHouse"]
+          idWarehouse
         );
       });
       await Promise.all(promises);
@@ -878,19 +881,17 @@ const wareHouseItem = {
   updateWarehouseItemField: async (
     name: string,
     price: number,
-    idSource: number | string,
     dateExpried: string,
     quantityPlane: number,
     quantity: number,
     idWareHouseItem: number | string,
     idIntermediary: number | string
   ) => {
-    const updateQuery = `UPDATE warehouseItem SET name = ?, price = ?, id_Source = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
+    const updateQuery = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
     const updateIntMediary = `UPDATE Intermediary SET quantity = ? WHERE ID = ?`;
     await runQuery(updateQuery, [
       name,
       price,
-      idSource,
       dateExpried,
       quantityPlane,
       idWareHouseItem,

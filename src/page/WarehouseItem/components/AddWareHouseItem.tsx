@@ -141,7 +141,6 @@ const AddWareHouseItem = React.memo(
           message.success("Cập nhật sản phẩm thành công");
         }
       } else {
-        console.log("add", params);
 
         const response = await ipcRenderer.invoke(
           "create-product-item",

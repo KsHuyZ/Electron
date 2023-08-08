@@ -25,7 +25,7 @@ const dataTab = [
 
 export type CountDeliveryType = {
     ID: number;
-    Nature: string;
+    nature: string;
     Note: string;
     name: string;
     title: string;
@@ -58,7 +58,7 @@ const History = () => {
 
     const location = useLocation()
 
-    const { notifyError, notifySuccess } = toastify
+    const {notifySuccess } = toastify
 
     const isExport = location.pathname.startsWith("/history/export")
     const columns: ColumnsType<CountDeliveryType> = [
@@ -75,7 +75,7 @@ const History = () => {
         },
         {
             title: "Tính chất",
-            dataIndex: "Nature"
+            dataIndex: "nature"
         },
         {
             title: "Ngày xuất",

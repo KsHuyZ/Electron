@@ -19,7 +19,7 @@ const countDelivery = {
     date: Moment | null
   ) => {
     const createQuery =
-      "INSERT INTO CoutDelivery(id_WareHouse, name, Nature, Note,Total,title,date) VALUES (?,?,?,?,?,?,?)";
+      "INSERT INTO CoutDelivery(id_WareHouse, name, nature, Note,Total,title,date) VALUES (?,?,?,?,?,?,?)";
     try {
       const ID = await runQueryReturnID(createQuery, [
         idWarehouse,
@@ -57,7 +57,7 @@ const countDelivery = {
   },
   getCountDelivery: async (pageSize: number, currentPage: number) => {
     const offsetValue = (currentPage - 1) * pageSize;
-    const selectQuery = `select ce.ID, ce.name, ce.Nature,ce.title, ce.Note, ce.Total as Totalprice, ce.date,w.name as nameReceiving,ce.id_WareHouse, COUNT(ce.ID) OVER() AS total  from CoutDelivery ce
+    const selectQuery = `select ce.ID, ce.name, ce.nature,ce.title, ce.Note, ce.Total as Totalprice, ce.date,w.name as nameReceiving,ce.id_WareHouse, COUNT(ce.ID) OVER() AS total  from CoutDelivery ce
     JOIN warehouse w on w.ID = ce.id_WareHouse
     ORDER BY ce.ID DESC LIMIT ? OFFSET ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [
@@ -125,16 +125,16 @@ const countDelivery = {
     id: number,
     idWareHouse: number,
     name: string,
-    Nature: string,
+    nature: string,
     Total: number,
     date: string,
     title: string
   ) => {
-    const updateQuery = `UPDATE CoutDelivery SET id_WareHouse = ?, name = ?, Nature = ?, Total = ?, date = ?, title = ? where id = ?`;
+    const updateQuery = `UPDATE CoutDelivery SET id_WareHouse = ?, name = ?, nature = ?, Total = ?, date = ?, title = ? where id = ?`;
     const isSuccess = await runQuery(updateQuery, [
       idWareHouse,
       name,
-      Nature,
+      nature,
       Total,
       date,
       title,
@@ -142,10 +142,22 @@ const countDelivery = {
     ]);
     return isSuccess;
   },
+  updateWHItem: async (
+    idWareHouse: number | string,
+    idIntermediary: number | string
+  ) => {
+    const updateQuery = `UPDATE Intermediary SET id_WareHouse = ? WHERE ID = ?`;
+    const isSuccess = await runQuery(updateQuery, [
+      idWareHouse,
+      idIntermediary,
+    ]);
+    return isSuccess;
+  },
   editCountDelivery: async (
     itemEditList: DataType[],
     newItemList: DataType[],
     removeItemList: DataType[],
+    items: DataType[],
     ID: number,
     idWarehouse: number,
     name: string,
@@ -155,6 +167,7 @@ const countDelivery = {
     title: string
   ) => {
     const { updateWarehouseItemExport } = wareHouseItemDB;
+
     itemEditList.forEach(async (item) => {
       await updateWarehouseItemExport(
         item.name,
@@ -184,6 +197,9 @@ const countDelivery = {
     removeItemList.forEach(async (item) => {
       await countDelivery.backtoTempExport(item.IDIntermediary);
       await countDelivery.deleteDeliveryItem(item.IDIntermediary);
+    });
+    items.forEach(async (item) => {
+      await countDelivery.updateWHItem(item.id_WareHouse, item.IDIntermediary);
     });
     await countDelivery.updateCountDelivery(
       ID,
