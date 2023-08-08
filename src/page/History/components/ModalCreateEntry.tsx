@@ -242,6 +242,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       value: source?.ID
     }
   ));
+
   const handleGetCouponItemByCouponId = async () => {
     if (select) {
       const result = await ipcRenderer.invoke(isExport ? "get-delivery-item-by-delivery-id" : "get-coupon-item-by-coupon-id", select?.ID)
@@ -266,6 +267,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     })
     setListItemEntryForm(removeItemChildrenInTable(newList));
   }
+  
   const handleGetAllSource = async () => {
     const result = await ipcRenderer.invoke(isExport ? "receiving-list" : "get-all-no-pagination")
     setListSource(result.rows)
@@ -520,6 +522,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     isError,
     setIsError: handleSetError
   }
+
   return (
     <CheckingErrorContext.Provider value={contextValue}>
       <Modal
@@ -568,7 +571,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             <Col span={8}>
               <Form.Item
                 label="Loại nhập"
-                name="Nature"
+                name="nature"
                 rules={[
                   {
                     required: true,
@@ -607,7 +610,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           </Row>
 
           <Space align="center" >
-            <h3>SẢN PHẨM THUỘC {isExport ? select?.nameReceiving?.toLocaleUpperCase() : select?.nameSource?.toLocaleUpperCase() ?? ""}</h3>
             <Button
               type="primary"
               onClick={() => setShowAddItem(true)}

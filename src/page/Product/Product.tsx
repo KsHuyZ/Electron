@@ -81,12 +81,6 @@ const Product = () => {
       )
     },
     {
-      title: 'Thuộc',
-      dataIndex: 'warehouseName',
-      width: 200,
-    },
-
-    {
       title: "Số lượng",
       children: [
         {
