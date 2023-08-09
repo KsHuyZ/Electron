@@ -22,6 +22,7 @@ import {
 import { HtmlConstruct, PdfCreateOptions, PdfReloadOptions } from "./type";
 import configInitPage from "./printPage";
 import { writeDataToHtml, print_page } from "./utils";
+import fs from "fs";
 
 class _Pdf {
   public pageSize: string;

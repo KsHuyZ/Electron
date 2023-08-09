@@ -70,28 +70,36 @@ export const createRegexValidator = (regex: RegExp, errorMessage: string) => {
   };
 };
 
-export const formatDate = (newDate: any, suffix: boolean = false, type: string = 'date_First') => {
+export const formatDate = (
+  newDate: any,
+  suffix: boolean = false,
+  type: string = "date_First"
+) => {
   // Set the locale to Vietnamese
-  dayjs.locale('vi');
+  dayjs.locale("vi");
 
-  let formattedDate = '';
+  let formattedDate = "";
 
   // Format the date based on the type
   switch (type) {
-    case 'date_First':
-      formattedDate = dayjs(newDate).format(`${suffix ? 'HH:MM' : ''} DD/MM/YYYY`);
+    case "date_First":
+      formattedDate = dayjs(newDate).format(
+        `${suffix ? "HH:MM" : ""} DD/MM/YYYY`
+      );
       break;
-    case 'after_Date':
-      formattedDate = dayjs(newDate).format(`YYYY/MM/DD ${suffix ? 'HH:MM' : ''}`);
+    case "after_Date":
+      formattedDate = dayjs(newDate).format(
+        `YYYY/MM/DD ${suffix ? "HH:MM" : ""}`
+      );
       break;
-    case 'after_7day':
-      const before7Days = dayjs(newDate).add(7, 'day');
+    case "after_7day":
+      const before7Days = dayjs(newDate).add(7, "day");
       formattedDate = dayjs(before7Days).format(`YYYY/MM/DD`);
       break;
-      case 'after_month':
-        const month = dayjs(newDate).add(1, 'month');
-        formattedDate = dayjs(month).format(`YYYY/MM/DD`);
-        break;
+    case "after_month":
+      const month = dayjs(newDate).add(1, "month");
+      formattedDate = dayjs(month).format(`YYYY/MM/DD`);
+      break;
     default:
       formattedDate = dayjs(newDate).format(`YYYY/MM/DD`);
       break;
@@ -100,7 +108,7 @@ export const formatDate = (newDate: any, suffix: boolean = false, type: string =
   return formattedDate;
 };
 
-export const convertPrice = (priceString: any) : number => {
+export const convertPrice = (priceString: any): number => {
   // Remove all dots from the price string
   const priceWithoutDots = priceString.replace(/\./g, "");
 
@@ -113,7 +121,7 @@ export const convertPrice = (priceString: any) : number => {
 export const stringifyParams = (data: any) => {
   const { params, option } = data;
   return queryString.stringify(params, {
-    arrayFormat: 'comma',
+    arrayFormat: "comma",
     encode: false,
     skipNull: true,
     skipEmptyString: true,
@@ -122,37 +130,37 @@ export const stringifyParams = (data: any) => {
 };
 
 export const getDateExpried = (date: string) => {
-  
-  if(!date) return
-  dayjs.locale('vi')
+  if (!date) return;
+  dayjs.locale("vi");
 
   const currentDate = dayjs();
   const specificDate = dayjs(date);
 
-// Chênh lệch thời gian giữa hai ngày
-const timeDiff = specificDate.diff(currentDate, 'day');
-  let days = '';  
-  
-if(timeDiff > 0){
-  const daysRemaining = timeDiff > 0 ? timeDiff : 0;
-  days =  `Còn ${daysRemaining} ngày nữa là đến ngày ${date}.`;
+  // Chênh lệch thời gian giữa hai ngày
+  const timeDiff = specificDate.diff(currentDate, "day");
+  let days = "";
 
-}else{
-  if( timeDiff < 0){
-    days = `Đã hết hạn từ ngày ${date}.`
+  if (timeDiff > 0) {
+    const daysRemaining = timeDiff > 0 ? timeDiff : 0;
+    days = `Còn ${daysRemaining} ngày nữa là đến ngày ${date}.`;
   } else {
-    let isSpecialDateToday = specificDate.isSame(currentDate, 'day');
-    if (isSpecialDateToday) {
-      days = `Hôm nay là ngày cuối ${date}.`
+    if (timeDiff < 0) {
+      days = `Đã hết hạn từ ngày ${date}.`;
     } else {
-      days = `Còn 1 ngày nữa sẽ đến ngày ${date}.`
+      let isSpecialDateToday = specificDate.isSame(currentDate, "day");
+      if (isSpecialDateToday) {
+        days = `Hôm nay là ngày cuối ${date}.`;
+      } else {
+        days = `Còn 1 ngày nữa sẽ đến ngày ${date}.`;
+      }
     }
   }
-}
-return days;
-}
+  return days;
+};
 
-export const createFormattedTable = (items: DataType[]): FormatTypeTable<DataType>[] => {
+export const createFormattedTable = (
+  items: DataType[]
+): FormatTypeTable<DataType>[] => {
   const result: FormatTypeTable<DataType>[] = [];
 
   for (const current of items) {
@@ -178,13 +186,20 @@ export const createFormattedTable = (items: DataType[]): FormatTypeTable<DataTyp
   return result;
 };
 
-export const removeItemChildrenInTable = (arrays: FormatTypeTable<DataType>[]): DataType[] => {
+export const removeItemChildrenInTable = (
+  arrays: FormatTypeTable<DataType>[]
+): DataType[] => {
   const newArray = JSON.parse(JSON.stringify(arrays));
   for (let i = 0; i < newArray.length; i++) {
     const item = newArray[i];
     item.totalPrice = Number(item.price) * Number(item.quantity);
   }
   return newArray;
+};
+
+export const isDate = (dateString: string) => {
+  var regex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
+  return regex.test(dateString);
 };
 
 interface DataObject {
@@ -221,11 +236,22 @@ export function chooseRowsAboveThreshold(
   return chosenRows;
 }
 
-const keys = ['key', 'unit', 'quality', 'date_expried', 'price', 'quantity_plane','quantity_real', 'total', 'note', 'name'];
+const keys = [
+  "key",
+  "unit",
+  "quality",
+  "date_expried",
+  "price",
+  "quantity_plane",
+  "quantity_real",
+  "total",
+  "note",
+  "name",
+];
 
 const convertKey = (oldKey: string) => {
-  const index = parseInt(oldKey.replace('__EMPTY_', ''));
-  if (oldKey === '__EMPTY') {
+  const index = parseInt(oldKey.replace("__EMPTY_", ""));
+  if (oldKey === "__EMPTY") {
     return keys[0];
   }
   if (!isNaN(index) && index >= 1 && index <= keys.length) {
@@ -233,25 +259,28 @@ const convertKey = (oldKey: string) => {
   }
   return keys[keys.length - 1];
 };
-  
-export const convertItemKey = (arrayList : any) =>{
-  return arrayList && arrayList?.map((obj: any) => {
-    const newObj: any = {};
-    
-    for (const oldKey in obj) {
-      const newKey = convertKey(oldKey);
-      newObj[newKey] = obj[oldKey];
-    }
-    return newObj;
-  })
+
+export const convertItemKey = (arrayList: any) => {
+  return (
+    arrayList &&
+    arrayList?.map((obj: any) => {
+      const newObj: any = {};
+
+      for (const oldKey in obj) {
+        const newKey = convertKey(oldKey);
+        newObj[newKey] = obj[oldKey];
+      }
+      return newObj;
+    })
+  );
 };
 
 export function formatDateUploadFile(dateString: any) {
-  const parts = dateString.split('/'); // Split the input date string by the slash '/'
-  
+  const parts = dateString.split("/"); // Split the input date string by the slash '/'
+
   // Ensure the parts have valid values
   if (parts.length !== 2 || parts[0].length !== 2 || parts[1].length !== 2) {
-    return 'Invalid date format';
+    return "Invalid date format";
   }
 
   const [month, day] = parts;
@@ -263,7 +292,10 @@ export function formatDateUploadFile(dateString: any) {
   return newDateString;
 }
 
-export const convertDataHasReceiving = (listData: DataType[], listNameWareHouse: OptionSelect[]) => {
+export const convertDataHasReceiving = (
+  listData: DataType[],
+  listNameWareHouse: OptionSelect[]
+) => {
   const warehouseMapping: { [key: string]: string } = {};
   let newArray: DataType[] = JSON.parse(JSON.stringify(listData));
   listNameWareHouse.forEach((warehouse) => {
@@ -272,8 +304,9 @@ export const convertDataHasReceiving = (listData: DataType[], listNameWareHouse:
 
   return newArray.map((element) => {
     if (element.prev_idwarehouse) {
-      element.nameWareHouse = warehouseMapping[element.prev_idwarehouse] || null;
+      element.nameWareHouse =
+        warehouseMapping[element.prev_idwarehouse] || null;
     }
     return element;
   });
-}
+};

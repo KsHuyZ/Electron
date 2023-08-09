@@ -38,8 +38,6 @@ export const print = async (e: IpcMainInvokeEvent, data: any) => {
   return result;
 };
 
-
-
 // @ts-ignore
 ipcMain.on(
   "reload-pdf",

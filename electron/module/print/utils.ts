@@ -207,7 +207,7 @@ export const defaultConfigPdfOptions = {
   height: 650,
   controlPanelWidth: 370,
   pageSize: "A4",
-  landscape: false,
+  landscape: true,
   margin: 10,
   scaleFactor: 100,
 };

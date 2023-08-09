@@ -74,7 +74,7 @@ const AddWareHouseItem = React.memo(
 
 
     useEffect(() => {
-      if(debouncedInputValue) handleOnChangeSearch(debouncedInputValue);
+      if (debouncedInputValue) handleOnChangeSearch(debouncedInputValue);
     }, [debouncedInputValue]);
 
     const onSelect = (data: string, option: any) => {
@@ -83,7 +83,7 @@ const AddWareHouseItem = React.memo(
 
     useEffect(() => {
       if (isEdit) {
-        const parsedDate = dayjs(itemEdit?.date_expried);
+        const parsedDate = itemEdit?.date_expried ? dayjs(itemEdit?.date_expried) : null;
         formWareHouseItem.setFieldsValue({
           name: itemEdit?.name,
           price:
@@ -184,17 +184,17 @@ const AddWareHouseItem = React.memo(
     };
 
     const handleOnChangeSearch = async (name: string) => {
-      if(!name.trim) return []
+      if (!name.trim) return []
       const result = await handleGetWarehouseItemByName(name);
       if (result) {
-        const uniqueData = result.reduce((acc : any, item : any) => {
+        const uniqueData = result.reduce((acc: any, item: any) => {
           const lowercaseName = item.name.toLowerCase();
-          const isDuplicate = acc.some((existingItem : any) => existingItem.name.toLowerCase() === lowercaseName);
-    
+          const isDuplicate = acc.some((existingItem: any) => existingItem.name.toLowerCase() === lowercaseName);
+
           if (!isDuplicate) {
             acc.push(item);
           }
-    
+
           return acc;
         }, []);
 
@@ -265,7 +265,7 @@ const AddWareHouseItem = React.memo(
                   onSelect={onSelect}
                   value={inputValue}
                   onChange={setInputValue}
-                  // onSearch={handleOnChangeSearch}
+                // onSearch={handleOnChangeSearch}
                 />
                 {/* <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} /> */}
               </Form.Item>
