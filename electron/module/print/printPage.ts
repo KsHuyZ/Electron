@@ -4,7 +4,7 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
             <html lang="en">
             <head>
                 <meta charset="UTF-8" />
-                <title>打印</title>
+                <title>In Phiếu</title>
                 <style>
                     .style_display_block {
                         display: block !important;
@@ -267,8 +267,8 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
                                     <span>Trình bày</span>
                                     <select class="layout devices" name="layout" disabled="true"
                                         onchange="changeSelectedLayout(this.options[this.selectedIndex].value)">
-                                        <option value="portrait" selected>Chiều dọc</option>
-                                        <option value="landscape">Chiều ngang</option>
+                                        <option value="portrait">Chiều dọc</option>
+                                        <option value="landscape" selected>Chiều ngang</option>
                                     </select>
                                 </div>
                                 <div>
@@ -319,7 +319,7 @@ export default function (config: HtmlConstruct = { style: "", script: "" }) {
                 const data = {
                     printDevices: [],
                     selectedPrintDevices: "",
-                    selectedLayout: "portrait",
+                    selectedLayout: "landscape",
                     selectedBackColor: "none",
                     selectedMargin: "10",
                     selectedPageSize: 'A4',

@@ -52,7 +52,11 @@ export const runQueryReturnID = function (query, params) {
   });
 };
 
-export const dateStringReverse = (originalDate: string, isFull: boolean = false, position?: number): string => {
+export const dateStringReverse = (
+  originalDate: string,
+  isFull: boolean = false,
+  position?: number
+): string => {
   const [year, month, day] = originalDate.split("/");
 
   if (isFull && position !== undefined) {
@@ -62,4 +66,7 @@ export const dateStringReverse = (originalDate: string, isFull: boolean = false,
   return `${day}/${month}/${year}`;
 };
 
-
+export const isDate = (dateString: string) => {
+  var regex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
+  return regex.test(dateString);
+};

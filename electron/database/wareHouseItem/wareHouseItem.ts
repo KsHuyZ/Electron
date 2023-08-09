@@ -5,7 +5,12 @@ import {
   ISearchWareHouseItem,
   IPostMultipleItem,
 } from "../../types";
-import { runQuery, runQueryGetAllData, runQueryReturnID } from "../../utils";
+import {
+  isDate,
+  runQuery,
+  runQueryGetAllData,
+  runQueryReturnID,
+} from "../../utils";
 import countDelivery from "../countDelivery/countDelivery";
 import countCoupon from "../countCoupon/countCoupon";
 import { Moment } from "moment";
@@ -364,7 +369,7 @@ const wareHouseItem = {
                   name,
                   price,
                   unit,
-                  date_expried,
+                  isDate(date_expried) ? date_expried : null,
                   paramsOther.date_created_at,
                   paramsOther.date_updated_at,
                   note,
