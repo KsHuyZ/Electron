@@ -235,7 +235,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const [srcOrWh, setSrcOrWh] = useState<number>()
   const [isError, setIsError] = useState(false);
   const [showAddItem, setShowAddItem] = useState<boolean>(false)
-  const [currentListItem, setCurrentListItem] = useState([])
+  const [currentListItem, setCurrentListItem] = useState<DataType[]>([])
   const formRef = useRef<FormInstance>(null);
 
   const optionSource: OptionSelect[] = listSource.map(source => (
@@ -277,8 +277,17 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   }
 
   useEffect(() => {
+    if (!isShowModal) {
+      setListItemHasChoose([])
+    }
+  }, [isShowModal])
+
+  useEffect(() => {
     if (listItemHasChoose.length !== 0) {
-      setListItemEntryForm((removeItemChildrenInTable([...currentListItem, ...listItemHasChoose])))
+      const removeIds = new Set(removeItemList.map(item => item.IDIntermediary));
+      const newArray = currentListItem.filter(item => !removeIds.has(item.IDIntermediary))
+      setListItemEntryForm((removeItemChildrenInTable([...newArray, ...listItemHasChoose])))
+      setNewItemList(listItemHasChoose)
     }
   }, [listItemHasChoose])
 

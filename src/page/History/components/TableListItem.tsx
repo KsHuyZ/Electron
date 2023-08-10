@@ -162,8 +162,10 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listIt
     }, [isExport, isShow, id]);
 
     useEffect(() => {
-
-    }, [])
+        if (listItem.length === 0) {
+            setIsListenChange(true)
+        }
+    }, [listItem])
 
     useEffect(() => {
         if (isSearch) {
@@ -243,8 +245,6 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listIt
         setIsSearch(true);
     }
 
-    console.log(listItemHasChoose)
-
     const handleClean = () => {
         setListItemHasChoose([])
         setListWareHouse([])
@@ -255,6 +255,9 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listIt
     }
 
     const handleSubmit = () => {
+        if (listItemHasChoose.length === 0) {
+            return
+        }
         setListItem(listItemHasChoose)
         setListItemHasChoose([])
         setListWareHouse([])
