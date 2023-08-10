@@ -9,13 +9,9 @@ const {
   getCountCoupon,
   getCouponItem,
   getCouponItembyCouponID,
-  updateCouponItem,
-  updateCountCoupon,
-  importWarehouseEdit,
-  backtoTempImport,
 } = countCouponDB;
 
-const { updateWarehouseItemField } = wareHouseItem;
+
 
 const countCoupon = () => {
   ipcMain.handle(

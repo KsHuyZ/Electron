@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./Sidebar.scss";
+import "./sideBar.scss";
 import { UilSignOutAlt, UilBars } from "@iconscout/react-unicons";
 import { SidebarData } from "../Data/Data";
 import { motion } from "framer-motion";
@@ -44,7 +44,7 @@ const Sidebar = () => {
                             </NavLink>
                         );
                     })}
-                    {/* signoutIcon */}
+              
                     <Link className="menuItem" to="/">
                         <UilSignOutAlt />
                     </Link>

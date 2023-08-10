@@ -335,7 +335,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             >
               <Input />
             </Form.Item>
-          </Col>
+          </Col> 
           <Col span={8}>
             <Form.Item
               label={!idReceiving ? "Tên loại phiếu" : "Cấp theo"}

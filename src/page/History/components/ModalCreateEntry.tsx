@@ -232,8 +232,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     current: 1,
     pageSize: 10,
   });
+  const [srcOrWh, setSrcOrWh] = useState<number>()
   const [isError, setIsError] = useState(false);
   const [showAddItem, setShowAddItem] = useState<boolean>(false)
+  const [currentListItem, setCurrentListItem] = useState([])
   const formRef = useRef<FormInstance>(null);
 
   const optionSource: OptionSelect[] = listSource.map(source => (
@@ -247,6 +249,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     if (select) {
       const result = await ipcRenderer.invoke(isExport ? "get-delivery-item-by-delivery-id" : "get-coupon-item-by-coupon-id", select?.ID)
       setListItemEntryForm(removeItemChildrenInTable(result as any))
+      setCurrentListItem(result)
       formRef.current?.setFieldsValue(select)
       formRef.current?.setFieldValue("date", dayjs(select?.date))
     }
@@ -267,7 +270,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     })
     setListItemEntryForm(removeItemChildrenInTable(newList));
   }
-  
+
   const handleGetAllSource = async () => {
     const result = await ipcRenderer.invoke(isExport ? "receiving-list" : "get-all-no-pagination")
     setListSource(result.rows)
@@ -275,9 +278,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
 
   useEffect(() => {
     if (listItemHasChoose.length !== 0) {
-      setNewItemList(listItemHasChoose)
-      setListItemEntryForm(prev => (removeItemChildrenInTable([...prev, ...listItemHasChoose])))
-      setListItemHasChoose([])
+      setListItemEntryForm((removeItemChildrenInTable([...currentListItem, ...listItemHasChoose])))
     }
   }, [listItemHasChoose])
 
@@ -454,7 +455,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       ID: select?.ID,
       removeItemList,
       newItemList,
-      itemEditList,
       items: listItemEntryForm,
       name: values.name,
       note: values.note,
@@ -565,7 +565,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             </Col>
             <Col span={8}>
               <Form.Item label={isExport ? "Đơn vị nhận" : "Nguồn nhập"} name={isExport ? "id_WareHouse" : "id_Source"}>
-                <Select options={optionSource} />
+                <Select options={optionSource} onChange={(value) => setSrcOrWh(value)} />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -628,7 +628,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             rowKey={(item: DataType) => item.IDIntermediary}
           />
         </Form>
-        <TableListItem id={isExport ? select?.id_WareHouse : select?.id_Source} isShow={showAddItem} onCloseModal={() => setShowAddItem(false)} setListItem={setListItemHasChoose} isExport={isExport} />
+        <TableListItem id={srcOrWh ? srcOrWh : isExport ? select?.id_WareHouse : select?.id_Source}
+          isShow={showAddItem}
+          onCloseModal={() => setShowAddItem(false)}
+          setListItem={setListItemHasChoose}
+          isExport={isExport}
+          listItem={listItemHasChoose} />
       </Modal>
     </CheckingErrorContext.Provider>
   );

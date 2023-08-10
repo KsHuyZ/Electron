@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import AuthModal from "@/components/AuthModal";
 
 import ModalWareHouse from "./components/ModalWareHouse";
+import Update from "@/components/update";
 
 type DataType = {
     ID: string;
@@ -131,6 +132,7 @@ const Warehouse = () => {
 
     return (
         <div className="form-table">
+               {/* <Update /> */}
             {
                 showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} fetching={async () => await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)} />
             }

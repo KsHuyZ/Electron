@@ -146,13 +146,11 @@ const Source = {
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity,
-        h.name as nameWareHouse,
+        h.name as nameWareHouse,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse,
         i.date, COUNT(i.ID) OVER() AS total 
         FROM warehouseItem wi
         JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
-        JOIN WareHouse h ON h.ID = ${
-          isEdit && isExport ? "i.prev_idwarehouse" : "id_WareHouse"
-        }
+        JOIN WareHouse h ON h.ID = ${isEdit ? "IDWarehouse" : "id_WareHouse"}
         ${whereClause}
         ORDER BY i.ID DESC
         LIMIT ? OFFSET ?`;
