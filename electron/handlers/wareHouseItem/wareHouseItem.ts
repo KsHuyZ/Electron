@@ -240,9 +240,8 @@ const wareHouseItem = () => {
       event,
       data: {
         ID: number;
-        itemEditList: DataType[];
-        newItemList: DataType[];
         removeItemList: DataType[];
+        newItemList: DataType[];
         items: DataType[];
         name: string;
         note: string;
@@ -256,9 +255,8 @@ const wareHouseItem = () => {
     ) => {
       const {
         ID,
-        itemEditList,
-        newItemList,
         removeItemList,
+        newItemList,
         items,
         name,
         note,
@@ -276,8 +274,6 @@ const wareHouseItem = () => {
         undefined
       );
       currentName = name;
-      currentEditItem = itemEditList;
-      currentNewItem = newItemList;
       currentDate = date;
       currentItems = items;
       currentNature = nature;
@@ -285,6 +281,7 @@ const wareHouseItem = () => {
       currentRemoveItem = removeItemList;
       currentTitle = title;
       currentTotal = total;
+      currentNewItem = newItemList;
       currentID = ID;
       currentIDSource = idSource;
       isForm = "edit-import";
@@ -382,9 +379,8 @@ const wareHouseItem = () => {
           }
         } else if (isForm === "edit-import") {
           await editCountCoupon(
-            currentEditItem,
-            currentNewItem,
             currentRemoveItem,
+            currentNewItem,
             currentItems,
             currentID,
             currentIDSource,

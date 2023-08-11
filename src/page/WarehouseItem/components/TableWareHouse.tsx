@@ -5,7 +5,7 @@ import type { TableRowSelection } from 'antd/es/table/interface';
 import { DataType } from "../types";
 
 interface TableWareHouseProps extends TableProps<any> {
-  isShowSelection?: Boolean;
+  isShowSelection?: boolean;
   setIsShowPopUp?: () => void;
   setRowSelected?: (data: any) => void;
   isListenChange?: Boolean;
@@ -14,23 +14,26 @@ interface TableWareHouseProps extends TableProps<any> {
   setRowsSelect?: Dispatch<SetStateAction<DataType[]>>
 }
 
-function TableWareHouse(props: TableWareHouseProps){
+function TableWareHouse(props: TableWareHouseProps) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const { isShowSelection = false, ...other } = props;
+  const { isShowSelection = false, listRowSelected, ...other } = props;
 
   useEffect(() => {
     if (props.isListenChange && props.listRowSelected) {
       onSelectChange(props.listRowSelected.map(item => +item.IDIntermediary));
       props.setIsListenChange(false);
     }
-  }, [props.isListenChange])
+  }, [props.isListenChange, listRowSelected])
 
   const onSelectChange = (newSelectedRowKeys: Key[], selectedRow?: DataType[]) => {
+    console.log("key: ", newSelectedRowKeys)
+    console.log("slect row: ", selectedRow)
     setSelectedRowKeys(newSelectedRowKeys);
     if (selectedRow && props.setRowsSelect) {
       props.setRowsSelect(selectedRow)
     }
   };
+
 
   const rowSelection: TableRowSelection<DataType> = {
     selectedRowKeys,
@@ -38,6 +41,8 @@ function TableWareHouse(props: TableWareHouseProps){
     preserveSelectedRowKeys: true,
     onChange: onSelectChange,
   };
+
+
   return (
     <Table
       rowSelection={isShowSelection ? rowSelection : undefined}

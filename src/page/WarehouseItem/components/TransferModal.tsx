@@ -83,7 +83,6 @@ const EditableCell: React.FC<EditableCellProps> = ({
     return Promise.resolve();
   };
 
-
   const save = async () => {
     try {
       const values = await form.validateFields();

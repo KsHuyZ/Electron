@@ -110,6 +110,7 @@ export const formatDate = (
 
 export const convertPrice = (priceString: any): number => {
   // Remove all dots from the price string
+
   const priceWithoutDots = priceString.replace(/\./g, "");
 
   // Parse the price string as an integer

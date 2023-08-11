@@ -883,27 +883,7 @@ const wareHouseItem = {
     const rows = await runQueryGetAllData(selectQuery, [id]);
     return rows;
   },
-  updateWarehouseItemField: async (
-    name: string,
-    price: number,
-    dateExpried: string,
-    quantityPlane: number,
-    quantity: number,
-    idWareHouseItem: number | string,
-    idIntermediary: number | string
-  ) => {
-    const updateQuery = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
-    const updateIntMediary = `UPDATE Intermediary SET quantity = ? WHERE ID = ?`;
-    await runQuery(updateQuery, [
-      name,
-      price,
-      dateExpried,
-      quantityPlane,
-      idWareHouseItem,
-    ]);
-    await runQuery(updateIntMediary, [quantity, idIntermediary]);
-    return true;
-  },
+
   updateWarehouseItemExport: async (
     name: string,
     price: number,

@@ -41,9 +41,10 @@ interface TableListProps {
     isShow: boolean; onCloseModal: () => void;
     setListItem: Dispatch<SetStateAction<DataType[]>>;
     isExport: boolean;
+    listItem: DataType[];
 }
 
-const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport }: TableListProps) => {
+const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listItem }: TableListProps) => {
     const [nameSearch, setNameSearch] = useState("");
     const [isSearch, setIsSearch] = useState<Boolean>(false);
     const [listData, setListData] = useState<TableData<FormatTypeTable<DataType>[]>>(defaultTable);
@@ -158,7 +159,13 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport }: Tabl
             getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
             getListWareHouse();
         }
-    }, [isExport, isShow]);
+    }, [isExport, isShow, id]);
+
+    useEffect(() => {
+        if (listItem.length === 0) {
+            setIsListenChange(true)
+        }
+    }, [listItem])
 
     useEffect(() => {
         if (isSearch) {
@@ -219,6 +226,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport }: Tabl
 
     const handleDataRowSelected = (listRows: DataType[]) => {
         setListItemHasChoose(listRows);
+        // if (listRows.length === 0) return setListItem([])
     };
 
     const handleChangeInput = (key: string, event: any) => {
@@ -236,18 +244,25 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport }: Tabl
     const handleSearchName = () => {
         setIsSearch(true);
     }
+
     const handleClean = () => {
         setListItemHasChoose([])
-        setListItem([])
         setListWareHouse([])
         setNameSearch("")
         setSelectSearch({ select: "" })
+        setIsListenChange(true)
         onCloseModal()
     }
 
     const handleSubmit = () => {
+        if (listItemHasChoose.length === 0) {
+            return
+        }
         setListItem(listItemHasChoose)
         setListItemHasChoose([])
+        setListWareHouse([])
+        setNameSearch("")
+        setSelectSearch({ select: "" })
         onCloseModal()
     }
 
@@ -292,7 +307,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport }: Tabl
                                 </Row>
                             </Card>
                             <span style={{ marginLeft: 8, paddingBottom: 8 }}>
-                                {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : ''}
+                                {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : listItem.length > 0 ? `Đã chọn ${listItem.length} mặt hàng` : ''}
                             </span>
                         </div>
                         <TableWareHouse
@@ -311,7 +326,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport }: Tabl
                             isListenChange={isListenChange}
                             setIsListenChange={(status: boolean) => setIsListenChange(status)}
                             setRowsSelect={handleDataRowSelected as any}
-                            listRowSelected={listItemHasChoose}
+                            listRowSelected={listItemHasChoose.length > 0 ? listItemHasChoose : listItem}
                         />
                     </div>
                 </Col>

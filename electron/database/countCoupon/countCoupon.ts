@@ -6,8 +6,7 @@ import {
   runQueryReturnID,
 } from "../../utils";
 import { DataType } from "../../types";
-import wareHouseItem from "../wareHouseItem/wareHouseItem";
-const { updateWarehouseItemField } = wareHouseItem;
+
 const countCoupon = {
   createCountCoupon: async (
     id_Source: number | string,
@@ -86,7 +85,7 @@ const countCoupon = {
     return rows;
   },
   getCouponItembyCouponID: async (id: number) => {
-    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Coupon_Item ci
+    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,i.prev_idwarehouse,i.status,wi.name, ci.quantity,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Coupon_Item ci
     join Intermediary i on i.ID = ci.id_intermediary
     join WareHouseItem wi on wi.ID = i.id_WareHouseItem
     join WareHouse w on w.ID = IDWarehouse
@@ -127,32 +126,29 @@ const countCoupon = {
     price: number,
     dateExpried: string,
     quantityPlane: number,
-    idCoutCoupon: number,
     quantity: number,
-    quality: number,
-    idWarehouse: number
+    idSource: string | number,
+    status: number
   ) => {
-    const updateQueryI = `UPDATE Intermediary SET status = 3, quantity = ? WHERE ID = ?`;
-    const updateQueryW = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
-    const isSuccess = await runQuery(updateQueryI, [id]);
+    const updateQueryI = `UPDATE Intermediary SET status = ${
+      status === 5 || status === 2 ? 2 : 3
+    }, quantity = ? WHERE ID = ?`;
+    const updateQueryW = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ?,id_Source = ? WHERE ID = ?`;
+    const isSuccess = await runQuery(updateQueryI, [quantity, id]);
     const updateW = await runQuery(updateQueryW, [
       name,
       price,
       dateExpried,
       quantityPlane,
+      idSource,
       IDWarehouseItem,
     ]);
-    await countCoupon.createCouponItem(
-      idCoutCoupon,
-      id,
-      quantity,
-      quality,
-      idWarehouse
-    );
+
     return isSuccess && updateW;
   },
 
   backtoTempImport: async (item: DataType) => {
+    console.log(item);
     const updateQuery = `UPDATE Intermediary SET status = ${
       item.status === 2 ? 5 : 1
     } WHERE ID = ?`;
@@ -161,21 +157,14 @@ const countCoupon = {
   },
   deleteCouponItem: async (id: number | string) => {
     const deleteQuery = `DELETE FROM Coupon_Item WHERE id_intermediary = ?`;
+    console.log(id);
     const isSuccess = await runQuery(deleteQuery, [id]);
     return isSuccess;
   },
-  updateSourceItem: async (
-    idSource: number | string,
-    idWareHouseItem: number | string
-  ) => {
-    const updateQuery = `UPDATE WareHouseItem SET id_Source = ? WHERE ID = ?`;
-    const isSuccess = await runQuery(updateQuery, [idSource, idWareHouseItem]);
-    return isSuccess;
-  },
+
   editCountCoupon: async (
-    itemEditList: DataType[],
-    newItemList: DataType[],
     removeItemList: DataType[],
+    newItemList: DataType[],
     items: DataType[],
     ID: number,
     idSource: number,
@@ -185,20 +174,13 @@ const countCoupon = {
     date: string,
     title: string
   ) => {
-    itemEditList.forEach(async (item) => {
-      await countCoupon.updateCouponItem(item.quantity, item.IDIntermediary);
-      await updateWarehouseItemField(
-        item.name,
-        item.price,
-        item.date_expried,
-        item.quantity_plane,
-        item.quantity,
-        item.IDWarehouseItem,
-        item.IDIntermediary
-      );
+    removeItemList.forEach(async (item) => {
+      await countCoupon.backtoTempImport(item);
+      await countCoupon.deleteCouponItem(item.IDIntermediary);
     });
 
-    newItemList.forEach(async (item) => {
+    items.forEach(async (item) => {
+      await countCoupon.updateCouponItem(item.quantity, item.IDIntermediary);
       await countCoupon.importWarehouseEdit(
         item.IDIntermediary,
         item.IDWarehouseItem,
@@ -206,20 +188,25 @@ const countCoupon = {
         item.price,
         item.date_expried,
         item.quantity_plane,
+        item.quantity,
+        idSource,
+        item.status
+      );
+    });
+    newItemList.forEach(async (item) => {
+      await countCoupon.createCouponItem(
         ID,
+        item.IDIntermediary,
         item.quantity,
         item.quality,
-        item["prev_idwarehouse"] ? item["prev_idwarehouse"] : item.id_WareHouse
+        item["IDWarehouse"]
+          ? item["IDWarehouse"]
+          : item["prev_idwarehouse"]
+          ? item["prev_idwarehouse"]
+          : item["id_WareHouse"]
       );
     });
 
-    removeItemList.forEach(async (item) => {
-      await countCoupon.backtoTempImport(item);
-      await countCoupon.deleteCouponItem(item.IDIntermediary);
-    });
-    items.forEach(async (item) => {
-      await countCoupon.updateSourceItem(idSource, item.IDWarehouseItem);
-    });
     await countCoupon.updateCountCoupon(
       ID,
       idSource,

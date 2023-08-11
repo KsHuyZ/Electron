@@ -78,7 +78,14 @@ const AddWareHouseItem = React.memo(
     }, [debouncedInputValue]);
 
     const onSelect = (data: string, option: any) => {
-      formWareHouseItem.setFieldsValue({ ...option.data, date_expried: option.data.date_expried ? dayjs(option.data.date_expried) : null, idSource: option.data.id_Source, quality: 1 })
+      const priceString = option.data.price.toString()
+      const numericValue = priceString.replace(/[^\d]/g, "");
+      const formattedNumericValue = numericValue.replace(
+        /\B(?=(\d{3})+(?!\d))/g,
+        "."
+      );
+      setPrice(formattedNumericValue);
+      formWareHouseItem.setFieldsValue({ ...option.data, date_expried: option.data.date_expried ? dayjs(option.data.date_expried) : null, idSource: option.data.id_Source, quality: 1, price: formattedNumericValue })
     };
 
     useEffect(() => {
