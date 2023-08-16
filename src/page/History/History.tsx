@@ -3,7 +3,7 @@ import { ipcRenderer } from 'electron'
 import React, { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import AuthModal from "@/components/AuthModal";
-import { Button, Col, Form, Input, Modal, Row, Space, Table, TablePaginationConfig } from 'antd'
+import { Button, Col, Form, Input, Modal, Row, Space, Table, TablePaginationConfig, Tag } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import docso from '@/utils/toVietnamese'
 import { UilPen } from '@iconscout/react-unicons'
@@ -58,7 +58,7 @@ const History = () => {
 
     const location = useLocation()
 
-    const {notifySuccess } = toastify
+    const { notifySuccess } = toastify
 
     const isExport = location.pathname.startsWith("/history/export")
     const columns: ColumnsType<CountDeliveryType> = [
@@ -82,6 +82,16 @@ const History = () => {
             dataIndex: "date"
         },
         {
+            title: "Trạng thái",
+            dataIndex: "status",
+            render: (value: number) => (
+                <Tag color={`${value === 0 ? "#f50" : "#87d068"}`}>
+                    {value === 0 ? "Chưa duyệt" : "Đã duyệt"}
+                </Tag>
+            )
+        },
+
+        {
             title: "Tổng tiền (Bằng số)",
             dataIndex: "Totalprice",
             render: (record) => (
@@ -95,7 +105,10 @@ const History = () => {
                 `${docso(value)} Đồng`
             )
         },
-
+        {
+            title: "Người làm phiếu",
+            dataIndex: "author"
+        },
         {
             title: "Ghi chú",
             dataIndex: "Note"
@@ -105,6 +118,7 @@ const History = () => {
             render: (_, value) => (
                 canUpdate ? <Space size="middle">
                     <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleShowModalUpdate(value)} />
+                    <Button type='text'>Duyệt phiếu</Button>
                 </Space> : <></>
             )
         }
@@ -133,7 +147,7 @@ const History = () => {
 
     useEffect(() => {
         ipcRenderer.on("edit-import-success", onUpdateSuccessCallback)
-        ipcRenderer.on("edit-export-success",onUpdateSuccessCallback)
+        ipcRenderer.on("edit-export-success", onUpdateSuccessCallback)
         return () => {
             ipcRenderer.removeListener("edit-import-success", onUpdateSuccessCallback)
             ipcRenderer.removeListener("edit-export-success", onUpdateSuccessCallback)

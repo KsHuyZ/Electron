@@ -1,11 +1,10 @@
-import "./warehouse.scss"
+
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
-import { Button, Space, Table, message } from 'antd';
+import { Button, Col, Row, Space, Table, message } from 'antd';
 import { UilPen } from '@iconscout/react-unicons'
 import { useEffect, useState } from "react";
 import { ipcRenderer } from "electron";
 import { Link } from "react-router-dom";
-import AuthModal from "@/components/AuthModal";
 
 import ModalWareHouse from "./components/ModalWareHouse";
 import Update from "@/components/update";
@@ -36,8 +35,8 @@ const Warehouse = () => {
             total: 0
         },
     });
+
     const [formEdit, setFormEdit] = useState<{ idEdit: string, name: string }>();
-    const [canUpdate, setCanUpdate] = useState(false)
 
     const columns: ColumnsType<DataType> = [
         {
@@ -61,9 +60,9 @@ const Warehouse = () => {
             dataIndex: "action",
             width: 150,
             render: (_, record) => (
-                canUpdate ? <Space size="middle">
-                <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleOpenEditModal(record.ID, record.name)} />
-            </Space> : <></>
+                <Space size="middle">
+                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleOpenEditModal(record.ID, record.name)} />
+                </Space>
             ),
         }
     ];
@@ -99,9 +98,7 @@ const Warehouse = () => {
     };
 
     useEffect(() => {
-        new Promise(async () => {
-            await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
-        })
+        handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)
     }, [])
 
     const handleOpenEditModal = (id: string, name: string) => {
@@ -131,22 +128,16 @@ const Warehouse = () => {
 
 
     return (
-        <div className="form-table">
-               {/* <Update /> */}
-            {
-                showAddModal && <ModalWareHouse dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} fetching={async () => await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)} />
-            }
-            {
-                canUpdate && (
-                    <div className="header">
-                        <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button></div>
-                    </div>
-                )
-            }
-            <AuthModal
-                canUpdate={canUpdate}
-                setCanUpdate={(status) => setCanUpdate(status)}
-            />
+        <>
+            {/* <Update /> */}
+            <ModalWareHouse isShow={showAddModal} dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} fetching={async () => await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)} />
+            <Row style={{ margin: '10px 0' }}>
+                <Col span={24}>
+                    <Space>
+                        <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button>
+                    </Space>
+                </Col>
+            </Row>
             <Table
                 columns={columns}
                 dataSource={allWareHouse.map((item) => ({ ...item, key: item.ID }))}
@@ -156,7 +147,7 @@ const Warehouse = () => {
                 bordered
                 onChange={handleTableChange}
             />
-        </div>
+        </>
     )
 }
 

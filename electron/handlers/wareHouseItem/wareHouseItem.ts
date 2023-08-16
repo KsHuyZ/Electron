@@ -30,6 +30,8 @@ let currentTitle = "";
 let currentNewItem = [];
 let currentRemoveItem = [];
 let currentEditItem = [];
+let currentAuthor = "";
+let currentNumContract;
 let currentID;
 let currentIDSource;
 let currentReceivingID;
@@ -170,9 +172,21 @@ const wareHouseItem = () => {
         date: any;
         title: string;
         nameSource: string;
+        author: string;
+        numContract: number | string;
       }
     ) => {
-      const { items, name, note, nature, total, date, title } = data;
+      const {
+        items,
+        name,
+        note,
+        nature,
+        total,
+        date,
+        title,
+        author,
+        numContract,
+      } = data;
       startPrint(
         {
           htmlString: await formExportBill(data),
@@ -186,6 +200,8 @@ const wareHouseItem = () => {
       currentDate = date;
       currentItems = items;
       currentTitle = title;
+      currentAuthor = author;
+      currentNumContract = numContract;
       isForm = "export";
       return null;
     }
@@ -204,9 +220,22 @@ const wareHouseItem = () => {
         title: string;
         nameSource: string;
         idSource: string | number;
+        author: string;
+        numContract: string | number;
       }
     ) => {
-      const { items, name, note, nature, total, date, title, idSource } = data;
+      const {
+        items,
+        name,
+        note,
+        nature,
+        total,
+        date,
+        title,
+        idSource,
+        author,
+        numContract,
+      } = data;
       startPrint(
         {
           htmlString: await formImportBill(data),
@@ -222,6 +251,8 @@ const wareHouseItem = () => {
       isForm = "import";
       currentTitle = title;
       currentIDSource = idSource;
+      currentAuthor = author;
+      currentNumContract = numContract;
       return true;
     }
   );
@@ -251,6 +282,8 @@ const wareHouseItem = () => {
         title: string;
         nameSource: string;
         idSource: number;
+        author: string;
+        numContract: number | string;
       }
     ) => {
       const {
@@ -265,6 +298,8 @@ const wareHouseItem = () => {
         date,
         title,
         idSource,
+        author,
+        numContract,
       } = data;
 
       startPrint(
@@ -284,9 +319,12 @@ const wareHouseItem = () => {
       currentNewItem = newItemList;
       currentID = ID;
       currentIDSource = idSource;
+      currentAuthor = author;
+      currentNumContract = numContract;
       isForm = "edit-import";
     }
   );
+
   ipcMain.handle(
     "print-export-edit",
     async (
@@ -304,6 +342,8 @@ const wareHouseItem = () => {
         date: any;
         title: string;
         nameSource: string;
+        author: string;
+        numContract: number | string;
         id_WareHouse: number;
       }
     ) => {
@@ -320,6 +360,8 @@ const wareHouseItem = () => {
         date,
         title,
         id_WareHouse,
+        author,
+        numContract,
       } = data;
       startPrint(
         {
@@ -339,8 +381,10 @@ const wareHouseItem = () => {
       currentTitle = title;
       currentTotal = total;
       currentID = ID;
-      currentReceivingID = id_WareHouse; // undefined
+      currentReceivingID = id_WareHouse;
       isForm = "edit-export";
+      currentAuthor = author;
+      currentNumContract = numContract;
     }
   );
 
@@ -356,7 +400,9 @@ const wareHouseItem = () => {
             currentNature,
             currentTotal,
             currentTitle,
-            currentDate
+            currentDate,
+            currentAuthor,
+            currentNumContract
           );
           const mainWindow = BrowserWindow.getFocusedWindow();
           if (mainWindow) {
@@ -371,7 +417,9 @@ const wareHouseItem = () => {
             currentTotal,
             currentTitle,
             currentDate,
-            currentIDSource
+            currentIDSource,
+            currentAuthor,
+            currentNumContract
           );
           const mainWindow = BrowserWindow.getFocusedWindow();
           if (isSuccess && mainWindow) {
@@ -388,7 +436,9 @@ const wareHouseItem = () => {
             currentNature,
             currentTotal,
             currentDate,
-            currentTitle
+            currentTitle,
+            currentAuthor,
+            currentNumContract
           );
           const mainWindow = BrowserWindow.getFocusedWindow();
           if (mainWindow) {
@@ -406,7 +456,9 @@ const wareHouseItem = () => {
             currentNature,
             currentTotal,
             currentDate,
-            currentTitle
+            currentTitle,
+            currentAuthor,
+            currentNumContract
           );
           const mainWindow = BrowserWindow.getFocusedWindow();
           if (mainWindow) {

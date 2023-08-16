@@ -244,7 +244,7 @@ export const formExportBill = async (data: {
     </div>
     <p class="thanhtien"><b>(${toVietnamese(totalMoney)} Việt Nam Đồng)</b></p>
   </div>
-  <p style="margin-left: 3%;">Ghi chú: </p>
+  <p style="margin-left: 3%;">Ghi chú: ${data.note ?? ""}</p>
   <div class="date">
     <p class="date1">Giao nhận ngày...tháng...năm... </p>
     <p class="date2">Ngày ${dateStringReverse(

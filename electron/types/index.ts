@@ -12,6 +12,7 @@ export type WarehouseItem = {
   quantity_plane: number;
   quantity_real: number;
   note: string;
+  origin: string;
 };
 
 export type Intermediary = {
@@ -74,17 +75,17 @@ export type ISearchWareHouseItem = {
 };
 
 export type IPostMultipleItem = {
-  name: string,
-  price: number,
-  unit: string,
+  name: string;
+  price: number;
+  unit: string;
   date_expried: string;
   date_created_at: string;
   date_updated_at: string;
-  note: string,
-  quantity_plane: number,
-  quantity_real: number
-  id_wareHouse: number,
-  status : string,
-  date: string,
-  quality: number
-}
+  note: string;
+  quantity_plane: number;
+  quantity_real: number;
+  id_wareHouse: number;
+  status: string;
+  date: string;
+  quality: number;
+};

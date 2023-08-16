@@ -16,10 +16,12 @@ const countDelivery = {
     note: string,
     total: string | number,
     title: string,
-    date: Moment | null
+    date: Moment | null,
+    author: string,
+    numContract: string | number
   ) => {
     const createQuery =
-      "INSERT INTO CoutDelivery(id_WareHouse, name, nature, Note,Total,title,date) VALUES (?,?,?,?,?,?,?)";
+      "INSERT INTO CoutDelivery(id_WareHouse, name, nature, Note,Total,title,date, author, numContract) VALUES (?,?,?,?,?,?,?, ?,?)";
     try {
       const ID = await runQueryReturnID(createQuery, [
         idWarehouse,
@@ -29,6 +31,8 @@ const countDelivery = {
         total,
         title,
         date,
+        author,
+        numContract,
       ]);
       return ID;
     } catch (error) {
@@ -128,9 +132,11 @@ const countDelivery = {
     nature: string,
     Total: number,
     date: string,
-    title: string
+    title: string,
+    author: string,
+    numContract: number | string
   ) => {
-    const updateQuery = `UPDATE CoutDelivery SET id_WareHouse = ?, name = ?, nature = ?, Total = ?, date = ?, title = ? where id = ?`;
+    const updateQuery = `UPDATE CoutDelivery SET id_WareHouse = ?, name = ?, nature = ?, Total = ?, date = ?, title = ?, author = ?, numContract = ? where id = ?`;
     const isSuccess = await runQuery(updateQuery, [
       idWareHouse,
       name,
@@ -139,6 +145,8 @@ const countDelivery = {
       date,
       title,
       id,
+      author,
+      numContract,
     ]);
     return isSuccess;
   },
@@ -164,7 +172,9 @@ const countDelivery = {
     nature: string,
     total: number,
     date: string,
-    title: string
+    title: string,
+    author: string,
+    numContract: number | string
   ) => {
     const { updateWarehouseItemExport } = wareHouseItemDB;
 
@@ -208,7 +218,9 @@ const countDelivery = {
       nature,
       total,
       date,
-      title
+      title,
+      author,
+      numContract
     );
   },
 };

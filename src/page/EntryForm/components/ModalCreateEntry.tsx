@@ -29,6 +29,7 @@ import { UilMultiply } from "@iconscout/react-unicons";
 import { FormInstance } from "antd/lib/form";
 import docso from "@/utils/toVietnamese";
 import { ipcRenderer } from "electron";
+import dayjs from "dayjs";
 
 interface PropsModal {
   isShowModal: any;
@@ -335,7 +336,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             >
               <Input />
             </Form.Item>
-          </Col> 
+          </Col>
           <Col span={8}>
             <Form.Item
               label={!idReceiving ? "Tên loại phiếu" : "Cấp theo"}
@@ -373,6 +374,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             <Form.Item
               label="Thời gian làm phiếu"
               name={nameOfEntryForm("date")}
+              initialValue={dayjs()}
               rules={[
                 {
                   required: true,
@@ -384,6 +386,26 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             </Form.Item>
           </Col>
           <Col span={8}>
+            <Form.Item label="Người làm phiếu" name={nameOfEntryForm("author")} rules={[
+              {
+                required: true,
+                message: "Người làm phiếu không được để trống"
+              }
+            ]}>
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="Hợp đồng số" name={nameOfEntryForm("numContract")} rules={[
+              {
+                required: true,
+                message: "Hợp đồng số không được để trống"
+              }
+            ]}>
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={16}>
             <Form.Item label="Chú thích" name={nameOfEntryForm("note")}>
               <Input.TextArea rows={4} />
             </Form.Item>

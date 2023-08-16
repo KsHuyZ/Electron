@@ -51,6 +51,10 @@ const defaultQuality: OptionSelect[] = [
     label: "Chất lượng loại 4",
     value: QUALITY.QUALITY_4,
   },
+  {
+    label: "Chất lượng loại 5",
+    value: "5"
+  }
 ];
 
 const AddWareHouseItem = React.memo(
@@ -64,7 +68,6 @@ const AddWareHouseItem = React.memo(
     fetching,
   }: PropsAddWareHouseItem) => {
     const [formWareHouseItem] = Form.useForm();
-    const [price, setPrice] = useState<any>();
     const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>();
     const [loadingButton, setLoadingButton] = useState<boolean>(false);
     const [options, setOptions] = useState<{ value: string }[]>([]);
@@ -84,7 +87,6 @@ const AddWareHouseItem = React.memo(
         /\B(?=(\d{3})+(?!\d))/g,
         "."
       );
-      setPrice(formattedNumericValue);
       formWareHouseItem.setFieldsValue({ ...option.data, date_expried: option.data.date_expried ? dayjs(option.data.date_expried) : null, idSource: option.data.id_Source, quality: 1, price: formattedNumericValue })
     };
 
@@ -169,7 +171,7 @@ const AddWareHouseItem = React.memo(
         /\B(?=(\d{3})+(?!\d))/g,
         "."
       );
-      setPrice(formattedNumericValue);
+
       formWareHouseItem.setFieldValue("price", formattedNumericValue);
     };
 
@@ -286,7 +288,6 @@ const AddWareHouseItem = React.memo(
                 ]}
               >
                 <Input
-                  value={price}
                   onChange={handleInputPrice}
                   addonAfter="vnđ"
                   disabled={itemEdit && itemEdit.status === 3 ? true : false}
@@ -410,6 +411,21 @@ const AddWareHouseItem = React.memo(
               </Form.Item>
             </Col>
             <Col span={8}>
+              <Form.Item
+                label="Xuất xứ"
+                name="origin"
+                initialValue={"Vietnam"}
+                rules={[
+                  {
+                    required: true,
+                    message: getMessage(ERROR.ERROR_1, "Đơn vị tính"),
+                  },
+                ]}
+              >
+                <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
               <Form.Item label="Chú thích" name="note">
                 <Input.TextArea
                   rows={4}

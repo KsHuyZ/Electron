@@ -274,13 +274,14 @@ const wareHouseItem = {
       quantity_plane,
       quantity_real,
       id_wareHouse,
+      origin,
     } = data;
     const status = 1;
 
     try {
       const createItemQuery = `INSERT INTO warehouseItem (id_Source, name, price, unit, date_expried, 
-        date_created_at, date_updated_at, note, quantity_plane, quantity_real) VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        date_created_at, date_updated_at, note, quantity_plane, quantity_real, origin) VALUES 
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const idWarehouseItem = await new Promise((resolve, reject) => {
         db.run(
           createItemQuery,
@@ -295,6 +296,7 @@ const wareHouseItem = {
             note,
             quantity_plane,
             quantity_real,
+            origin,
           ],
           function (err) {
             if (err) {
@@ -439,6 +441,7 @@ const wareHouseItem = {
       quantity,
       idWarehouseItem,
       idIntermediary,
+      origin,
     } = data;
 
     const intermediaryExists = await new Promise((resolve, reject) => {
@@ -462,7 +465,7 @@ const wareHouseItem = {
 
     await new Promise((resolve, reject) => {
       db.run(
-        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, date_created_at = ?, date_updated_at = ?, note = ?, quantity_plane = ? WHERE ID = ?`,
+        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, date_created_at = ?, date_updated_at = ?, note = ?, quantity_plane = ?, origin = ? WHERE ID = ?`,
         [
           name,
           price,
@@ -474,6 +477,7 @@ const wareHouseItem = {
           note,
           quantity_plane,
           idWarehouseItem,
+          origin,
         ],
         function (err) {
           if (err) {
@@ -802,7 +806,9 @@ const wareHouseItem = {
     nature: string,
     total: number,
     title: string,
-    date: Moment | null | any
+    date: Moment | null | any,
+    author: string,
+    numContract: string | number
   ) => {
     try {
       const { createCountDelivery, createDeliveryItem } = countDelivery;
@@ -813,7 +819,9 @@ const wareHouseItem = {
         note,
         total,
         title,
-        date
+        date,
+        author,
+        numContract
       );
       const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
@@ -835,7 +843,9 @@ const wareHouseItem = {
     total: number,
     title: string,
     date: Moment | null | any,
-    idSource: string | number
+    idSource: string | number,
+    author: string,
+    numContract: number | string
   ) => {
     try {
       const { createCountCoupon, createCouponItem } = countCoupon;
@@ -846,7 +856,9 @@ const wareHouseItem = {
         nature,
         note,
         total,
-        date
+        date,
+        author,
+        numContract
       );
       const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = ${

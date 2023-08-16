@@ -8,4 +8,6 @@ export type ModalEntryForm = {
   total?: string;
   idSource: string;
   idReceiving?: string
+  author: string;
+  numContract: number | string;
 };

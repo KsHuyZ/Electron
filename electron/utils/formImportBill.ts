@@ -13,6 +13,7 @@ export const formImportBill = async (data: {
   date: any;
   title: string;
   ID?: number;
+  temp?: boolean;
   nameSource: string;
 }) => {
   const { countCouponRow } = countCoupon;
@@ -57,7 +58,9 @@ export const formImportBill = async (data: {
                 <div>${data.name.toUpperCase() ?? ""}</div>
             </h3>
             <div style="flex: 8;" class="center">
-                <h1 style="text-align: center;">PHIẾU NHẬP KHO</h1>
+                <h1 style="text-align: center;">PHIẾU${
+                  data.temp ? " Tạm" : ""
+                } NHẬP KHO</h1>
                 <div style="text-align: center;" class="inputnguonkhach">
                     <div class="nguonnhap">
                         <p>Nguồn nhập: ${
@@ -140,9 +143,7 @@ export const formImportBill = async (data: {
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${new Intl.NumberFormat().format(
                   item.totalPrice
                 )}</td>
-                <td style="border:1px solid black; padding: 8px; text-align:center;">${
-                  data.note ?? ""
-                }</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;"></td>
             </tr>
                 `
               )}
@@ -166,7 +167,7 @@ export const formImportBill = async (data: {
           totalMoney
         )} Việt Nam Đồng)</b></p>
     </div>
-    <p style="margin-left: 3%;">Ghi chú: (HD 284 ngay 22/12/2022)</p>
+    <p style="margin-left: 3%;">Ghi chú: ${data.note ?? ""}</p>
     <div style="display: flex; width: 90%; margin: 0 auto 0;" class="date">
         <p style="flex: 50%; text-align: left;" class="date1">Giao nhận ngày...tháng...năm...</p>
         <p style="flex: 50%; text-align: right;" class="date2">Ngày ${dateStringReverse(

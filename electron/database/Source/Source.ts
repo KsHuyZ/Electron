@@ -3,12 +3,15 @@ import { BrowserWindow } from "electron";
 import db from "../../utils/connectDB";
 import { Source } from "../../types";
 import { ISearchWareHouseItem } from "../../types";
+import { runQueryGetData } from "../../utils";
 
 sqlite3.verbose();
 
 const Source = {
-  //Insert Source
-  createItemSource: (data: Source) => {
+  createItemSource: async (data: Source) => {
+    const selectQuery = `SELECT ID FROM Source WHERE LOWER(name) = LOWER(?)`;
+    const result: any = await runQueryGetData(selectQuery, [data.name]);
+    if (result?.ID) return false;
     return new Promise((resolve, reject) => {
       const { name, phone, address } = data;
       db.run(

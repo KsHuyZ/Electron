@@ -15,10 +15,12 @@ const countCoupon = {
     nature: string,
     note: string,
     total: string | number,
-    date: Moment | null
+    date: Moment | null,
+    author: string,
+    numContract: number | string
   ) => {
     const createQuery =
-      "INSERT INTO CoutCoupon(id_Source, name, title, nature, Note,Total,date) VALUES (?,?,?,?,?,?, ?)";
+      "INSERT INTO CoutCoupon(id_Source, name, title, nature, Note,Total,date, author, numContract) VALUES (?,?,?,?,?,?, ?,?,?)";
     try {
       const ID = await runQueryReturnID(createQuery, [
         id_Source,
@@ -28,6 +30,8 @@ const countCoupon = {
         note,
         total,
         date,
+        author,
+        numContract,
       ]);
       return ID;
     } catch (error) {
@@ -65,7 +69,7 @@ const countCoupon = {
   },
   getCountCoupon: async (pageSize: number, currentPage: number) => {
     const offsetValue = (currentPage - 1) * pageSize;
-    const selectQuery = `select cu.ID, cu.name, cu.nature,cu.id_Source, cu.Note, cu.Total as Totalprice, cu.date,s.name as nameSource,cu.title, COUNT(cu.ID) OVER() AS total  from CoutCoupon cu
+    const selectQuery = `select cu.ID, cu.name, cu.nature,cu.id_Source, cu.Note, cu.Total as Totalprice, cu.date,s.name as nameSource,cu.title, cu.author, cu.numContract,cu.status, COUNT(cu.ID) OVER() AS total  from CoutCoupon cu
     JOIN Source s on s.ID = cu.id_Source
     ORDER BY cu.ID DESC LIMIT ? OFFSET ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [
@@ -105,9 +109,11 @@ const countCoupon = {
     nature: string,
     Total: number,
     date: string,
-    title: string
+    title: string,
+    author: string,
+    numContract: number | string
   ) => {
-    const updateQuery = `UPDATE CoutCoupon SET id_Source = ?, name = ?, nature = ?, Total = ?, date = ?, title = ? where id = ?`;
+    const updateQuery = `UPDATE CoutCoupon SET id_Source = ?, name = ?, nature = ?, Total = ?, date = ?, title = ?, author = ?, numContract = ? where id = ?`;
     const isSuccess = await runQuery(updateQuery, [
       idSource,
       name,
@@ -115,6 +121,8 @@ const countCoupon = {
       Total,
       date,
       title,
+      author,
+      numContract,
       id,
     ]);
     return isSuccess;
@@ -172,7 +180,9 @@ const countCoupon = {
     nature: string,
     total: number,
     date: string,
-    title: string
+    title: string,
+    author: string,
+    numContract: string | number
   ) => {
     removeItemList.forEach(async (item) => {
       await countCoupon.backtoTempImport(item);
@@ -214,7 +224,9 @@ const countCoupon = {
       nature,
       total,
       date,
-      title
+      title,
+      author,
+      numContract
     );
   },
 };

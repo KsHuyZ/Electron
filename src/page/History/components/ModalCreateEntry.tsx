@@ -9,7 +9,6 @@ import {
   Space,
   Button,
   DatePicker,
-  Tag,
   Table,
   message,
   InputRef,
@@ -606,7 +605,27 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="Chú thích" name={nameOfEntryForm("note")}>
+              <Form.Item label="Người làm phiếu" name={nameOfEntryForm("author")} rules={[
+                {
+                  required: true,
+                  message: "Người làm phiếu không được để trống"
+                }
+              ]}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Hợp đồng số" name={nameOfEntryForm("numContract")} rules={[
+                {
+                  required: true,
+                  message: "Hợp đồng số không được để trống"
+                }
+              ]}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={16}>
+              <Form.Item label="Chú thích" name={"Note"}>
                 <Input.TextArea rows={4} />
               </Form.Item>
             </Col>
