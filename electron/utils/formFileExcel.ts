@@ -12,7 +12,7 @@ export const formFileExcel = async(infoParams: InfoParamsType, nameWareHouse: st
 
     // column product
     const columns = [
-      { header: 'TT', key: 'IDWarehouseItem', width: 10  },
+      { header: 'TT', key: 'index', width: 10  },
       { header: 'Tên Hàng', key: 'name', width: 40 },
       { header: 'DVT', key: 'unit', width: 10 },
       { header: 'CL', key: 'quality', width: 10 },

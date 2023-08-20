@@ -875,8 +875,13 @@ const wareHouseItem = {
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID
      WHERE status IN (1,3,5) AND id_WareHouse = ? and i.quantity > 0`;
-    const rows = await runQueryGetAllData(selectQuery, [id]);
-    return rows;
+    const rows: any = await runQueryGetAllData(selectQuery, [id]);
+    return rows.map((item, index: number) =>(
+      {
+        ...item,
+        index : index +1
+      }
+    )) 
   },
 
   updateWarehouseItemExport: async (
