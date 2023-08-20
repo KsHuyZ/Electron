@@ -97,7 +97,7 @@ const AddWareHouseItem = React.memo(
             itemEdit?.price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") ||
             "",
           unit: itemEdit?.unit,
-          quality: itemEdit?.quality,
+          quality: defaultQuality[Number(itemEdit?.quality) -1],
           note: itemEdit?.note,
           quantity_plane: itemEdit?.quantity_plane,
           quantity_real: itemEdit?.quantity,

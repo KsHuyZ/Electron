@@ -16,7 +16,6 @@ import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "./components/TransferModal";
 import FilterWareHouseItem from "./components/FilterWareHouseItem";
 import { useSearchParams } from "react-router-dom";
-import type { UploadProps } from "antd";
 
 const { confirm } = Modal;
 
@@ -283,8 +282,18 @@ const WareHouseItem = () => {
   }
 
 
-  const handleExportReport = () => {
-    ipcRenderer.send('export-report-warehouseitem', idWareHouse)
+  const handleExportReport = async() => {
+    const result = await ipcRenderer.invoke('export-request-xlsx', nameWareHouse);
+
+    if (result.filePath) {
+      const response = await ipcRenderer.invoke('export-report-warehouseitem', { nameWareHouse:nameWareHouse, data: idWareHouse, filePath: result.filePath });
+
+      if(response === 'error'){
+        message.error('Xuất file không thành công');
+      } else {
+        message.success('Xuất file thành công');
+      }
+    }
   }
 
 

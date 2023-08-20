@@ -3,9 +3,10 @@ import {
   IpcMainEvent,
   WebContentsPrintOptions,
   ipcMain,
+  dialog
 } from "electron";
 import wareHouseItemDB from "../../database/wareHouseItem/wareHouseItem";
-import { DataType, Intermediary, WarehouseItem } from "../../types";
+import { DataType, Intermediary, WarehouseItem, InfoParamsType } from "../../types";
 import { startPrint } from "../../module/print";
 import { formExportBill } from "../../utils/formExportBill";
 import { formImportBill } from "../../utils/formImportBill";
@@ -18,6 +19,7 @@ const { editCountCoupon } = countCouponDB;
 const { editCountDelivery } = countDelivery;
 import fs from "fs";
 import countDelivery from "../../database/countDelivery/countDelivery";
+import { formFileExcel } from "../../utils/formFileExcel";
 
 let currentName = "";
 let currentNote = "";
@@ -418,15 +420,37 @@ const wareHouseItem = () => {
     fs.unlinkSync(url);
   });
 
-  ipcMain.on("export-report-warehouseitem", async (event, id: number) => {
-    const items: any = await getAllWarehouseItemandWHName(id);
-    startPrint(
-      {
-        htmlString: formReport({ items, warehouse: items[0].warehouseName }),
-      },
-      undefined
-    );
+  ipcMain.handle("export-report-warehouseitem", async (event, payload: any) => {
+    const { nameWareHouse ,data, filePath } = payload;
+    const items: any = await getAllWarehouseItemandWHName(data);
+
+    const infoParams: InfoParamsType = {
+      nameForm: 'BÁO CÁO SỐ LƯỢNG HÀNG TỒN',
+      isForm: false
+    }
+
+    try {
+
+    formFileExcel(infoParams,nameWareHouse, items, filePath);
+    
+    return {status: 'success'}
+    } catch (error) {
+      return  {status: 'error'};
+    }    
   });
+
+  ipcMain.handle('export-request-xlsx', async (event, payload: string) => {  
+    const result = await dialog.showSaveDialog({
+      defaultPath: `[${payload}]-${new Date().toDateString()}.xlsx`,
+      filters: [
+        { name: 'Excel Files', extensions: ['xlsx'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+  
+    return result;
+  });
+
   ipcMain.handle("get-warehouse-by-name", async (event, name: string) => {
     return await getWarehouseItemByName(name);
   });
