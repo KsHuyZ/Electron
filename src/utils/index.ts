@@ -80,6 +80,11 @@ export const formatDate = (
 
   let formattedDate = "";
 
+  if(!newDate){
+    const currentYear = new Date().getFullYear();
+    return dayjs(new Date(currentYear, 0, 1)).format(`YYYY/MM/DD`);
+  }
+
   // Format the date based on the type
   switch (type) {
     case "date_First":

@@ -4,6 +4,7 @@ import {
   WarehouseItem,
   ISearchWareHouseItem,
   IPostMultipleItem,
+  IDateRangerItem
 } from "../../types";
 import {
   isDate,
@@ -884,6 +885,30 @@ const wareHouseItem = {
     )) 
   },
 
+  getAllWareHouseByDateCreated: async (id: number , dateRanger : IDateRangerItem) => {
+    console.log(dateRanger);
+    
+    const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
+    wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+     i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
+      i.date,w.name AS warehouseName 
+     FROM warehouseItem wi
+     JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
+     JOIN warehouse w ON id_WareHouse = w.ID
+     WHERE status IN (1,3,5) 
+     AND id_WareHouse = ? 
+     AND wi.date_created_at >= ? 
+     AND wi.date_created_at <= ?
+     AND i.quantity > 0`;
+    const rows: any = await runQueryGetAllData(selectQuery, [id, dateRanger.start, dateRanger.end]);
+    return rows.map((item, index: number) =>(
+      {
+        ...item,
+        index : index +1
+      }
+    )) 
+  },
+
   updateWarehouseItemExport: async (
     name: string,
     price: number,
@@ -911,7 +936,7 @@ const wareHouseItem = {
     return result1 && result2;
   },
   getWarehouseItemByName: async (name: string) => {
-    const selectQuery = `select * from warehouseitem where name like ? limit 3`;
+    const selectQuery = `select * from warehouseitem where name like ?`;
     const result: any = await runQueryGetAllData(selectQuery, [`%${name}%`]);
     return result;
   },
