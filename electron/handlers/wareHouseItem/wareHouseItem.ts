@@ -6,7 +6,7 @@ import {
   dialog
 } from "electron";
 import wareHouseItemDB from "../../database/wareHouseItem/wareHouseItem";
-import { DataType, Intermediary, WarehouseItem, InfoParamsType } from "../../types";
+import { DataType, Intermediary, WarehouseItem, InfoParamsType, IDateRangerItem } from "../../types";
 import { startPrint } from "../../module/print";
 import { formExportBill } from "../../utils/formExportBill";
 import { formImportBill } from "../../utils/formImportBill";
@@ -52,6 +52,7 @@ const wareHouseItem = () => {
     createWareHouseItemMultiple,
     getAllWarehouseItemandWHName,
     getWarehouseItemByName,
+    getAllWareHouseByDateCreated
   } = wareHouseItemDB;
   //  listen create warehouse item request
   ipcMain.handle(
@@ -426,12 +427,33 @@ const wareHouseItem = () => {
 
     const infoParams: InfoParamsType = {
       nameForm: 'BÁO CÁO SỐ LƯỢNG HÀNG TỒN',
-      isForm: false
+      isForm: false,
+      nameWareHouse: `Danh sách hàng tồn Kho ${nameWareHouse}`
     }
 
     try {
 
-    formFileExcel(infoParams,nameWareHouse, items, filePath);
+    formFileExcel(infoParams,items, filePath);
+    
+    return {status: 'success'}
+    } catch (error) {
+      return  {status: 'error'};
+    }    
+  });
+
+  ipcMain.handle("export-report-new-item", async (event, payload: any) => {
+    const { date ,idWareHouse, filePath } = payload;    
+    const items: any = await getAllWareHouseByDateCreated(idWareHouse, date);
+
+    const infoParams: InfoParamsType = {
+      nameForm: 'BÁO CÁO MẶT HÀNG MỚI',
+      isForm: false,
+      nameWareHouse: 'Danh sách mặt hàng mới'
+    }
+
+    try {
+
+    formFileExcel(infoParams,items, filePath);
     
     return {status: 'success'}
     } catch (error) {
@@ -441,7 +463,7 @@ const wareHouseItem = () => {
 
   ipcMain.handle('export-request-xlsx', async (event, payload: string) => {  
     const result = await dialog.showSaveDialog({
-      defaultPath: `[${payload}]-${new Date().toDateString()}.xlsx`,
+      defaultPath: `[${payload}]-${new Date().getFullYear()}.xlsx`,
       filters: [
         { name: 'Excel Files', extensions: ['xlsx'] },
         { name: 'All Files', extensions: ['*'] }
