@@ -933,7 +933,7 @@ const wareHouseItem = {
     return result1 && result2;
   },
   getWarehouseItemByName: async (name: string) => {
-    const selectQuery = `select * from warehouseitem where name like ? limit 3`;
+    const selectQuery = `select DISTINCT * from warehouseitem where name like ? limit 3`;
     const result: any = await runQueryGetAllData(selectQuery, [`%${name}%`]);
     return result;
   },
