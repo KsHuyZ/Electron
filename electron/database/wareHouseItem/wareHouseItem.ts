@@ -59,19 +59,14 @@ const wareHouseItem = {
         queryParams.unshift(status);
       }
 
-      if (now_date_ex !== after_date_ex) {
+      if (now_date_ex) {
         whereConditions.unshift(`wi.date_expried >= ?`);
         queryParams.unshift(now_date_ex);
       }
 
       if (after_date_ex) {
-        if (now_date_ex !== after_date_ex) {
-          whereConditions.unshift(`wi.date_expried <= ?`);
-          queryParams.unshift(after_date_ex);
-        } else {
-          whereConditions.unshift(`wi.date_expried < ?`);
-          queryParams.unshift(after_date_ex);
-        }
+        whereConditions.unshift(`wi.date_expried <= ?`);
+        queryParams.unshift(after_date_ex);
       }
 
       const whereClause =
@@ -259,13 +254,17 @@ const wareHouseItem = {
       return null;
     }
   },
-  createWareHouseItem: async (data: WarehouseItem & Intermediary) => {
+  createWareHouseItem: async (
+    idTempCoutCoupon: number | unknown,
+    idWareHouse: number,
+    idSource: number,
+    data: WarehouseItem & Intermediary
+  ) => {
     const {
       name,
       price,
       unit,
       quality,
-      idSource,
       date_expried,
       date_created_at,
       date_updated_at,
@@ -273,7 +272,6 @@ const wareHouseItem = {
       date,
       quantity_plane,
       quantity_real,
-      id_wareHouse,
       origin,
     } = data;
     const status = 1;
@@ -312,7 +310,7 @@ const wareHouseItem = {
       const idIntermediary = await new Promise((resolve, reject) => {
         db.run(
           createIntermediary,
-          [id_wareHouse, idWarehouseItem, status, quality, quantity_real, date],
+          [idWareHouse, idWarehouseItem, status, quality, quantity_real, date],
           function (err) {
             if (err) {
               reject(err);
@@ -322,6 +320,15 @@ const wareHouseItem = {
           }
         );
       });
+      const createTempCountCoupon = `INSERT INTO Coupon_Temp_Item (id_Temp_Cout_Coupon,id_intermediary,quantity,quality,id_Warehouse)
+      VALUES (?, ?, ?, ?, ?)`;
+      await runQuery(createTempCountCoupon, [
+        idTempCoutCoupon,
+        idIntermediary,
+        quantity_real,
+        quality,
+        idWareHouse,
+      ]);
       return true;
     } catch (error) {
       console.log(error);
@@ -892,8 +899,11 @@ const wareHouseItem = {
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID
      WHERE status IN (1,3,5) AND id_WareHouse = ? and i.quantity > 0`;
-    const rows = await runQueryGetAllData(selectQuery, [id]);
-    return rows;
+    const rows: any = await runQueryGetAllData(selectQuery, [id]);
+    return rows.map((item, index: number) => ({
+      ...item,
+      index: index + 1,
+    }));
   },
 
   updateWarehouseItemExport: async (

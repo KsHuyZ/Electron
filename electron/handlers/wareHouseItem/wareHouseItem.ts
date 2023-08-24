@@ -3,9 +3,15 @@ import {
   IpcMainEvent,
   WebContentsPrintOptions,
   ipcMain,
+  dialog,
 } from "electron";
 import wareHouseItemDB from "../../database/wareHouseItem/wareHouseItem";
-import { DataType, Intermediary, WarehouseItem } from "../../types";
+import {
+  DataType,
+  Intermediary,
+  WarehouseItem,
+  InfoParamsType,
+} from "../../types";
 import { startPrint } from "../../module/print";
 import { formExportBill } from "../../utils/formExportBill";
 import { formImportBill } from "../../utils/formImportBill";
@@ -14,10 +20,15 @@ import moment, { Moment } from "moment";
 import printPreview from "../../module/print/printPreview";
 import countCouponDB from "../../database/countCoupon/countCoupon";
 import { print } from "pdf-to-printer";
+import tempCountCouponDB from "../../database/tempCountCoupon/tempCountCoupon";
+
 const { editCountCoupon } = countCouponDB;
 const { editCountDelivery } = countDelivery;
+const { createMutipleWarehouseItem, createTempCountCoupon } = tempCountCouponDB;
 import fs from "fs";
 import countDelivery from "../../database/countDelivery/countDelivery";
+import { formFileExcel } from "../../utils/formFileExcel";
+import { sendResponse } from "../../utils";
 
 let currentName = "";
 let currentNote = "";
@@ -38,7 +49,6 @@ let currentReceivingID;
 
 const wareHouseItem = () => {
   const {
-    createWareHouseItem,
     getAllWarehouseItembyWareHouseId,
     deleteWareHouseItem,
     updateWareHouseItem,
@@ -53,15 +63,6 @@ const wareHouseItem = () => {
     getAllWarehouseItemandWHName,
     getWarehouseItemByName,
   } = wareHouseItemDB;
-  //  listen create warehouse item request
-  ipcMain.handle(
-    "create-product-item",
-    async (event: IpcMainEvent, data: string) => {
-      const newData = JSON.parse(data);
-      const isCreated = await createWareHouseItem(newData);
-      return isCreated;
-    }
-  );
 
   ipcMain.handle(
     "create-multiple-product-item",
@@ -150,12 +151,61 @@ const wareHouseItem = () => {
       return isSuccess;
     }
   );
+
   //Change warehouse
   ipcMain.handle(
     "change-warehouse",
     async (event, id_newWareHouse: number, id_list: Intermediary[]) => {
       const isSuccess = await changeWareHouse(id_newWareHouse, id_list);
       return isSuccess;
+    }
+  );
+
+  //  listen create warehouse item request
+  ipcMain.handle(
+    "create-product-item",
+    async (event: IpcMainEvent, data: any) => {
+      const {
+        items,
+        nameSource,
+        name,
+        note,
+        nature,
+        total,
+        date,
+        title,
+        nameWareHouse,
+        author,
+        id_Source,
+        numContract,
+        idWareHouse,
+      } = data;
+      startPrint(
+        {
+          htmlString: await formImportBill({
+            items,
+            nameSource,
+            temp: true,
+            name,
+            note,
+            nature,
+            total,
+            date,
+            title,
+            nameWareHouse,
+            numContract,
+          }),
+        },
+        undefined
+      );
+      // const isCreated = await createWareHouseItem(newData);
+      isForm = "temp-import";
+      currentItems = items;
+      currentAuthor = author;
+      currentDate = date;
+      currentName = name;
+      currentIDSource = id_Source;
+      currentReceivingID = idWareHouse;
     }
   );
 
@@ -221,7 +271,7 @@ const wareHouseItem = () => {
         nameSource: string;
         idSource: string | number;
         author: string;
-        numContract: string | number;
+        numContract: number;
       }
     ) => {
       const {
@@ -283,7 +333,7 @@ const wareHouseItem = () => {
         nameSource: string;
         idSource: number;
         author: string;
-        numContract: number | string;
+        numContract: number;
       }
     ) => {
       const {
@@ -440,10 +490,7 @@ const wareHouseItem = () => {
             currentAuthor,
             currentNumContract
           );
-          const mainWindow = BrowserWindow.getFocusedWindow();
-          if (mainWindow) {
-            mainWindow.webContents.send("edit-import-success");
-          }
+          sendResponse("edit-import-success");
         } else if (isForm === "edit-export") {
           editCountDelivery(
             currentEditItem,
@@ -460,25 +507,81 @@ const wareHouseItem = () => {
             currentAuthor,
             currentNumContract
           );
-          const mainWindow = BrowserWindow.getFocusedWindow();
-          if (mainWindow) {
-            mainWindow.webContents.send("edit-export-success");
+          sendResponse("edit-export-success");
+        } else if (isForm === "temp-import") {
+          try {
+            const ID = await createTempCountCoupon(
+              currentName,
+              currentIDSource,
+              currentNature,
+              currentNote,
+              currentTotal,
+              currentDate,
+              currentTitle,
+              currentAuthor,
+              currentNumContract
+            );
+            await createMutipleWarehouseItem(
+              ID,
+              currentItems,
+              currentIDSource,
+              currentReceivingID
+            );
+            sendResponse("temp-import-success");
+          } catch (error) {
+            console.log(error);
           }
         }
       })
       .catch((error) => console.log(error));
+    currentAuthor = "";
+    currentDate = null;
+    currentEditItem = [];
+    currentID = null;
+    currentIDSource = null;
+    currentItems = [];
+    currentName = "";
+    currentNature = "";
+    currentNewItem = [];
+    currentNote = "";
+    currentNumContract = null;
+    currentReceivingID = null;
+    currentRemoveItem = [];
+    currentTitle = "";
+    currentTotal = 0;
     fs.unlinkSync(url);
   });
 
-  ipcMain.on("export-report-warehouseitem", async (event, id: number) => {
-    const items: any = await getAllWarehouseItemandWHName(id);
-    startPrint(
-      {
-        htmlString: formReport({ items, warehouse: items[0].warehouseName }),
-      },
-      undefined
-    );
+  ipcMain.handle("export-report-warehouseitem", async (event, payload: any) => {
+    const { nameWareHouse, data, filePath } = payload;
+    const items: any = await getAllWarehouseItemandWHName(data);
+
+    const infoParams: InfoParamsType = {
+      nameForm: "BÁO CÁO SỐ LƯỢNG HÀNG TỒN",
+      isForm: false,
+    };
+
+    try {
+      formFileExcel(infoParams, nameWareHouse, items, filePath);
+
+      return { status: "success" };
+    } catch (error) {
+      return { status: "error" };
+    }
   });
+
+  ipcMain.handle("export-request-xlsx", async (event, payload: string) => {
+    const result = await dialog.showSaveDialog({
+      defaultPath: `[${payload}]-${new Date().toDateString()}.xlsx`,
+      filters: [
+        { name: "Excel Files", extensions: ["xlsx"] },
+        { name: "All Files", extensions: ["*"] },
+      ],
+    });
+
+    return result;
+  });
+
   ipcMain.handle("get-warehouse-by-name", async (event, name: string) => {
     return await getWarehouseItemByName(name);
   });

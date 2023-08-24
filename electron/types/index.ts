@@ -89,3 +89,8 @@ export type IPostMultipleItem = {
   date: string;
   quality: number;
 };
+
+export type InfoParamsType = {
+  nameForm: string;
+  isForm: boolean;
+};

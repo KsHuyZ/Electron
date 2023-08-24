@@ -223,6 +223,11 @@ const countDelivery = {
       numContract
     );
   },
+  approveAccept: async (id: number | string) => {
+    const updateQuery = `UPDATE CoutDelivery SET status = 1 where id = ?`;
+    const isSuccess = await runQuery(updateQuery, [id]);
+    return isSuccess;
+  },
 };
 
 export default countDelivery;

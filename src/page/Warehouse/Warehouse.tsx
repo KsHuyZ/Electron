@@ -76,7 +76,6 @@ const Warehouse = () => {
         const result: ResponseCallBackWareHouse = await ipcRenderer.invoke("warehouse-request-read", { pageSize, currentPage });
         if (result) {
             setLoading(false);
-            console.log(result);
             setTableParams((prev) => ({
                 pagination: {
                     ...prev.pagination,

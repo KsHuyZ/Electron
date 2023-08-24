@@ -3,18 +3,28 @@ import { ipcRenderer } from 'electron'
 import React, { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import AuthModal from "@/components/AuthModal";
-import { Button, Col, Form, Input, Modal, Row, Space, Table, TablePaginationConfig, Tag } from 'antd'
+import { Button, Col, Form, Input, Modal, Row, Space, Table, TablePaginationConfig, Tag, message } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import docso from '@/utils/toVietnamese'
-import { UilPen } from '@iconscout/react-unicons'
+import { UilExclamationCircle, UilPen } from '@iconscout/react-unicons'
 import ModalCreateEntry from './components/ModalCreateEntry'
 import toastify from '@/lib/toastify'
 
 const dataTab = [
     {
+        tabName: 'temp-import',
+        name: 'Lịch sự tạm nhập kho',
+        url: '/history/temp-import'
+    },
+    {
         tabName: 'import',
         name: 'Lịch sử nhập kho',
         url: `/history/import`,
+    },
+    {
+        tabName: 'temp-export',
+        name: 'Lịch sử tạm xuất kho',
+        url: `/history/temp-export`,
     },
     {
         tabName: 'export',
@@ -35,7 +45,10 @@ export type CountDeliveryType = {
     nameSource: string;
     id_Source: number | string;
     id_WareHouse: number | string;
+    status: number | string
 }
+
+const { confirm } = Modal;
 
 const History = () => {
     const [canUpdate, setCanUpdate] = useState(false)
@@ -44,19 +57,44 @@ const History = () => {
     const [currentSelect, setCurrentSelect] = useState<CountDeliveryType>()
     const current = searchParams.get("current");
     const pageSize = searchParams.get("pageSize");
+
     const defaultTable: TableData<CountDeliveryType[]> = {
         pagination: {
-            current: 1,
-            pageSize: 5,
+            current: current ? Number(current) : 1,
+            pageSize: pageSize ? Number(pageSize) : 5,
             total: 0,
         },
         loading: false,
         rows: [],
     };
-
-    const [tableData, setTableData] = useState<TableData<CountDeliveryType[]>>(defaultTable)
+    const [tableData, setTableData] = useState<TableData<CountDeliveryType[]>>({
+        pagination: {
+            current: current ? Number(current) : 1,
+            pageSize: pageSize ? Number(pageSize) : 5,
+            total: 0,
+        },
+        loading: false,
+        rows: [],
+    })
 
     const location = useLocation()
+
+    const handleApprove = (data: CountDeliveryType) => {
+        confirm({
+            closable: true,
+            title: `Bạn có đang duyệt phiếu ${data.ID} ?. Sau khi duyệt phiếu thì không thể chỉnh sửa`,
+            icon: <UilExclamationCircle />,
+            okText: 'Đồng ý',
+            okType: 'danger',
+            cancelText: 'Từ chối',
+            onOk() {
+                handleApproveAccept(data.ID)
+            },
+            onCancel() {
+
+            }
+        });
+    };
 
     const { notifySuccess } = toastify
 
@@ -116,13 +154,25 @@ const History = () => {
         {
             title: "Cập nhật",
             render: (_, value) => (
-                canUpdate ? <Space size="middle">
+                canUpdate && value.status === 0 ? <Space size="middle">
                     <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleShowModalUpdate(value)} />
-                    <Button type='text'>Duyệt phiếu</Button>
+                    <Button type='text' onClick={() => handleApprove(value)}>Duyệt phiếu</Button>
                 </Space> : <></>
             )
         }
     ]
+
+    const handleApproveAccept = async (id: number | string) => {
+        try {
+            const response = await ipcRenderer.invoke(`approve-${isExport ? "export" : "import"}`, id)
+            if (response) {
+                await handleGetData()
+                message.success("Duyệt phiếu thành công")
+            }
+        } catch (error) {
+            message.error("Duyệt phiếu thất bại")
+        }
+    }
 
     const handleShowModalUpdate = (value: CountDeliveryType) => {
         setCurrentSelect(value)
@@ -130,8 +180,8 @@ const History = () => {
     }
 
     const handleGetData = async () => {
-        const result = await ipcRenderer.invoke(`get-history-${isExport ? "export" : "import"}`, { current: current ? current : 1, pageSize: pageSize ? pageSize : 5 })
-        return setTableData(result)
+        const result = await ipcRenderer.invoke(`get-history-${isExport ? "export" : "import"}`, { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize })
+        return setTableData({ ...result, pagination: { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize }, loading: false })
     }
 
     const handleTableChange = (pagination: TablePaginationConfig) => {

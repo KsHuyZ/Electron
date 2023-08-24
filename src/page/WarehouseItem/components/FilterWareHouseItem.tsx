@@ -107,22 +107,22 @@ const FilterWareHouseItem = (props: PropsFilter) => {
 
   const onFinish = (value: ISearch) => {
 
-    const nowDate = formatDate(Date.now(), false, 'no_date');
-    const after_Date = formatDate(Date.now(), false, 'after_7day');
-    const after_Month = formatDate(Date.now(), false, 'after_month');
+    // const nowDate = formatDate(Date.now(), false, 'no_date');
+    // const after_Date = formatDate(Date.now(), false, 'after_7day');
+    // const after_Month = formatDate(Date.now(), false, 'after_month');
 
-    const checkDate = () => {
-      if (!value.date_expried) return ''
-      return value.date_expried === '7_days' ? after_Date : (value.date_expried === 'out_date' ? nowDate : after_Month)
-    }
+    // const checkDate = () => {
+    //   if (!value.date_expried) return ''
+    //   return value.date_expried === '7_days' ? after_Date : (value.date_expried === 'out_date' ? nowDate : after_Month)
+    // }
 
     const objSearch = {
       status: value.status ?? '',
       startDate: value.date && value.date[0] ? dayjs(value.date[0]).format('YYYY/MM/DD') : undefined,
       endDate: value.date && value.date[1] ? dayjs(value.date[1]).format('YYYY/MM/DD') : undefined,
       idSource: value.idSource ?? '',
-      now_date_ex: value.date_expried ? nowDate : '',
-      after_date_ex: checkDate()
+      now_date_ex: value.date_expried && value.date_expried[0] ? dayjs(value.date_expried[0]).format('YYYY/MM/DD') : undefined,
+      after_date_ex: value.date_expried && value.date_expried[1] ? dayjs(value.date_expried[1]).format('YYYY/MM/DD') : undefined,
     }
     other.handleIsSearch(true);
     setSearchParams(stringifyParams({ params: { ...objSearch } }));
@@ -184,20 +184,14 @@ const FilterWareHouseItem = (props: PropsFilter) => {
 
           </Col>
           {page !== 'receiving' && <Col span={8}>
-
             <Form.Item
               name={'date_expried'}
               label={'Sắp hết hạn'}
               className="label-custom-input-filter"
             >
-              <Select
-
-                style={{ width: '100%' }}
-                options={listTimeExpried}
-
-              />
+              <RangePicker
+                style={{ width: '100%' }} />
             </Form.Item>
-
           </Col>}
         </Row>
         <Row align={'bottom'} style={{ float: 'right', marginTop: '20px' }}>

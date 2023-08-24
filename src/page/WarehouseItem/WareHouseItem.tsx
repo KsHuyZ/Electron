@@ -9,7 +9,6 @@ import { renderTextStatus, formatNumberWithCommas, getDateExpried } from "@/util
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "./types";
 import TableWareHouse from "./components/TableWareHouse";
 import { ipcRenderer } from "electron";
-import AddWareHouseItem from "./components/AddWareHouseItem";
 import { ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
 import { Link, useParams } from "react-router-dom";
 import { TablePaginationConfig } from "antd/es/table";
@@ -17,6 +16,7 @@ import TransferModal from "./components/TransferModal";
 import FilterWareHouseItem from "./components/FilterWareHouseItem";
 import { useSearchParams } from "react-router-dom";
 import type { UploadProps } from "antd";
+import ModalCreateEntry from "./components/ModalCreateEntry";
 
 const { confirm } = Modal;
 
@@ -115,7 +115,7 @@ const WareHouseItem = () => {
       title: 'Chất lượng mặt hàng',
       dataIndex: 'quality',
       width: 200,
-      render : (record) => {
+      render: (record) => {
         const findItem = QUALITY_PRODUCT.find((item) => item.value == record);
         return (
           <span>{findItem?.label}</span>
@@ -151,8 +151,8 @@ const WareHouseItem = () => {
           <div style={{ display: 'flex' }}>
             {
               <Tag color={color}>
-              {text}
-            </Tag>
+                {text}
+              </Tag>
             }
           </div>
         )
@@ -170,7 +170,7 @@ const WareHouseItem = () => {
             setItemEdit(record)
             setIsShowModal(true)
           }} />
-         {record.status !== 3 && <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />}
+          {record.status !== 3 && <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />}
         </Space>
       ),
     }
@@ -208,7 +208,7 @@ const WareHouseItem = () => {
       now_date_ex: parsedSearchParams.now_date_ex || '',
       after_date_ex: parsedSearchParams.after_date_ex || ''
     };
-    
+
     const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("warehouseitem-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, idWareHouse: idWareHouse, paramsSearch: paramsSearch });
     if (result) {
       setListData((prev) => (
@@ -235,7 +235,7 @@ const WareHouseItem = () => {
   };
 
   const handleDataRowSelected = (listRows: DataType[]) => {
-    setListItemHasChoose(listRows.map((item) =>({
+    setListItemHasChoose(listRows.map((item) => ({
       ...item,
       newQuantity: item.quantity!
     })));
@@ -283,9 +283,32 @@ const WareHouseItem = () => {
   }
 
 
-  const handleExportReport = () => {
-    ipcRenderer.send('export-report-warehouseitem', idWareHouse)
+  const handleExportReport = async () => {
+    const result = await ipcRenderer.invoke('export-request-xlsx', nameWareHouse);
+
+    if (result.filePath) {
+      const response = await ipcRenderer.invoke('export-report-warehouseitem', { nameWareHouse: nameWareHouse, data: idWareHouse, filePath: result.filePath });
+
+      if (response === 'error') {
+        message.error('Xuất file không thành công');
+      } else {
+        message.success('Xuất file thành công');
+      }
+    }
   }
+
+  const tempImportWarehouseItemCallBack = async () => {
+    await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+    setIsShowModal(false)
+    message.success("Tạm nhập mặt hàng thành công")
+  }
+
+  useEffect(() => {
+    ipcRenderer.on("temp-import-success", tempImportWarehouseItemCallBack)
+    return () => {
+      ipcRenderer.removeListener("edit-import-success", tempImportWarehouseItemCallBack)
+    }
+  }, [])
 
 
   return (
@@ -352,19 +375,14 @@ const WareHouseItem = () => {
           />
         </div>
       </Col>
-      {
-        isShowModal && (
-          <AddWareHouseItem
-            isEdit={isEdit}
-            setIsEdit={(status) => setIsEdit(status)}
-            itemEdit={itemEdit}
-            isShowModal={isShowModal}
-            idWareHouse={idWareHouse}
-            onCloseModal={() => setIsShowModal(false)}
-            fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
-          />
-        )
-      }
+
+      <ModalCreateEntry
+        isShowModal={isShowModal}
+        onCloseModal={() => setIsShowModal(false)}
+        idWareHouse={idWareHouse}
+        nameWareHouse={nameWareHouse}
+      />
+
       {
         statusModal === STATUS_MODAL.TRANSFER && (
           <TransferModal

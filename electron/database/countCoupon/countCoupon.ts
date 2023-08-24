@@ -154,7 +154,6 @@ const countCoupon = {
 
     return isSuccess && updateW;
   },
-
   backtoTempImport: async (item: DataType) => {
     console.log(item);
     const updateQuery = `UPDATE Intermediary SET status = ${
@@ -169,7 +168,6 @@ const countCoupon = {
     const isSuccess = await runQuery(deleteQuery, [id]);
     return isSuccess;
   },
-
   editCountCoupon: async (
     removeItemList: DataType[],
     newItemList: DataType[],
@@ -228,6 +226,11 @@ const countCoupon = {
       author,
       numContract
     );
+  },
+  approveAccept: async (id: number | string) => {
+    const updateQuery = `UPDATE CoutCoupon SET status = 1 where id = ?`;
+    const isSuccess = await runQuery(updateQuery, [id]);
+    return isSuccess;
   },
 };
 
