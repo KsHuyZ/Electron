@@ -47,12 +47,13 @@ const countDelivery = {
   },
   createDeliveryItem: async (
     idCoutDelivery: number | unknown,
-    idIntermediary: number | string
+    idIntermediary: number | string,
+    quantity: number
   ) => {
     const createQuery =
-      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermediary) VALUES(?,?)";
+      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermediary, quantity) VALUES(?,?, ?)";
     try {
-      await runQuery(createQuery, [idCoutDelivery, idIntermediary]);
+      await runQuery(createQuery, [idCoutDelivery, idIntermediary, quantity]);
       return true;
     } catch (error) {
       console.log(error);
@@ -72,7 +73,7 @@ const countDelivery = {
     return { rows, total: countResult };
   },
   getDeliveryItem: async (id: number) => {
-    const selectQuery = `select di.ID,wi.name, wi.ID as IDWarehouseItem, wi.price, i.quality, i.quantity, w.name as nameWareHouse from Delivery_Item di
+    const selectQuery = `select di.ID,wi.name, wi.ID as IDWarehouseItem, wi.price, i.quality, di.quantity, w.name as nameWareHouse from Delivery_Item di
     join Intermediary i on i.ID = di.id_intermediary
     join warehouseitem wi on wi.ID = i.id_WareHouseItem
     join warehouse w on w.ID = i.prev_idwarehouse
@@ -81,7 +82,7 @@ const countDelivery = {
     return rows;
   },
   getDeliveryItembyDeliveryID: async (id: number) => {
-    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, i.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Delivery_Item ci
+    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Delivery_Item ci
     join Intermediary i on i.ID = ci.id_intermediary
     join WareHouseItem wi on wi.ID = i.id_WareHouseItem
    join warehouse w on w.ID = i.prev_idwarehouse
@@ -112,7 +113,7 @@ const countDelivery = {
       quantityPlane,
       IDWarehouseItem,
     ]);
-    await countDelivery.createDeliveryItem(idCoutDelivery, id);
+    await countDelivery.createDeliveryItem(idCoutDelivery, id, quantity);
     return isSuccess && updateW;
   },
   deleteDeliveryItem: async (id: number | string) => {

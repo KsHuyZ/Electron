@@ -37,12 +37,12 @@ db.run(
   "CREATE TABLE IF NOT EXISTS Coupon_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Cout_Coupon INTEGER NOT NULL, id_intermediary INTEGER, quantity INTEGER,quality INTEGER,id_Warehouse INTEGER NOT NULL, FOREIGN KEY (id_Cout_Coupon) REFERENCES CountCoupon(ID),FOREIGN KEY (id_intermediary) REFERENCES Intermediary(ID), FOREIGN KEY (id_Warehouse) REFERENCES WareHouse(ID))"
 );
 db.run(
-  "CREATE TABLE IF NOT EXISTS Delivery_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Cout_Delivery INTEGER NOT NULL, id_intermediary INTEGER, FOREIGN KEY (id_Cout_Delivery) REFERENCES CountDelivery(ID),FOREIGN KEY (id_intermediary) REFERENCES Intermediary(ID))"
+  "CREATE TABLE IF NOT EXISTS Delivery_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Cout_Delivery INTEGER NOT NULL, id_intermediary INTEGER,quantity INTEGER, FOREIGN KEY (id_Cout_Delivery) REFERENCES CountDelivery(ID),FOREIGN KEY (id_intermediary) REFERENCES Intermediary(ID))"
 );
 db.run(
   "CREATE TABLE IF NOT EXISTS Coupon_Temp_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Temp_Cout_Coupon INTEGER NOT NULL, id_intermediary INTEGER, quantity INTEGER,quality INTEGER,id_Warehouse INTEGER NOT NULL, FOREIGN KEY (id_Temp_Cout_Coupon) REFERENCES CoutTempCoupon(ID),FOREIGN KEY (id_intermediary) REFERENCES Intermediary(ID), FOREIGN KEY (id_Warehouse) REFERENCES WareHouse(ID))"
 );
 db.run(
-  "CREATE TABLE IF NOT EXISTS Delivery_Temp_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Cout_Delivery INTEGER NOT NULL, id_intermediary INTEGER, FOREIGN KEY (id_Cout_Delivery) REFERENCES CountDelivery(ID),FOREIGN KEY (id_intermediary) REFERENCES Intermediary(ID))"
+  "CREATE TABLE IF NOT EXISTS Delivery_Temp_Item (ID INTEGER PRIMARY KEY AUTOINCREMENT, id_Temp_Cout_Delivery INTEGER NOT NULL, id_intermediary INTEGER,quantity INTEGER, FOREIGN KEY (id_Temp_Cout_Delivery) REFERENCES CoutTempDelivery(ID),FOREIGN KEY (id_intermediary) REFERENCES Intermediary(ID))"
 );
 export default db;

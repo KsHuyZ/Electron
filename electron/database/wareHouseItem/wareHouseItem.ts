@@ -84,7 +84,6 @@ const wareHouseItem = {
         ${whereClause}
         ORDER BY i.ID DESC
         LIMIT ? OFFSET ?`;
-
       const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, ...queryParams, (err, rows) => {
           if (err) {
@@ -230,7 +229,7 @@ const wareHouseItem = {
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
      i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
-      i.date,w.name AS warehouseName, COUNT(i.ID) OVER() AS total 
+      i.date,w.name AS nameWareHouse, COUNT(i.ID) OVER() AS total 
      FROM warehouseItem wi
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID
@@ -322,13 +321,14 @@ const wareHouseItem = {
       });
       const createTempCountCoupon = `INSERT INTO Coupon_Temp_Item (id_Temp_Cout_Coupon,id_intermediary,quantity,quality,id_Warehouse)
       VALUES (?, ?, ?, ?, ?)`;
-      await runQuery(createTempCountCoupon, [
+      const ID = await runQueryReturnID(createTempCountCoupon, [
         idTempCoutCoupon,
         idIntermediary,
         quantity_real,
         quality,
         idWareHouse,
       ]);
+
       return true;
     } catch (error) {
       console.log(error);
@@ -724,9 +724,9 @@ const wareHouseItem = {
             query,
             [
               id_newWareHouse,
-              item.id_wareHouse_item,
-              item.quality,
-              item.id_wareHouse,
+              item["IDWarehouseItem"],
+              item["newQuantity"],
+              item["id_WareHouse"],
             ],
             function (err, row: any) {
               if (err) {
@@ -738,11 +738,12 @@ const wareHouseItem = {
             }
           );
         });
+
         if (row.length > 0) {
           await row.forEach(async (element) => {
             console.log("This is row data", element);
             const { quantity, status, ID } = element;
-            if (Number(quantity) < item.quantity) {
+            if (Number(quantity) < item["newQuantity"]) {
               throw new Error(
                 "Can't export warehouseitem to receiving. Is too large"
               );
@@ -752,12 +753,12 @@ const wareHouseItem = {
               );
               const updateQuery1 = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
               const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
-              await runQuery(updateQuery1, [item.quantity, ID]);
+              await runQuery(updateQuery1, [item["newQuantity"], ID]);
 
               await runQuery(updateQuery2, [
-                item.quantity,
-                item.id_wareHouse_item,
-                item.id_wareHouse,
+                item["newQuantity"],
+                item["IDWarehouseItem"],
+                item["id_WareHouse"],
               ]);
             }
           });
@@ -766,7 +767,7 @@ const wareHouseItem = {
           const updateWareHouseQuery = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? `;
           const quantity = await new Promise((resolve, reject) => {
             const query = `SELECT quantity from Intermediary WHERE ID = ?`;
-            db.get(query, [item.idIntermediary], function (err, row: any) {
+            db.get(query, [item["IDIntermediary"]], function (err, row: any) {
               if (err) {
                 console.log(err);
                 reject(err);
@@ -775,24 +776,23 @@ const wareHouseItem = {
               }
             });
           });
-
-          if (Number(quantity) < item.quantity) {
+          if (Number(quantity) < item["newQuantity"]) {
             throw new Error(
               "Can't change warehouseitem to new warehouse. Is too large"
             );
           } else {
             await runQuery(changeWareHouseQuery, [
               id_newWareHouse,
-              item.id_wareHouse_item,
-              item.id_wareHouse,
+              item["IDWarehouseItem"],
+              item["id_WareHouse"],
               item.status === 1 ? 5 : 2,
               item.quality,
-              item.quantity,
+              item["newQuantity"],
               item.date,
             ]);
             await runQuery(updateWareHouseQuery, [
-              item.quantity,
-              item.idIntermediary,
+              item["newQuantity"],
+              item["IDIntermediary"],
             ]);
           }
         }
@@ -833,7 +833,7 @@ const wareHouseItem = {
       const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
-        await createDeliveryItem(ID, item["IDIntermediary"]);
+        await createDeliveryItem(ID, item["IDIntermediary"], item.quantity);
       });
       await Promise.all(promises);
       return true;
@@ -894,7 +894,7 @@ const wareHouseItem = {
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
      i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
-      i.date,w.name AS warehouseName 
+      i.date,w.name AS nameWareHouse 
      FROM warehouseItem wi
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID

@@ -1,8 +1,8 @@
 import toastify from '@/lib/toastify'
 import { UilMultiply } from '@iconscout/react-unicons'
-import { Button, Input, Form, Modal, message } from 'antd'
+import { Button, Input, Form, Modal, message, InputRef } from 'antd'
 import { ipcRenderer } from 'electron'
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 
 
 type DataType = {
@@ -25,7 +25,7 @@ const ModalRecipient = (props: ModalRecipientProps) => {
     const { closeModal, data, reload, setAllRecipient, isShow } = props
     const [form] = Form.useForm();
     const { notifySuccess, notifyError } = toastify
-
+    const inputRef = useRef<InputRef | null>(null)
     const hanldeSubmit = async () => {
         await form.validateFields();
         const { name, address, phone } = form.getFieldsValue();
@@ -68,10 +68,16 @@ const ModalRecipient = (props: ModalRecipientProps) => {
     }
 
     useEffect(() => {
-        if (data) {
+        if (data && isShow) {
             form.setFieldsValue(data);
         }
-    }, [data])
+        const handle = setTimeout(() => {
+            inputRef.current?.focus()
+        }, 300)
+        return () => {
+            clearTimeout(handle)
+        }
+    }, [data, isShow])
 
     const handleClean = () => {
         form.resetFields()
@@ -93,7 +99,7 @@ const ModalRecipient = (props: ModalRecipientProps) => {
                         { required: true, message: 'Tên đơn vị nhận không được để trống.' },
                     ]}
                 >
-                    <Input size="large" placeholder="Tên đơn vị nhận" />
+                    <Input size="large" placeholder="Tên đơn vị nhận" ref={inputRef} />
                 </Form.Item>
                 <Form.Item
                     label="Địa Chỉ Đơn Vị Nhận"

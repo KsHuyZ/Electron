@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { Ref, useEffect, useRef, useState } from 'react';
 import { UilMultiply } from '@iconscout/react-unicons';
-import { Form, Input, Button, Modal } from 'antd';
+import { Form, Input, Button, Modal, InputRef } from 'antd';
 import { ipcRenderer } from 'electron';
 import { message } from "antd";
 
@@ -19,12 +19,20 @@ type ModalProps = {
 const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean, fetching, isShow }: ModalProps) => {
   const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
+  const inputRef = useRef<InputRef | null>(null)
   useEffect(() => {
-    if (dataEdit?.idEdit) {
+    if (dataEdit?.idEdit && isShow) {
       form.setFieldValue('name', dataEdit.name);
     }
-  }, [dataEdit?.idEdit])
+    const handle = setTimeout(() => {
+      inputRef.current?.focus()
+    }, 300)
+    return () => {
+      clearTimeout(handle)
+    }
+  }, [dataEdit?.idEdit, isShow])
+
+
 
   const handleAddNewWareHouse = async () => {
     try {
@@ -96,7 +104,7 @@ const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean, fetching, isS
             { required: true, message: 'Tên kho hàng không được để trống.' },
           ]}
         >
-          <Input size="large" placeholder="Tên kho hàng" disabled={isLoading} />
+          <Input size="large" placeholder="Tên kho hàng" disabled={isLoading} ref={inputRef} />
         </Form.Item>
       </Form>
     </Modal>

@@ -25,10 +25,12 @@ import tempCountCouponDB from "../../database/tempCountCoupon/tempCountCoupon";
 const { editCountCoupon } = countCouponDB;
 const { editCountDelivery } = countDelivery;
 const { createMutipleWarehouseItem, createTempCountCoupon } = tempCountCouponDB;
+const { tempExportWarehouse } = tempCountDelivery;
 import fs from "fs";
 import countDelivery from "../../database/countDelivery/countDelivery";
 import { formFileExcel } from "../../utils/formFileExcel";
 import { sendResponse } from "../../utils";
+import tempCountDelivery from "../../database/tempCountDelivery";
 
 let currentName = "";
 let currentNote = "";
@@ -47,7 +49,7 @@ let currentID;
 let currentIDSource;
 let currentReceivingID;
 
-const wareHouseItem = () => {
+const wareHouseItem = (mainScreen: BrowserWindow) => {
   const {
     getAllWarehouseItembyWareHouseId,
     deleteWareHouseItem,
@@ -198,7 +200,7 @@ const wareHouseItem = () => {
         },
         undefined
       );
-      // const isCreated = await createWareHouseItem(newData);
+
       isForm = "temp-import";
       currentItems = items;
       currentAuthor = author;
@@ -206,6 +208,10 @@ const wareHouseItem = () => {
       currentName = name;
       currentIDSource = id_Source;
       currentReceivingID = idWareHouse;
+      currentNature = nature;
+      currentTitle = title;
+      currentTotal = total;
+      currentNumContract = numContract;
     }
   );
 
@@ -309,9 +315,54 @@ const wareHouseItem = () => {
 
   ipcMain.handle(
     "temp-export-warehouse",
-    async (event, id_receiving: number, id_list: Intermediary[]) => {
-      const isSuccess = await tempExportWareHouse(id_receiving, id_list);
-      return isSuccess;
+    async (
+      event,
+      data: {
+        name: string;
+        items: DataType[];
+        note: string;
+        nature: string;
+        date: any;
+        total: number;
+        nameSource: string;
+        title: string;
+        author: string;
+        numContract: number;
+        idReceiving: number;
+        nameReceiving: string;
+      }
+    ) => {
+      const {
+        name,
+        note,
+        total,
+        nature,
+        date,
+        items,
+        title,
+        author,
+        numContract,
+        idReceiving,
+      } = data;
+      // const isSuccess = await tempExportWareHouse(id_receiving, id_list);
+      // return isSuccess;
+      startPrint(
+        {
+          htmlString: await formExportBill({ ...data, temp: true }),
+        },
+        undefined
+      );
+      currentName = name;
+      currentNote = note;
+      currentTotal = total;
+      currentNature = nature;
+      currentDate = date;
+      currentItems = items;
+      currentTitle = title;
+      currentAuthor = author;
+      currentNumContract = numContract;
+      currentReceivingID = idReceiving;
+      isForm = "temp-export";
     }
   );
 
@@ -454,10 +505,8 @@ const wareHouseItem = () => {
             currentAuthor,
             currentNumContract
           );
-          const mainWindow = BrowserWindow.getFocusedWindow();
-          if (mainWindow) {
-            mainWindow.webContents.send("export-warehouse", { isSuccess });
-          }
+
+          mainScreen.webContents.send("export-warehouse", { isSuccess });
         } else if (isForm === "import") {
           const isSuccess = await importWarehouse(
             currentItems,
@@ -471,9 +520,8 @@ const wareHouseItem = () => {
             currentAuthor,
             currentNumContract
           );
-          const mainWindow = BrowserWindow.getFocusedWindow();
-          if (isSuccess && mainWindow) {
-            mainWindow.webContents.send("import-warehouse", { isSuccess });
+          if (isSuccess) {
+            mainScreen.webContents.send("import-warehouse", { isSuccess });
           }
         } else if (isForm === "edit-import") {
           await editCountCoupon(
@@ -507,7 +555,7 @@ const wareHouseItem = () => {
             currentAuthor,
             currentNumContract
           );
-          sendResponse("edit-export-success");
+          mainScreen.webContents.send("edit-export-success");
         } else if (isForm === "temp-import") {
           try {
             const ID = await createTempCountCoupon(
@@ -527,10 +575,24 @@ const wareHouseItem = () => {
               currentIDSource,
               currentReceivingID
             );
-            sendResponse("temp-import-success");
+            mainScreen.webContents.send("temp-import-success");
           } catch (error) {
             console.log(error);
           }
+        } else if (isForm === "temp-export") {
+          await tempExportWarehouse(
+            currentItems,
+            currentReceivingID,
+            currentName,
+            currentNote,
+            currentNature,
+            currentTotal,
+            currentTitle,
+            currentDate,
+            currentAuthor,
+            currentNumContract
+          );
+          mainScreen.webContents.send("temp-export-warehouse-success");
         }
       })
       .catch((error) => console.log(error));
@@ -549,6 +611,7 @@ const wareHouseItem = () => {
     currentRemoveItem = [];
     currentTitle = "";
     currentTotal = 0;
+    isForm = "";
     fs.unlinkSync(url);
   });
 

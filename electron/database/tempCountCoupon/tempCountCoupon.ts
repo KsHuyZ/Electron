@@ -4,7 +4,7 @@ import wareHouseItemDB from "../wareHouseItem/wareHouseItem";
 const tempCountCoupon = {
   getTempCoutCoupon: async (pageSize: number, currentPage: number) => {
     const offsetValue = (currentPage - 1) * pageSize;
-    const selectQuery = `select cu.ID, cu.name, cu.nature,cu.id_Source, cu.Note, cu.Total as Totalprice, cu.date,s.name as nameSource,cu.title, cu.author, cu.numContract,cu.status, COUNT(cu.ID) OVER() AS total  from CoutCoupon cu
+    const selectQuery = `select cu.ID, cu.name, cu.nature,cu.id_Source, cu.Note, cu.Total as Totalprice, cu.date,s.name as nameSource,cu.title, cu.author, cu.numContract, COUNT(cu.ID) OVER() AS total  from CoutTempCoupon cu
     JOIN Source s on s.ID = cu.id_Source
     ORDER BY cu.ID DESC LIMIT ? OFFSET ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [
@@ -67,6 +67,15 @@ const tempCountCoupon = {
       console.log(error);
       return false;
     }
+  },
+  getTempCoutCouponItem: async (id: number) => {
+    const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name,wi.price,wi.quantity_plane,wi.unit, cu.quantity, cu.quality,w.name as nameWareHouse FROM Coupon_Temp_Item cu
+    JOIN Intermediary i on i.ID = cu.id_intermediary
+    JOIN WareHouseItem wi on wi.ID = i.id_WareHouseItem
+    JOIN WareHouse w on w.ID = cu.id_Warehouse
+    WHERE cu.id_Temp_Cout_Coupon = ?`;
+    const rows: any = await runQueryGetAllData(selectQuery, [id]);
+    return rows;
   },
 };
 

@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import countCouponDB from "../../database/countCoupon/countCoupon";
 
 const {
@@ -8,7 +8,7 @@ const {
   approveAccept,
 } = countCouponDB;
 
-const countCoupon = () => {
+const countCoupon = (mainScreen: BrowserWindow) => {
   ipcMain.handle(
     "get-history-import",
     async (
@@ -19,7 +19,7 @@ const countCoupon = () => {
       return reuslt;
     }
   );
-  ipcMain.handle("get-coupon-item", async (event, id: number) => {
+  ipcMain.handle("get-import-item", async (event, id: number) => {
     return await getCouponItem(id);
   });
   ipcMain.handle("get-coupon-item-by-coupon-id", async (event, ID: number) => {

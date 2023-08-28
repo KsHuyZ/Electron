@@ -42,9 +42,13 @@ const Routers = () => {
           <Route path='/warehouse-item' element={<WareHouseItem />} />
           <Route path="/history" element={<Navigate to={"/history/import"} />} />
           <Route path="/history/export" element={<History />} />
+          <Route path="/history/temp-export" element={<History />} />
           <Route path="/history/import" element={<History />} />
+          <Route path="/history/temp-import" element={<History />} />
           <Route path="/history/import/:id" element={<HistoryItem />} />
+          <Route path="/history/temp-import/:id" element={<HistoryItem />} />
           <Route path="/history/export/:id" element={<HistoryItem />} />
+          <Route path="/history/temp-export/:id" element={<HistoryItem />} />
           <Route path='/upload-multiple/:idWareHouse/:nameWareHouse' element={<UploadXlsx />} />
         </Route>
         <Route path='/' element={<Login />} />

@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import countDeliveryDB from "../../database/countDelivery/countDelivery";
 
 const {
@@ -8,7 +8,7 @@ const {
   approveAccept,
 } = countDeliveryDB;
 
-const countDelivery = () => {
+const countDelivery = (mainScreen: BrowserWindow) => {
   ipcMain.handle(
     "get-history-export",
     async (

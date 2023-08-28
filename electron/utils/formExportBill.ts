@@ -13,6 +13,7 @@ export const formExportBill = async (data: {
   total: number;
   date: any;
   title: string;
+  temp?: boolean;
   nameSource: string;
 }) => {
   const { items, name, note, nature, total, date, title, nameSource, ID } =
@@ -161,7 +162,7 @@ export const formExportBill = async (data: {
         <h3 class="name">${data.name.toUpperCase() ?? ""}</h3>
       </div>
       <div class="center-top">
-        <h1>PHIẾU XUẤT KHO</h1>
+        <h1>PHIẾU ${data.temp ? "TẠM" : ""} XUẤT KHO</h1>
       </div>
       <div class="right-top">
         <p class="right">Số lệnh: ${ID ? ID : Number(count) + 1}</p>

@@ -28,13 +28,12 @@ import { FormInstance } from "antd/lib/form";
 import docso from "@/utils/toVietnamese";
 import { ipcRenderer } from "electron";
 import dayjs from "dayjs";
-import AddWareHouseItem from "./AddWareHouseItem";
 
 interface PropsModal {
   isShowModal: any;
   onCloseModal: () => void;
-  nameWareHouse?: string;
-  idWareHouse?: number | string;
+  listItem: DataType[];
+  idReceiving: number | unknown;
 }
 
 const removeItemChildrenInTable = (
@@ -71,21 +70,18 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const {
     isShowModal,
     onCloseModal,
-    idWareHouse,
-    nameWareHouse
+    listItem,
+    idReceiving
   } = props;
 
-  const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(
-    removeItemChildrenInTable([])
-  );
+  const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>([]);
 
-  const [listSource, setListSource] = useState<{ name: string, ID: number }[]>([])
-  const [showModal, setShowModal] = useState<boolean>(false)
+  const [listWareHouse, setListWareHouse] = useState<{ name: string, ID: number }[]>([])
   const formRef = useRef<FormInstance>(null);
 
   const handleGetAllSource = async () => {
-    const result = await ipcRenderer.invoke("get-all-no-pagination")
-    setListSource(result.rows)
+    const result = await ipcRenderer.invoke("receiving-list")
+    setListWareHouse(result.rows)
   }
 
   useEffect(() => {
@@ -95,19 +91,20 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   useEffect(() => {
     if (isShowModal) {
       return formRef.current?.setFieldsValue({
-        ...defaultInput
+        ...defaultInput, idReceiving
       })
     }
     handleClean()
   }, [isShowModal])
 
+  useEffect(() => {
+    setListItemEntryForm(removeItemChildrenInTable(listItem))
+  }, [listItem])
+
   const columns: ColumnsType<DataType> = [
     {
       title: 'Tên Kho Hàng',
-      dataIndex: 'prev_idwarehouse',
-      render: () => {
-        return nameWareHouse
-      },
+      dataIndex: 'nameWareHouse',
       width: 200,
     },
     {
@@ -182,12 +179,14 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       ),
     },
   ];
-  const optionSource: OptionSelect[] = listSource.map(source => (
+
+  const optionSource: OptionSelect[] = listWareHouse.map(source => (
     {
       label: source?.name,
       value: source?.ID
     }
   ));
+
   const handleSubmitForm = async () => {
     try {
       await formRef?.current!.validateFields();
@@ -224,19 +223,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     );
   };
 
-  const importWarehouseCallBack = async (
-    event: Electron.IpcRendererEvent,
-    isSuccess: boolean
-  ) => {
-    if (!isSuccess) {
-      return message.error("Nhập kho thất bại. Hãy thử lại");
-    } else {
-      message.success("Nhập kho thành công");
-      handleClean();
-      return;
-    }
-  };
-
   const handleClean = () => {
     onCloseModal();
     formRef.current?.resetFields();
@@ -248,9 +234,9 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       message.error("Không có sản phẩm để làm phiếu");
       return;
     }
-    const idSource = formRef.current?.getFieldValue("id_Source")
+    const idSource = formRef.current?.getFieldValue("idReceiving")
 
-    const sourceSelect = listSource?.find(item => item.ID === idSource)
+    const sourceSelect = listWareHouse?.find(item => item.ID === idSource)
     const params: any = {
       ...values,
       items: listItemEntryForm,
@@ -261,19 +247,14 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       total: totalPrice,
       title: values.title,
       nameSource: sourceSelect?.name,
-      nameWareHouse,
-      idWareHouse
     };
 
-    const result = await ipcRenderer.invoke("create-product-item", { ...params });
-    // if (result) {
-    //   setListItemEntryForm([])
-    // }
+    try {
+      await ipcRenderer.invoke("temp-export-warehouse", params);
+    } catch (error) {
+      message.error('Loi server')
+    }
   };
-
-  const handleCreateNewItem = (item: DataType) => {
-    setListItemEntryForm(prev => removeItemChildrenInTable([...prev, item]))
-  }
 
   const handleRemoveItem = (item: DataType) => {
     const filterItem = listItemEntryForm.filter(
@@ -292,7 +273,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
 
   return (
     <Modal
-      title={`LÀM PHIẾU TẠM NHẬP`}
+      title={`LÀM PHIẾU TẠM XUẤT`}
       centered
       open={isShowModal}
       onCancel={handleClean}
@@ -330,7 +311,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label={"Nguồn nhập"} name={"id_Source"} initialValue={optionSource[0]?.value} rules={[
+            <Form.Item label={"Đơn vị nhận"} name={"idReceiving"} rules={[
               {
                 required: true,
                 message: getMessage(ERROR.ERROR_1, "Nguồn nhập"),
@@ -401,9 +382,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           </Col>
         </Row>
 
-        <Space align="center" style={{ margin: "10px 0" }}>
-          <Button type="primary" onClick={() => setShowModal(true)}>Thêm sản phẩm mới</Button>
-        </Space>
         <Table
           columns={columns}
           dataSource={listItemEntryForm as any}
@@ -414,11 +392,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           rowKey={(item: DataType) => item.IDIntermediary}
         />
       </Form>
-      <AddWareHouseItem
-        isShowModal={showModal}
-        onCloseModal={() => setShowModal(false)}
-        onCreateItem={(item) => handleCreateNewItem(item)}
-      />
+
     </Modal>
   );
 };

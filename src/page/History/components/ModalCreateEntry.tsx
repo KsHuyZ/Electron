@@ -255,7 +255,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   }
 
   const handleSave = (data: DataType) => {
-    console.log(data);
     const newList = listItemEntryForm.map(item => item.IDIntermediary === data.IDIntermediary ? data : item)
     const index = itemEditList.findIndex(item => item.IDIntermediary === data.IDIntermediary)
     setItemEditList(prev => {

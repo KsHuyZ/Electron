@@ -265,6 +265,7 @@ const AddWareHouseItem = React.memo(
                   onSelect={onSelect}
                   value={inputValue}
                   onChange={setInputValue}
+                  autoFocus
                 />
               </Form.Item>
             </Col>

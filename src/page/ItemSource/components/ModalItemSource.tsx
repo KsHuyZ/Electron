@@ -1,7 +1,7 @@
 import { UilMultiply } from '@iconscout/react-unicons'
-import { Button, Input, Form, Modal, message } from 'antd'
+import { Button, Input, Form, Modal, message, InputRef } from 'antd'
 import { ipcRenderer } from 'electron'
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toastify from '@/lib/toastify'
 
 type DataType = {
@@ -24,6 +24,7 @@ const ModalItemSource = (props: ModalItemSourceProps) => {
     const { closeModal, setLoading, data, reload, setAllItemSource, isShow } = props
     const [isLoading, setIsLoading] = useState(false)
     const [form] = Form.useForm();
+    const inputRef = useRef<InputRef | null>(null)
 
     const hanldeSubmit = async () => {
         await form.validateFields();
@@ -67,10 +68,16 @@ const ModalItemSource = (props: ModalItemSourceProps) => {
     }
 
     useEffect(() => {
-        if (data) {
+        if (data && isShow) {
             form.setFieldsValue(data);
         }
-    }, [data])
+        const handle = setTimeout(() => {
+            inputRef.current?.focus()
+        }, 300)
+        return () => {
+            clearTimeout(handle)
+        }
+    }, [data, isShow])
 
     const handleClean = () => {
         form.resetFields()
@@ -92,7 +99,7 @@ const ModalItemSource = (props: ModalItemSourceProps) => {
                         { required: true, message: 'Tên nguồn hàng không được để trống.' },
                     ]}
                 >
-                    <Input size="large" placeholder="Tên nguồn hàng" />
+                    <Input size="large" placeholder="Tên nguồn hàng" ref={inputRef} />
                 </Form.Item>
                 <Form.Item
                     label="Địa Chỉ Nguồn Hàng"

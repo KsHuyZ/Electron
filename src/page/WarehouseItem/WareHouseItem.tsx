@@ -226,8 +226,6 @@ const WareHouseItem = () => {
         setIsSearch(false);
       }
     }
-
-
   }
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
@@ -297,16 +295,18 @@ const WareHouseItem = () => {
     }
   }
 
-  const tempImportWarehouseItemCallBack = async () => {
-    await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-    setIsShowModal(false)
-    message.success("Tạm nhập mặt hàng thành công")
+  const tempImportWarehouseItemCallBack = () => {
+    setTimeout(() => {
+      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+      setIsShowModal(false)
+      message.success("Tạm nhập mặt hàng thành công")
+    }, 500)
   }
 
   useEffect(() => {
     ipcRenderer.on("temp-import-success", tempImportWarehouseItemCallBack)
     return () => {
-      ipcRenderer.removeListener("edit-import-success", tempImportWarehouseItemCallBack)
+      ipcRenderer.removeListener("temp-import-success", tempImportWarehouseItemCallBack)
     }
   }, [])
 

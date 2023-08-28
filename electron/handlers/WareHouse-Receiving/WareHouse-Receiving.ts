@@ -1,8 +1,8 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import wareHouseDB from "../../database/WareHouse-Receiving/wareHouse-Receiving";
 import { WarehouseReceiving } from "../../types";
 
-const WareHouse = () => {
+const WareHouse = (mainScreen: BrowserWindow) => {
   const {
     create_WareHouse_Receiving,
     getAllWareHouse,
@@ -11,7 +11,7 @@ const WareHouse = () => {
     updateReceiving,
     getListWareHouseExceptId,
     getListReceiving,
-    getAllWareHouseNoPagination
+    getAllWareHouseNoPagination,
   } = wareHouseDB;
 
   //listen create warehouse request
@@ -43,10 +43,10 @@ const WareHouse = () => {
     }
   );
 
-  ipcMain.handle("get-warehouse-no-pagination", async(event) =>{
+  ipcMain.handle("get-warehouse-no-pagination", async (event) => {
     const response = await getAllWareHouseNoPagination();
     return response;
-  })
+  });
 
   // listen get all Receiving request
   ipcMain.handle(

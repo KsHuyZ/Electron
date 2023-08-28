@@ -9,6 +9,7 @@ import docso from '@/utils/toVietnamese'
 import { UilExclamationCircle, UilPen } from '@iconscout/react-unicons'
 import ModalCreateEntry from './components/ModalCreateEntry'
 import toastify from '@/lib/toastify'
+import { getPath } from './utils';
 
 const dataTab = [
     {
@@ -48,6 +49,7 @@ export type CountDeliveryType = {
     status: number | string
 }
 
+
 const { confirm } = Modal;
 
 const History = () => {
@@ -58,15 +60,6 @@ const History = () => {
     const current = searchParams.get("current");
     const pageSize = searchParams.get("pageSize");
 
-    const defaultTable: TableData<CountDeliveryType[]> = {
-        pagination: {
-            current: current ? Number(current) : 1,
-            pageSize: pageSize ? Number(pageSize) : 5,
-            total: 0,
-        },
-        loading: false,
-        rows: [],
-    };
     const [tableData, setTableData] = useState<TableData<CountDeliveryType[]>>({
         pagination: {
             current: current ? Number(current) : 1,
@@ -99,34 +92,36 @@ const History = () => {
     const { notifySuccess } = toastify
 
     const isExport = location.pathname.startsWith("/history/export")
-    const columns: ColumnsType<CountDeliveryType> = [
+    const pathName = location.pathname
+    let columns: ColumnsType<CountDeliveryType> = [
         {
             title: "Số phiếu",
             dataIndex: "ID",
             render(value) {
-                return <Link to={`/history/${isExport ? "export" : "import"}/${value}`}>{value}</Link>
+                return <Link to={`/history/${getPath(pathName)}/${value}`}>{value}</Link>
             },
         },
         {
-            title: isExport ? "Đơn vị nhận" : "Nhập vào Kho",
-            dataIndex: isExport ? "nameReceiving" : "nameSource"
+            title: getPath(pathName).includes("export") ? "Đơn vị nhận" : "Nguồn hàng",
+            dataIndex: getPath(pathName).includes("export") ? "nameReceiving" : "nameSource"
         },
         {
             title: "Tính chất",
             dataIndex: "nature"
         },
         {
-            title: "Ngày xuất",
+            title: "Ngày làm phiếu",
             dataIndex: "date"
         },
         {
             title: "Trạng thái",
             dataIndex: "status",
+            key: "status",
             render: (value: number) => (
                 <Tag color={`${value === 0 ? "#f50" : "#87d068"}`}>
                     {value === 0 ? "Chưa duyệt" : "Đã duyệt"}
                 </Tag>
-            )
+            ),
         },
 
         {
@@ -154,17 +149,20 @@ const History = () => {
         {
             title: "Cập nhật",
             render: (_, value) => (
-                canUpdate && value.status === 0 ? <Space size="middle">
+                canUpdate && value.status !== 1 ? <Space size="middle">
                     <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleShowModalUpdate(value)} />
-                    <Button type='text' onClick={() => handleApprove(value)}>Duyệt phiếu</Button>
+                    {getPath(pathName).includes("temp") ? null : <Button type='text' onClick={() => handleApprove(value)}>Duyệt phiếu</Button>}
                 </Space> : <></>
             )
         }
     ]
+    if (getPath(pathName).includes("temp")) {
+        columns = columns.filter(col => col.key !== "status")
+    }
 
     const handleApproveAccept = async (id: number | string) => {
         try {
-            const response = await ipcRenderer.invoke(`approve-${isExport ? "export" : "import"}`, id)
+            const response = await ipcRenderer.invoke(`approve-${getPath(pathName)}`, id)
             if (response) {
                 await handleGetData()
                 message.success("Duyệt phiếu thành công")
@@ -180,12 +178,12 @@ const History = () => {
     }
 
     const handleGetData = async () => {
-        const result = await ipcRenderer.invoke(`get-history-${isExport ? "export" : "import"}`, { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize })
+        const result = await ipcRenderer.invoke(`get-history-${getPath(pathName)}`, { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize })
         return setTableData({ ...result, pagination: { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize }, loading: false })
     }
 
     const handleTableChange = (pagination: TablePaginationConfig) => {
-        const { current, pageSize } = pagination
+        const { current, pageSize, total } = pagination
         setSearchParams(prev => ({ ...prev, current, pageSize }))
     };
 
@@ -206,7 +204,7 @@ const History = () => {
 
     useEffect(() => {
         handleGetData()
-    }, [current, pageSize, isExport])
+    }, [current, pageSize, location.pathname, searchParams])
 
     return (
         <>
@@ -248,7 +246,6 @@ const History = () => {
                 }}
                 select={currentSelect}
                 isExport={isExport}
-
             />
         </>
     )

@@ -16,7 +16,7 @@ type DataType = {
   date_updated_at: string;
   id_Source?: string;
   id_WareHouse?: number;
-  warehouseName?: string;
+  nameWareHouse?: string;
 };
 
 export const countMoney = (allProductItem: DataType[], isTemp?: boolean) => {

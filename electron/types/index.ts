@@ -19,7 +19,7 @@ export type Intermediary = {
   idIntermediary: number;
   id_wareHouse: number;
   id_wareHouse_item: number;
-
+  quantity_real?: number;
   status: number;
   quality: number;
   quantity: number;
@@ -45,7 +45,7 @@ export type DataType = {
   date_updated_at: string;
   id_Source?: string;
   id_WareHouse?: number;
-  warehouseName?: string;
+  nameWareHouse?: string;
   id_prev_warehouse?: number;
 };
 
