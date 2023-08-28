@@ -14,7 +14,8 @@ import {
 import countDelivery from "../countDelivery/countDelivery";
 import countCoupon from "../countCoupon/countCoupon";
 import { Moment } from "moment";
-
+import tempCountDelivery from "../tempCountDelivery";
+const { createTempDeliveryItem } = tempCountDelivery;
 const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
     id: number,
@@ -713,6 +714,7 @@ const wareHouseItem = {
     }
   },
   tempExportWareHouse: async (
+    idCoutDelivery: number | unknown,
     id_newWareHouse: number,
     intermediary: Intermediary[]
   ) => {
@@ -760,6 +762,11 @@ const wareHouseItem = {
                 item["IDWarehouseItem"],
                 item["id_WareHouse"],
               ]);
+              await createTempDeliveryItem(
+                idCoutDelivery,
+                ID,
+                item["newQuantity"]
+              );
             }
           });
         } else {
@@ -781,7 +788,7 @@ const wareHouseItem = {
               "Can't change warehouseitem to new warehouse. Is too large"
             );
           } else {
-            await runQuery(changeWareHouseQuery, [
+            const ID = await runQueryReturnID(changeWareHouseQuery, [
               id_newWareHouse,
               item["IDWarehouseItem"],
               item["id_WareHouse"],
@@ -790,10 +797,16 @@ const wareHouseItem = {
               item["newQuantity"],
               item.date,
             ]);
+
             await runQuery(updateWareHouseQuery, [
               item["newQuantity"],
               item["IDIntermediary"],
             ]);
+            await createTempDeliveryItem(
+              idCoutDelivery,
+              ID,
+              item["newQuantity"]
+            );
           }
         }
       });

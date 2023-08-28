@@ -181,7 +181,7 @@ const History = () => {
         const result = await ipcRenderer.invoke(`get-history-${getPath(pathName)}`, { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize })
         return setTableData({ ...result, pagination: { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize }, loading: false })
     }
-
+    console.log(tableData.rows)
     const handleTableChange = (pagination: TablePaginationConfig) => {
         const { current, pageSize, total } = pagination
         setSearchParams(prev => ({ ...prev, current, pageSize }))

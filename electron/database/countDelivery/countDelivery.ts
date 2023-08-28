@@ -62,7 +62,7 @@ const countDelivery = {
   },
   getCountDelivery: async (pageSize: number, currentPage: number) => {
     const offsetValue = (currentPage - 1) * pageSize;
-    const selectQuery = `select ce.ID, ce.name, ce.nature,ce.title, ce.Note, ce.Total as Totalprice, ce.date,w.name as nameReceiving,ce.id_WareHouse, COUNT(ce.ID) OVER() AS total  from CoutDelivery ce
+    const selectQuery = `select ce.ID, ce.name, ce.nature,ce.title, ce.Note, ce.Total as Totalprice, ce.date,w.name as nameReceiving,ce.id_WareHouse,ce.status,ce.author, ce.numContract, COUNT(ce.ID) OVER() AS total  from CoutDelivery ce
     JOIN warehouse w on w.ID = ce.id_WareHouse
     ORDER BY ce.ID DESC LIMIT ? OFFSET ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [

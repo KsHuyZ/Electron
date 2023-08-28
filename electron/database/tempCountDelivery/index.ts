@@ -36,7 +36,7 @@ const tempCountDelivery = {
   },
   createTempDeliveryItem: async (
     idTempCoutDelivery: number | unknown,
-    idIntermediary: number | string,
+    idIntermediary: number | string | unknown,
     quantity: number
   ) => {
     const createQuery =
@@ -80,15 +80,8 @@ const tempCountDelivery = {
         author,
         numContract
       );
-      await tempExportWareHouse(id_newWareHouse, intermediary);
-      const promises = intermediary.map(async (item) => {
-        await createTempDeliveryItem(
-          ID,
-          item["IDIntermediary"],
-          item["newQuantity"]
-        );
-      });
-      await Promise.all(promises);
+      await tempExportWareHouse(ID, id_newWareHouse, intermediary);
+
       return true;
     } catch (error) {
       console.log(error);
@@ -112,7 +105,7 @@ const tempCountDelivery = {
     join Intermediary i on i.ID = di.id_intermediary
     join warehouseitem wi on wi.ID = i.id_WareHouseItem
     join warehouse w on w.ID = i.prev_idwarehouse
-    where id_Cout_Delivery = ?`;
+    where id_Temp_Cout_Delivery = ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [id]);
     return rows;
   },
