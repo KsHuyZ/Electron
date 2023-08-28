@@ -1,7 +1,6 @@
-import "./modalWareHouse.scss";
-import React, { useEffect, useState } from 'react';
+import React, { Ref, useEffect, useRef, useState } from 'react';
 import { UilMultiply } from '@iconscout/react-unicons';
-import { Form, Input, Button } from 'antd';
+import { Form, Input, Button, Modal, InputRef } from 'antd';
 import { ipcRenderer } from 'electron';
 import { message } from "antd";
 
@@ -9,59 +8,73 @@ type ModalProps = {
   closeModal: () => void;
   setLoading: () => void;
   clean: () => void;
-  dataEdit?:{
+  dataEdit?: {
     idEdit: string;
     name: string;
   };
   fetching: () => void;
+  isShow: boolean;
 };
 
-const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean,fetching }: ModalProps) => {
+const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean, fetching, isShow }: ModalProps) => {
   const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  useEffect(() =>{
-    if(dataEdit?.idEdit){
-        form.setFieldValue('name', dataEdit.name);
-
+  const inputRef = useRef<InputRef | null>(null)
+  useEffect(() => {
+    if (dataEdit?.idEdit && isShow) {
+      form.setFieldValue('name', dataEdit.name);
     }
-  },[dataEdit?.idEdit])
+    const handle = setTimeout(() => {
+      inputRef.current?.focus()
+    }, 300)
+    return () => {
+      clearTimeout(handle)
+    }
+  }, [dataEdit?.idEdit, isShow])
+
+
 
   const handleAddNewWareHouse = async () => {
     try {
-      await form.validateFields(); // Validate the form fields
-      setLoading();
-      setIsLoading(true); // Set loading state to true
-      const { name } = form.getFieldsValue(); // Get the value of the name field
-      if(dataEdit?.idEdit){
+      await form.validateFields();
+      setIsLoading(true);
+      const { name } = form.getFieldsValue();
+      if (dataEdit?.idEdit) {
         const params = {
           name: name,
           address: '',
           description: '',
-          is_receiving : 0,
+          is_receiving: 0,
           phone: ''
         }
-        const response = await ipcRenderer.invoke('update-warehouse', {...params, id: dataEdit.idEdit});
-        if(response){
+        const response = await ipcRenderer.invoke('update-warehouse', { ...params, id: dataEdit.idEdit });
+        if (response) {
           console.log(response);
-          
+
         }
-      }else{
+      } else {
         const params = {
           name: name,
           address: '',
           description: '',
-          is_receiving : 0,
+          is_receiving: 0,
           phone: ''
         }
         const response = await ipcRenderer.invoke('create-new-warehouse', JSON.stringify(params));
-        if(response){
-          message.success('Tạo kho hàng thành công');
+        if (!response) {
+          setIsLoading(false);
+          return form.setFields([{
+            name: 'name',
+            errors: ['Kho đã tồn tại']
+          }])
         }
+        handleClean()
+        message.success('Tạo kho hàng thành công');
       }
-      // Simulating loading completion after 3 seconds
+
       clean();
-      setIsLoading(false); // Set loading state to false
+      setIsLoading(false);
+      setLoading();
       closeModal();
       fetching();
     } catch (error) {
@@ -69,52 +82,32 @@ const ModalWareHouse = ({ closeModal, setLoading, dataEdit, clean,fetching }: Mo
     }
   };
 
+  const handleClean = () => {
+    form.resetFields()
+    closeModal()
+  }
+
   return (
-    <div className="backdrop">
-      <div className="modal" tabIndex={0}>
-        <div className="header">
-          <div className="close-btn">
-            <UilMultiply onClick={closeModal} />
-          </div>
-        </div>
-        <div className="main-body">
-          <Form form={form} layout="vertical">
-            <Form.Item
-              label="Tên Kho Hàng"
-              name="name"
-              rules={[
-                { required: true, message: 'Tên kho hàng không được để trống.' },
-              ]}
-            >
-              <Input size="large" placeholder="Tên kho hàng" disabled={isLoading} />
-            </Form.Item>
-          </Form>
-        </div>
-        <div className="action">
-          <div className="cancel">
-            <Button
-              type="primary"
-              ghost
-              onClick={() => {
-                setTimeout(() => closeModal(), 300);
-              }}
-            >
-              Thoát
-            </Button>
-          </div>
-          <div className="create">
-            <Button
-              type="primary"
-              onClick={handleAddNewWareHouse}
-              loading={isLoading}
-              htmlType="submit"
-            >
-              {dataEdit?.idEdit ? 'Cập Nhật' : 'Tạo'}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Modal
+      title={dataEdit?.idEdit ? `Cập nhật kho` : `Thêm kho mới`}
+      centered
+      open={isShow}
+      onCancel={handleClean}
+      onOk={() => form.submit()}
+
+    >
+      <Form form={form} layout="vertical" onFinish={handleAddNewWareHouse}>
+        <Form.Item
+          label="Tên Kho Hàng"
+          name="name"
+          rules={[
+            { required: true, message: 'Tên kho hàng không được để trống.' },
+          ]}
+        >
+          <Input size="large" placeholder="Tên kho hàng" disabled={isLoading} ref={inputRef} />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 };
 

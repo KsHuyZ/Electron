@@ -1,8 +1,8 @@
 import toastify from '@/lib/toastify'
 import { UilMultiply } from '@iconscout/react-unicons'
-import { Button, Input, Form } from 'antd'
+import { Button, Input, Form, Modal, message, InputRef } from 'antd'
 import { ipcRenderer } from 'electron'
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 
 
 type DataType = {
@@ -17,24 +17,17 @@ interface ModalRecipientProps {
     data: DataType | null | undefined,
     reload: () => void,
     setAllRecipient: Dispatch<SetStateAction<DataType[]>>
+    isShow: boolean;
 }
 
 
 const ModalRecipient = (props: ModalRecipientProps) => {
-    const { closeModal, data, reload, setAllRecipient } = props
-    const [isLoading, setIsLoading] = useState(false)
+    const { closeModal, data, reload, setAllRecipient, isShow } = props
     const [form] = Form.useForm();
     const { notifySuccess, notifyError } = toastify
-
-    const handleCloseModal = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === "Escape") {
-            closeModal()
-        }
-    }
-
+    const inputRef = useRef<InputRef | null>(null)
     const hanldeSubmit = async () => {
         await form.validateFields();
-        setIsLoading(true)
         const { name, address, phone } = form.getFieldsValue();
         if (data) {
             const { ID } = data
@@ -56,12 +49,16 @@ const ModalRecipient = (props: ModalRecipientProps) => {
         const success = await ipcRenderer.invoke("create-new-receiving", receivingString)
         if (success.ID) {
             reload()
-            closeModal()
-            return notifySuccess("Thêm đơn vị nhận thành công!")
+            handleClean()
+            return message.success("Thêm đơn vị nhận thành công!")
+        } if (!success) {
+            return form.setFields([{
+                name: 'name',
+                errors: ['Đơn vị nhận đã tồn tại']
+            }])
         } else {
-            notifyError("Thêm đơn vị nhận thất bại")
+            message.error("Thêm đơn vị nhận thất bại")
         }
-        
     }
 
     const handleInputPhone = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,68 +67,54 @@ const ModalRecipient = (props: ModalRecipientProps) => {
         form.setFieldValue('phone', numericValue)
     }
 
-
     useEffect(() => {
-        if (data) {
-            const { name, address, phone } = data
-            form.setFieldValue('name', name);
-            form.setFieldValue('address', address);
-            form.setFieldValue('phone', phone);
+        if (data && isShow) {
+            form.setFieldsValue(data);
         }
-    }, [])
+        const handle = setTimeout(() => {
+            inputRef.current?.focus()
+        }, 300)
+        return () => {
+            clearTimeout(handle)
+        }
+    }, [data, isShow])
+
+    const handleClean = () => {
+        form.resetFields()
+        closeModal()
+    }
 
     return (
-        <div className='backdrop'>
-            <div className="modal" onKeyDown={handleCloseModal} tabIndex={0}>
-                <div className="header">
-                    <div className="close-btn" >
-                        <UilMultiply onClick={closeModal} />
-                    </div>
-                </div>
-                <div className="main-body">
-                    <Form form={form} layout="vertical">
-                        <Form.Item
-                            label="Tên Đơn Vị Nhận"
-                            name="name"
-                            rules={[
-                                { required: true, message: 'Tên đơn vị nhận không được để trống.' },
-                            ]}
-                        >
-                            <Input size="large" placeholder="Tên đơn vị nhận" disabled={isLoading} />
-                        </Form.Item>
-                        <Form.Item
-                            label="Địa Chỉ Đơn Vị Nhận"
-                            name="address"
-                            rules={[
-                                { required: true, message: 'Địa chỉ đơn vị nhận không được để trống.' },
-                            ]}
-                        >
-                            <Input size="large" placeholder="Địa chỉ đơn vị nhận" disabled={isLoading} />
-                        </Form.Item>
-                        <Form.Item
-                            label="Số Điện Thoại Đơn Vị Nhận"
-                            name="phone"
-                            rules={[
-                                { required: true, message: 'Số điện thoại đơn vị nhận không được để trống.' },
-                            ]}
-                        >
-                            <Input size="large" placeholder="Số điện thoại đơn vị nhận" disabled={isLoading} onChange={handleInputPhone} />
-                        </Form.Item>
-                    </Form>
-                </div>
-
-                <div className="action">
-                    <div className="cancel">
-                        <Button type="primary" ghost onClick={() => {
-                            setTimeout(() => closeModal(), 300)
-                        }}>Thoát</Button>
-                    </div>
-                    <div className="create">
-                        <Button type="primary" onClick={hanldeSubmit} htmlType="submit">{!data ? "Thêm nguồn hàng" : "Cập nhật"}</Button>
-                    </div>
-                </div>
-            </div>
-        </div >
+        <Modal
+            title={data ? `Cập nhật đơn vị` : `Thêm đơn vị mới`}
+            centered
+            open={isShow}
+            onCancel={handleClean}
+            onOk={() => form.submit()}>
+            <Form form={form} layout="vertical" onFinish={hanldeSubmit}>
+                <Form.Item
+                    label="Tên Đơn Vị Nhận"
+                    name="name"
+                    rules={[
+                        { required: true, message: 'Tên đơn vị nhận không được để trống.' },
+                    ]}
+                >
+                    <Input size="large" placeholder="Tên đơn vị nhận" ref={inputRef} />
+                </Form.Item>
+                <Form.Item
+                    label="Địa Chỉ Đơn Vị Nhận"
+                    name="address"
+                >
+                    <Input size="large" placeholder="Địa chỉ đơn vị nhận" />
+                </Form.Item>
+                <Form.Item
+                    label="Số Điện Thoại Đơn Vị Nhận"
+                    name="phone"
+                >
+                    <Input size="large" placeholder="Số điện thoại đơn vị nhận" onChange={handleInputPhone} />
+                </Form.Item>
+            </Form>
+        </Modal>
     )
 }
 

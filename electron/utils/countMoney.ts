@@ -16,13 +16,14 @@ type DataType = {
   date_updated_at: string;
   id_Source?: string;
   id_WareHouse?: number;
-  warehouseName?: string;
+  nameWareHouse?: string;
 };
 
-export const countMoney = (allProductItem: DataType[]) => {
-  let value = 0;
-  allProductItem.map((product: DataType) => {
-    value += product.price * product.quantity;
-  });
-  return value;
+export const countMoney = (allProductItem: DataType[], isTemp?: boolean) => {
+  return allProductItem.reduce((total: number, product: DataType) => {
+    return (
+      total +
+      product.price * (!isTemp ? product.quantity : product.quantity_real)
+    );
+  }, 0);
 };

@@ -1,7 +1,7 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import SourceDB from "../../database/Source/Source";
 import { Source } from "../../types";
-const Source = () => {
+const Source = (mainScreen: BrowserWindow) => {
   const {
     createItemSource,
     getAllItemSource,

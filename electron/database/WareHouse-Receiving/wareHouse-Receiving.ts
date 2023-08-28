@@ -1,10 +1,14 @@
 import { BrowserWindow } from "electron";
 import db from "../../utils/connectDB";
 import { WarehouseReceiving } from "../../types";
+import { runQueryGetData } from "../../utils";
 
 const WareHouse = {
   //Insert warehouse and Receiving
-  create_WareHouse_Receiving: (data: WarehouseReceiving) => {
+  create_WareHouse_Receiving: async (data: WarehouseReceiving) => {
+    const selectQuery = `SELECT ID FROM warehouse WHERE LOWER(name) = LOWER(?)`;
+    const result: any = await runQueryGetData(selectQuery, [data.name]);
+    if (result?.ID) return false;
     return new Promise((resolve, reject) => {
       const { name, address, description, is_receiving, phone } = data;
       db.run(
@@ -151,8 +155,7 @@ const WareHouse = {
   },
   getAllWareHouseNoPagination: async () => {
     try {
-      const selectQuery =
-        "SELECT * FROM WareHouse WHERE is_receiving = 0";
+      const selectQuery = "SELECT * FROM WareHouse WHERE is_receiving = 0";
       const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, (err, rows) => {
           if (err) {
@@ -162,7 +165,7 @@ const WareHouse = {
           }
         });
       });
-      return { rows};
+      return { rows };
     } catch (err) {
       console.log(err);
     }

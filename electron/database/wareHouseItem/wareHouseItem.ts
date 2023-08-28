@@ -15,7 +15,8 @@ import {
 import countDelivery from "../countDelivery/countDelivery";
 import countCoupon from "../countCoupon/countCoupon";
 import { Moment } from "moment";
-
+import tempCountDelivery from "../tempCountDelivery";
+const { createTempDeliveryItem } = tempCountDelivery;
 const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
     id: number,
@@ -66,8 +67,8 @@ const wareHouseItem = {
       }
 
       if (after_date_ex) {
-          whereConditions.unshift(`wi.date_expried <= ?`);
-          queryParams.unshift(after_date_ex);
+        whereConditions.unshift(`wi.date_expried <= ?`);
+        queryParams.unshift(after_date_ex);
       }
 
       const whereClause =
@@ -85,7 +86,6 @@ const wareHouseItem = {
         ${whereClause}
         ORDER BY i.ID DESC
         LIMIT ? OFFSET ?`;
-
       const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, ...queryParams, (err, rows) => {
           if (err) {
@@ -231,7 +231,7 @@ const wareHouseItem = {
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
      i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
-      i.date,w.name AS warehouseName, COUNT(i.ID) OVER() AS total 
+      i.date,w.name AS nameWareHouse, COUNT(i.ID) OVER() AS total 
      FROM warehouseItem wi
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID
@@ -255,13 +255,17 @@ const wareHouseItem = {
       return null;
     }
   },
-  createWareHouseItem: async (data: WarehouseItem & Intermediary) => {
+  createWareHouseItem: async (
+    idTempCoutCoupon: number | unknown,
+    idWareHouse: number,
+    idSource: number,
+    data: WarehouseItem & Intermediary
+  ) => {
     const {
       name,
       price,
       unit,
       quality,
-      idSource,
       date_expried,
       date_created_at,
       date_updated_at,
@@ -269,14 +273,14 @@ const wareHouseItem = {
       date,
       quantity_plane,
       quantity_real,
-      id_wareHouse,
+      origin,
     } = data;
     const status = 1;
 
     try {
       const createItemQuery = `INSERT INTO warehouseItem (id_Source, name, price, unit, date_expried, 
-        date_created_at, date_updated_at, note, quantity_plane, quantity_real) VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        date_created_at, date_updated_at, note, quantity_plane, quantity_real, origin) VALUES 
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       const idWarehouseItem = await new Promise((resolve, reject) => {
         db.run(
           createItemQuery,
@@ -291,6 +295,7 @@ const wareHouseItem = {
             note,
             quantity_plane,
             quantity_real,
+            origin,
           ],
           function (err) {
             if (err) {
@@ -306,7 +311,7 @@ const wareHouseItem = {
       const idIntermediary = await new Promise((resolve, reject) => {
         db.run(
           createIntermediary,
-          [id_wareHouse, idWarehouseItem, status, quality, quantity_real, date],
+          [idWareHouse, idWarehouseItem, status, quality, quantity_real, date],
           function (err) {
             if (err) {
               reject(err);
@@ -316,6 +321,16 @@ const wareHouseItem = {
           }
         );
       });
+      const createTempCountCoupon = `INSERT INTO Coupon_Temp_Item (id_Temp_Cout_Coupon,id_intermediary,quantity,quality,id_Warehouse)
+      VALUES (?, ?, ?, ?, ?)`;
+      const ID = await runQueryReturnID(createTempCountCoupon, [
+        idTempCoutCoupon,
+        idIntermediary,
+        quantity_real,
+        quality,
+        idWareHouse,
+      ]);
+
       return true;
     } catch (error) {
       console.log(error);
@@ -435,6 +450,7 @@ const wareHouseItem = {
       quantity,
       idWarehouseItem,
       idIntermediary,
+      origin,
     } = data;
 
     const intermediaryExists = await new Promise((resolve, reject) => {
@@ -458,7 +474,7 @@ const wareHouseItem = {
 
     await new Promise((resolve, reject) => {
       db.run(
-        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, date_created_at = ?, date_updated_at = ?, note = ?, quantity_plane = ? WHERE ID = ?`,
+        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, date_created_at = ?, date_updated_at = ?, note = ?, quantity_plane = ?, origin = ? WHERE ID = ?`,
         [
           name,
           price,
@@ -470,6 +486,7 @@ const wareHouseItem = {
           note,
           quantity_plane,
           idWarehouseItem,
+          origin,
         ],
         function (err) {
           if (err) {
@@ -698,6 +715,7 @@ const wareHouseItem = {
     }
   },
   tempExportWareHouse: async (
+    idCoutDelivery: number | unknown,
     id_newWareHouse: number,
     intermediary: Intermediary[]
   ) => {
@@ -709,9 +727,9 @@ const wareHouseItem = {
             query,
             [
               id_newWareHouse,
-              item.id_wareHouse_item,
-              item.quality,
-              item.id_wareHouse,
+              item["IDWarehouseItem"],
+              item["newQuantity"],
+              item["id_WareHouse"],
             ],
             function (err, row: any) {
               if (err) {
@@ -723,11 +741,12 @@ const wareHouseItem = {
             }
           );
         });
+
         if (row.length > 0) {
           await row.forEach(async (element) => {
             console.log("This is row data", element);
             const { quantity, status, ID } = element;
-            if (Number(quantity) < item.quantity) {
+            if (Number(quantity) < item["newQuantity"]) {
               throw new Error(
                 "Can't export warehouseitem to receiving. Is too large"
               );
@@ -737,13 +756,18 @@ const wareHouseItem = {
               );
               const updateQuery1 = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
               const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
-              await runQuery(updateQuery1, [item.quantity, ID]);
+              await runQuery(updateQuery1, [item["newQuantity"], ID]);
 
               await runQuery(updateQuery2, [
-                item.quantity,
-                item.id_wareHouse_item,
-                item.id_wareHouse,
+                item["newQuantity"],
+                item["IDWarehouseItem"],
+                item["id_WareHouse"],
               ]);
+              await createTempDeliveryItem(
+                idCoutDelivery,
+                ID,
+                item["newQuantity"]
+              );
             }
           });
         } else {
@@ -751,7 +775,7 @@ const wareHouseItem = {
           const updateWareHouseQuery = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? `;
           const quantity = await new Promise((resolve, reject) => {
             const query = `SELECT quantity from Intermediary WHERE ID = ?`;
-            db.get(query, [item.idIntermediary], function (err, row: any) {
+            db.get(query, [item["IDIntermediary"]], function (err, row: any) {
               if (err) {
                 console.log(err);
                 reject(err);
@@ -760,25 +784,30 @@ const wareHouseItem = {
               }
             });
           });
-
-          if (Number(quantity) < item.quantity) {
+          if (Number(quantity) < item["newQuantity"]) {
             throw new Error(
               "Can't change warehouseitem to new warehouse. Is too large"
             );
           } else {
-            await runQuery(changeWareHouseQuery, [
+            const ID = await runQueryReturnID(changeWareHouseQuery, [
               id_newWareHouse,
-              item.id_wareHouse_item,
-              item.id_wareHouse,
+              item["IDWarehouseItem"],
+              item["id_WareHouse"],
               item.status === 1 ? 5 : 2,
               item.quality,
-              item.quantity,
+              item["newQuantity"],
               item.date,
             ]);
+
             await runQuery(updateWareHouseQuery, [
-              item.quantity,
-              item.idIntermediary,
+              item["newQuantity"],
+              item["IDIntermediary"],
             ]);
+            await createTempDeliveryItem(
+              idCoutDelivery,
+              ID,
+              item["newQuantity"]
+            );
           }
         }
       });
@@ -798,7 +827,9 @@ const wareHouseItem = {
     nature: string,
     total: number,
     title: string,
-    date: Moment | null | any
+    date: Moment | null | any,
+    author: string,
+    numContract: string | number
   ) => {
     try {
       const { createCountDelivery, createDeliveryItem } = countDelivery;
@@ -809,12 +840,14 @@ const wareHouseItem = {
         note,
         total,
         title,
-        date
+        date,
+        author,
+        numContract
       );
       const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
         await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
-        await createDeliveryItem(ID, item["IDIntermediary"]);
+        await createDeliveryItem(ID, item["IDIntermediary"], item.quantity);
       });
       await Promise.all(promises);
       return true;
@@ -831,7 +864,9 @@ const wareHouseItem = {
     total: number,
     title: string,
     date: Moment | null | any,
-    idSource: string | number
+    idSource: string | number,
+    author: string,
+    numContract: number | string
   ) => {
     try {
       const { createCountCoupon, createCouponItem } = countCoupon;
@@ -842,7 +877,9 @@ const wareHouseItem = {
         nature,
         note,
         total,
-        date
+        date,
+        author,
+        numContract
       );
       const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = ${
@@ -871,18 +908,16 @@ const wareHouseItem = {
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
      i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
-      i.date,w.name AS warehouseName 
+      i.date,w.name AS nameWareHouse 
      FROM warehouseItem wi
      JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
      JOIN warehouse w ON id_WareHouse = w.ID
      WHERE status IN (1,3,5) AND id_WareHouse = ? and i.quantity > 0`;
     const rows: any = await runQueryGetAllData(selectQuery, [id]);
-    return rows.map((item, index: number) =>(
-      {
-        ...item,
-        index : index +1
-      }
-    )) 
+    return rows.map((item, index: number) => ({
+      ...item,
+      index: index + 1,
+    }));
   },
 
   getAllWareHouseByDateCreated: async (id: number , dateRanger : IDateRangerItem) => {
@@ -936,7 +971,7 @@ const wareHouseItem = {
     return result1 && result2;
   },
   getWarehouseItemByName: async (name: string) => {
-    const selectQuery = `select * from warehouseitem where name like ?`;
+    const selectQuery = `select DISTINCT * from warehouseitem where name like ? limit 3`;
     const result: any = await runQueryGetAllData(selectQuery, [`%${name}%`]);
     return result;
   },

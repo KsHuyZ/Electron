@@ -1,19 +1,14 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import countCouponDB from "../../database/countCoupon/countCoupon";
-import wareHouseItem from "../../database/wareHouseItem/wareHouseItem";
-import { DataType } from "../../types";
-import { startPrint } from "../../module/print";
-import { formImportBill } from "../../utils/formImportBill";
 
 const {
   getCountCoupon,
   getCouponItem,
   getCouponItembyCouponID,
+  approveAccept,
 } = countCouponDB;
 
-
-
-const countCoupon = () => {
+const countCoupon = (mainScreen: BrowserWindow) => {
   ipcMain.handle(
     "get-history-import",
     async (
@@ -24,12 +19,14 @@ const countCoupon = () => {
       return reuslt;
     }
   );
-  ipcMain.handle("get-coupon-item", async (event, id: number) => {
+  ipcMain.handle("get-import-item", async (event, id: number) => {
     return await getCouponItem(id);
   });
   ipcMain.handle("get-coupon-item-by-coupon-id", async (event, ID: number) => {
     return await getCouponItembyCouponID(ID);
   });
-
+  ipcMain.handle("approve-import", async (event, id: number | string) => {
+    return await approveAccept(id);
+  });
 };
 export default countCoupon;

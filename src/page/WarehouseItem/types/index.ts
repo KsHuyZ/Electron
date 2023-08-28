@@ -3,7 +3,7 @@ type DataType = {
   IDIntermediary: string;
   IDWarehouseItem?: string;
   name: string;
-  nameWareHouse?:string;
+  nameWareHouse?: string;
   price: string;
   unit: string;
   quality: number | null;
@@ -21,7 +21,7 @@ type DataType = {
   warehouseName?: string;
   prev_idwarehouse?: number;
   totalPrice?: number;
-  newQuantity?:number;
+  newQuantity?: number;
 };
 
 type WarehouseItem = {
@@ -37,11 +37,13 @@ type WarehouseItem = {
 };
 
 type FormWareHouseItem = WarehouseItem & {
-  id_wareHouse: number;
+  id_wareHouse?: number;
   status: number;
   date_created_at: any;
   date_updated_at: any;
   date: any;
+  nameSource?: string;
+  nameWareHouse?: string;
 };
 
 type ISearchWareHouseItem = {

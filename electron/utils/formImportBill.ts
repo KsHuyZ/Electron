@@ -2,7 +2,7 @@ import countCoupon from "../database/countCoupon/countCoupon";
 import { DataType } from "../types";
 import { countMoney } from "./countMoney";
 import toVietnamese from "./toVietnamese";
-import { dateStringReverse } from ".";
+import { dateStringReverse, formatDate } from ".";
 
 export const formImportBill = async (data: {
   items: DataType[];
@@ -13,10 +13,13 @@ export const formImportBill = async (data: {
   date: any;
   title: string;
   ID?: number;
+  temp?: boolean;
   nameSource: string;
+  nameWareHouse?: string;
+  numContract: number;
 }) => {
   const { countCouponRow } = countCoupon;
-  const totalMoney = countMoney(data.items);
+  const totalMoney = countMoney(data.items, data.temp);
   const count = await countCouponRow();
 
   const groupByWarehouse = data.items.reduce((acc: any, item: any) => {
@@ -57,31 +60,37 @@ export const formImportBill = async (data: {
                 <div>${data.name.toUpperCase() ?? ""}</div>
             </h3>
             <div style="flex: 8;" class="center">
-                <h1 style="text-align: center;">PHIẾU NHẬP KHO</h1>
-                <div style="text-align: center;" class="inputnguonkhach">
-                    <div class="nguonnhap">
-                        <p>Nguồn nhập: ${
-                          data.nameSource.toUpperCase() ?? ""
-                        }</p>
-                    </div>
-                    <div class="khachhang">
-                    <p>${data.nature ?? ""}: ${data.title}</p>
-                    </div>
-                    <p>Hợp đồng số:</p>
-                </div>
+                <h1 style="text-align: center;">PHIẾU${
+                  data.temp ? " TẠM" : ""
+                } NHẬP KHO</h1>
+               <div style="text-align: center;" class="inputnguonkhach">
+               <div class="nguonnhap">
+                   <p>Nguồn nhập: ${data.nameSource.toUpperCase() ?? ""}</p>
+               </div>
+               <div class="khachhang">
+               <p>${data.nature ?? ""}: ${data.title}</p>
+               </div>
+               <p>Hợp đồng số: ${data.numContract}</p>
+           </div>
             </div>
             <div class="right-head">
-                <p style="flex: 1; text-align: right;" class="right">Số lệnh: ${
-                  data.ID ? data.ID : Number(count) + 1
-                }</p>
+                ${
+                  data.temp
+                    ? ""
+                    : `<p style="flex: 1; text-align: right;" class="right">Số lệnh: ${
+                        data.ID ? data.ID : Number(count) + 1
+                      }</p>`
+                }
                 <p style="flex: 1; text-align: right;" class="right">Ngày: <span id="printDate">${
-                  dateStringReverse(data.date, false) ?? ""
+                  data.temp
+                    ? formatDate(new Date())
+                    : dateStringReverse(data.date, false)
                 }</span></p>
             </div>
         </div>
-        <p style="text-align: right;" class="tinhchat">Tính chất: ${
-          data.nature
-        }</p>
+      <p style="text-align: right;" class="tinhchat">Tính chất: ${
+        data.nature
+      }</p>
     </div>
     
     <table style="width: 100%; border-collapse: collapse; margin: auto; margin-top: 20px; border: 1px solid black; padding: 8px; text-align: left; border-collapse: collapse;" class="data-table">
@@ -98,7 +107,7 @@ export const formImportBill = async (data: {
                 <th rowspan="2" style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Ghi chú</th>
             </tr>
             <tr>
-                <th style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Kế hoạch thực hiện</th>
+                <th style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Kế hoạch</th>
                 <th style="border: 1px solid black; padding: 8px; text-align: center; background-color: #f2f2f2;">Thực hiện</th>
             </tr>
 
@@ -107,7 +116,9 @@ export const formImportBill = async (data: {
                 `
               
               <th>
-                  <td style={{ padding: 8, textAlign: "left" }}>${nameWareHouse}</td>
+                  <td style={{ padding: 8, textAlign: "left" }}>${
+                    data.temp ? data.nameWareHouse : nameWareHouse
+                  }</td>
               </th>
               ${products.map(
                 (item: any, index: number) =>
@@ -132,7 +143,7 @@ export const formImportBill = async (data: {
                   item.quantity_plane
                 }</td>
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${
-                  item.quantity
+                  item.quantity ? item.quantity : item.quantity_real
                 }</td>
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${new Intl.NumberFormat().format(
                   item.price
@@ -140,18 +151,14 @@ export const formImportBill = async (data: {
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${new Intl.NumberFormat().format(
                   item.totalPrice
                 )}</td>
-                <td style="border:1px solid black; padding: 8px; text-align:center;">${
-                  data.note ?? ""
-                }</td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;"></td>
             </tr>
                 `
               )}
               
               `
             )}
-            
-        
-    
+
         </tbody>
     </table>
     <!-- Footer -->
@@ -166,18 +173,22 @@ export const formImportBill = async (data: {
           totalMoney
         )} Việt Nam Đồng)</b></p>
     </div>
-    <p style="margin-left: 3%;">Ghi chú: (HD 284 ngay 22/12/2022)</p>
+    <p style="margin-left: 3%;">Ghi chú: ${data.temp ? "" : data.note ?? ""}</p>
     <div style="display: flex; width: 90%; margin: 0 auto 0;" class="date">
         <p style="flex: 50%; text-align: left;" class="date1">Giao nhận ngày...tháng...năm...</p>
-        <p style="flex: 50%; text-align: right;" class="date2">Ngày ${dateStringReverse(
-          data.date,
-          true,
-          2
-        )} tháng  ${dateStringReverse(
-    data.date,
-    true,
-    1
-  )} năm  ${dateStringReverse(data.date, true, 0)}</p>
+       ${
+         data.temp
+           ? ""
+           : ` <p style="flex: 50%; text-align: right;" class="date2">Ngày ${dateStringReverse(
+               data.date,
+               true,
+               2
+             )} tháng  ${dateStringReverse(
+               data.date,
+               true,
+               1
+             )} năm  ${dateStringReverse(data.date, true, 0)}</p>`
+       }
     </div>
     <div style="display: flex; width: 100%;" class="single">
         <h4 style="flex: 20%; text-align: center;">NGƯỜI GIAO</h4>

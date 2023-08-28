@@ -1,3 +1,4 @@
+import { BrowserWindow } from "electron";
 import db from "./connectDB";
 
 export const runQuery = (query, params) => {
@@ -66,7 +67,22 @@ export const dateStringReverse = (
   return `${day}/${month}/${year}`;
 };
 
+export const formatDate = (date: any) => {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
+
 export const isDate = (dateString: string) => {
   var regex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
   return regex.test(dateString);
+};
+
+export const sendResponse = (channel: string) => {
+  const mainWindow = BrowserWindow.getFocusedWindow();
+  if (mainWindow) {
+    mainWindow.webContents.send(channel);
+  }
 };

@@ -1,13 +1,11 @@
 import { UilMultiply, UilPen } from '@iconscout/react-unicons';
-import { Table, Space, Button } from 'antd';
+import { Table, Space, Button, Row, Col } from 'antd';
 import { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import React, { useEffect, useState } from 'react'
 import ModalItemSource from './components/ModalItemSource';
-import { FilterValue, SorterResult, TableRowSelection } from 'antd/es/table/interface';
 import { ipcRenderer } from 'electron';
 import toastify from '@/lib/toastify';
 import { Link } from 'react-router-dom';
-import AuthModal from "@/components/AuthModal";
 
 type DataType = {
   ID: number;
@@ -15,52 +13,6 @@ type DataType = {
   address: string;
   phone: string;
 }
-
-
-
-interface TableParams {
-  pagination?: TablePaginationConfig;
-  sortField?: string;
-  sortOrder?: string;
-  filters?: Record<string, FilterValue>;
-}
-
-interface ModalItemSourceProps {
-  data: DataType | null | undefined,
-  deleteFunc: (id: number | undefined) => void
-  closeModal: () => void
-}
-
-
-const ModalDelete = (props: ModalItemSourceProps) => {
-  const { data, deleteFunc, closeModal } = props
-
-  return (
-    <div className='backdrop'>
-      <div className="modal">
-        <div className="header">
-          <div className="close-btn">
-            <UilMultiply onClick={closeModal} />
-          </div>
-        </div>
-        <div className="main-body">
-          <div className="row">
-            <p>Bạn có chắc chắn muốn xóa nguồn hàng <span>{data?.name}</span> ?</p>
-          </div>
-        </div>
-        <div className="action">
-          <div className="cancel">
-            <Button type="primary" ghost onClick={closeModal}>Thoát</Button>
-          </div>
-          <div className="create">
-            <Button type="primary" danger ghost onClick={() => deleteFunc(data?.ID)} style={{ backgroundColor: "transparent" }}>Xác nhận</Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 
 
 const ItemSource = () => {
@@ -76,7 +28,6 @@ const ItemSource = () => {
     total: 0,
   });
   const [showModalDelete, setShowModalDelete] = useState(false)
-  const [canUpdate, setCanUpdate] = useState(false)
 
   const columns: ColumnsType<DataType> = [
     {
@@ -89,7 +40,7 @@ const ItemSource = () => {
     {
       title: 'Tên nguồn hàng',
       dataIndex: 'name',
-      render: (_,record) =>{
+      render: (_, record) => {
         return <Link to={`/item-source/${record.ID}/${record.name}`}>{record.name}</Link>
       }
     },
@@ -105,9 +56,9 @@ const ItemSource = () => {
       title: "Hành động",
       dataIndex: "action",
       render: (_, data) => (
-        canUpdate ? <Space size="middle">
-        <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
-      </Space> : <></>
+        <Space size="middle">
+          <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleSelectRow(data)} />
+        </Space>
       ),
     }
   ];
@@ -117,17 +68,7 @@ const ItemSource = () => {
     setCurrentItemSource(data)
   }
 
-  const handleSelectRowDelete = (data: DataType) => {
-    setShowModalDelete(true)
-    setCurrentItemSource(data)
-  }
-
   const { notifySuccess, notifyError } = toastify
-
-  const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
-    console.log('selectedRowKeys changed: ', newSelectedRowKeys);
-    setSelectedRowKeys(newSelectedRowKeys);
-  };
 
   const handleTableChange = (
     pagination: TablePaginationConfig
@@ -173,7 +114,7 @@ const ItemSource = () => {
     if (isSuccess) {
       notifySuccess("Xóa nguồn hàng thành công")
       setShowModalDelete(false)
-     return handleGetAllItemSource()
+      return handleGetAllItemSource()
     }
     notifyError("Xóa nguồn hàng thất bại")
   }
@@ -183,16 +124,16 @@ const ItemSource = () => {
   }, [])
 
   return (
-    <div className="form-table">
-      {showAddModal && <ModalItemSource closeModal={handleCloseModal} setLoading={setLoading} data={currentItemSource} reload={handleGetAllItemSource} setAllItemSource={setAllItemSource} />}
-      {showModalDelete && <ModalDelete data={currentItemSource} deleteFunc={handleDeleteItemSource} closeModal={handleCloseModalDelete} />}
-      {canUpdate && <div className="header">
-        <div className="add-data"> <Button type="primary" onClick={handleShowAddModal}>Thêm nguồn hàng</Button></div>
-      </div>}
-      <AuthModal
-                canUpdate={canUpdate}
-                setCanUpdate={(status) => setCanUpdate(status)}
-            />
+
+    <>
+      <ModalItemSource isShow={showAddModal} closeModal={handleCloseModal} setLoading={setLoading} data={currentItemSource} reload={handleGetAllItemSource} setAllItemSource={setAllItemSource} />
+      <Row style={{ margin: '10px 0' }}>
+        <Col span={24}>
+          <Space>
+            <Button type="primary" onClick={handleShowAddModal}>Thêm nguồn hàng</Button>
+          </Space>
+        </Col>
+      </Row>
       <Table
         columns={columns}
         dataSource={allItemSource.map(item => ({ ...item, key: item.ID }))}
@@ -202,7 +143,7 @@ const ItemSource = () => {
         bordered
         onChange={handleTableChange}
       />
-    </div>
+    </>
   )
 }
 

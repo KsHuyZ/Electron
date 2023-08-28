@@ -6,6 +6,7 @@ import { OptionSelect, WareHouse } from "@/types";
 import { DataType } from "../types";
 import { UilMultiply } from "@iconscout/react-unicons";
 import { formatNumberWithCommas, renderTextStatus } from "@/utils";
+import ModalCreateEntry from "../../Product/components/ModalCreateEntry"
 import type { FormInstance } from 'antd/es/form';
 import "../styles/transferModal.scss"
 
@@ -134,12 +135,14 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
 
 const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: TransferModalProps) => {
-  const [listWareHouse, setListWareHouse] = useState<OptionSelect[]>();
+  const [listWareHouse, setListWareHouse] = useState<OptionSelect[]>([]);
   const [listItemTransfer, setListItemTransfer] = useState<DataType[]>(listItem);
   const refError = useRef<any>(null);
   const [item, setItem] = useState<number>();
   const [isError, setIsError] = useState(false);
   const [isErrorSelect, setIsErrorSelect] = useState(false);
+  const [showEntry, setShowEntry] = useState<boolean>(false)
+
   const columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
       title: 'Mã mặt hàng',
@@ -244,8 +247,6 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
     handleGetWarehouseOrReceiving(idWareHouse)
   }, [idWareHouse]);
 
-
-
   const Footer = () => {
     return (
       <>
@@ -279,23 +280,27 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
       quality: item.quality,
       idIntermediary: item?.IDIntermediary,
       date: item.date
-
     }))
 
-    if (newList) {
-      try {
-        const result = await ipcRenderer.invoke(`${isShow === STATUS_MODAL.TRANSFER ? "change-warehouse" : "temp-export-warehouse"}`, item, newList);
-        if (result) {
-          await props.fetching();
-          setIsShow();
-          props.removeItemList(newList.map(i => i.idIntermediary));
-          if(isShow === STATUS_MODAL.TRANSFER) return message.success('Chuyển kho thành công');
-          return message.success('Tạm xuất kho thành công');
+    if (isShow === STATUS_MODAL.TRANSFER) {
+      if (newList) {
+        try {
+          const result = await ipcRenderer.invoke(`${isShow === STATUS_MODAL.TRANSFER ? "change-warehouse" : "temp-export-warehouse"}`, item, newList);
+          if (result) {
+            await props.fetching();
+            setIsShow();
+            props.removeItemList(newList.map(i => i.idIntermediary));
+            if (isShow === STATUS_MODAL.TRANSFER) return message.success('Chuyển kho thành công');
+            return message.success('Tạm xuất kho thành công');
+          }
+        } catch (error) {
+          message.error('Loi server')
         }
-      } catch (error) {
-        message.error('Loi server')
       }
+    } else {
+      setShowEntry(true)
     }
+
   }
 
   const handleChangeSelect = (idItem: number) => {
@@ -364,7 +369,7 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
               value={item}
               onChange={(e) => handleChangeSelect(e)}
               options={listWareHouse}
-              style={{width : '200px'}}
+              style={{ width: '200px' }}
             />
             {
               isErrorSelect && <p className="text-error">Vui lòng không để trống ô này</p>
@@ -388,8 +393,13 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
           <Button size="large" type="primary" onClick={handleTransferWareHouse}>
             {isShow === STATUS_MODAL.TRANSFER ? 'Chuyển kho' : 'Xuất kho'}
           </Button>
-
         </Space>
+        <ModalCreateEntry
+          isShowModal={showEntry}
+          onCloseModal={() => setShowEntry(false)}
+          listItem={listItemTransfer}
+          idReceiving={item}
+        />
       </Modal>
     </CheckingErrorContext.Provider>
   )

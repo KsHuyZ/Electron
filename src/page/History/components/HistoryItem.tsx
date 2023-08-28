@@ -7,6 +7,7 @@ import {
     UilArrowLeft, UilMultiply, UilPen,
 } from "@iconscout/react-unicons";
 
+
 type HistoryType = {
     IDWarehouseItem: string;
     nameWarehouse?: string;
@@ -16,6 +17,9 @@ type HistoryType = {
     quantity: number;
 }
 
+const getPath = (s: string) => {
+    return s.split("/")
+}
 
 const History = () => {
 
@@ -25,7 +29,7 @@ const History = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const location = useLocation()
-    const isExport = location.pathname.startsWith("/history/export")
+    const pathName = location.pathname
 
     const columns: ColumnsType<HistoryType> = [
         {
@@ -68,7 +72,7 @@ const History = () => {
 
     const handleGetData = async () => {
         setLoading(true)
-        const result = await ipcRenderer.invoke(`get-${isExport ? 'delivery' : 'coupon'}-item`, id)
+        const result = await ipcRenderer.invoke(`get-${getPath(pathName)[2]}-item`, id)
         setLoading(false)
         return setTableData(result)
     }
@@ -93,6 +97,7 @@ const History = () => {
                 pagination={false}
                 columns={columns}
                 scroll={{ y: 500 }}
+                rowKey={(item) => item.IDWarehouseItem}
             />
 
         </>

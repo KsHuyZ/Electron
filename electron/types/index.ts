@@ -12,13 +12,14 @@ export type WarehouseItem = {
   quantity_plane: number;
   quantity_real: number;
   note: string;
+  origin: string;
 };
 
 export type Intermediary = {
   idIntermediary: number;
   id_wareHouse: number;
   id_wareHouse_item: number;
-
+  quantity_real?: number;
   status: number;
   quality: number;
   quantity: number;
@@ -44,7 +45,7 @@ export type DataType = {
   date_updated_at: string;
   id_Source?: string;
   id_WareHouse?: number;
-  warehouseName?: string;
+  nameWareHouse?: string;
   id_prev_warehouse?: number;
 };
 
@@ -74,28 +75,28 @@ export type ISearchWareHouseItem = {
 };
 
 export type IPostMultipleItem = {
-  name: string,
-  price: number,
-  unit: string,
+  name: string;
+  price: number;
+  unit: string;
   date_expried: string;
   date_created_at: string;
   date_updated_at: string;
-  note: string,
-  quantity_plane: number,
-  quantity_real: number
-  id_wareHouse: number,
-  status : string,
-  date: string,
-  quality: number
-}
+  note: string;
+  quantity_plane: number;
+  quantity_real: number;
+  id_wareHouse: number;
+  status: string;
+  date: string;
+  quality: number;
+};
 
 export type InfoParamsType = {
-  nameForm: string,
-isForm : boolean,
-nameWareHouse: string
-}
+  nameForm: string;
+  isForm: boolean;
+  nameWareHouse: string;
+};
 
 export type IDateRangerItem = {
-  start: string,
-  end: string
-}
+  start: string;
+  end: string;
+};

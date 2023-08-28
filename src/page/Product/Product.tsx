@@ -7,7 +7,7 @@ import { renderTextStatus, formatNumberWithCommas, getDateExpried } from "@/util
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
 import TableWareHouse from "../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
-import {  ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
+import { ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "../WarehouseItem/components/TransferModal";
 import FilterWareHouseItem from "../WarehouseItem/components/FilterWareHouseItem";
@@ -27,7 +27,7 @@ const defaultRows: DataType[] = [
     date_expried: '',
     date_created_at: '',
     date_updated_at: '',
-    warehouseName: ''
+    nameWareHouse: ''
   }
 ];
 
@@ -64,7 +64,7 @@ const Product = () => {
     },
     {
       title: 'Kho Hàng',
-      dataIndex: 'warehouseName',
+      dataIndex: 'nameWareHouse',
       width: 200,
     },
     {
@@ -110,7 +110,7 @@ const Product = () => {
       title: 'Chất lượng mặt hàng',
       dataIndex: 'quality',
       width: 200,
-      render : (record) => {
+      render: (record) => {
         const findItem = QUALITY_PRODUCT.find((item) => item.value == record);
         return (
           <span>{findItem?.label}</span>
@@ -205,6 +205,12 @@ const Product = () => {
     setStatusModal(STATUS_MODAL.CLOSE);
   }
 
+  const tempExportWareHouseCallBack = async () => {
+    await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
+    message.success("Tạm xuất kho thành công")
+    setStatusModal(STATUS_MODAL.CLOSE)
+  }
+
   const removeItemList = (IDIntermediary: string[]) => {
     const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
     setDataRowSelected(filterNewList)
@@ -212,11 +218,18 @@ const Product = () => {
   }
 
   const handleDataRowSelected = (listRows: DataType[]) => {
-    setDataRowSelected(listRows.map((item) =>({
+    setDataRowSelected(listRows.map((item) => ({
       ...item,
       newQuantity: item.quantity!
     })));
   }
+
+  useEffect(() => {
+    ipcRenderer.on("temp-export-warehouse-success", tempExportWareHouseCallBack);
+    return () => {
+      ipcRenderer.removeListener("temp-export-warehouse-success", tempExportWareHouseCallBack);
+    };
+  }, [])
 
   return (
     <Row className="filter-bar">

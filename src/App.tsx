@@ -8,7 +8,6 @@ function App() {
       <div className="AppGlass">
         <Sidebar />
         <MainDash />
-     
       </div>
     </div>
   )

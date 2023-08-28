@@ -1,9 +1,14 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import countDeliveryDB from "../../database/countDelivery/countDelivery";
 
-const { getCountDelivery, getDeliveryItem, getDeliveryItembyDeliveryID } = countDeliveryDB;
+const {
+  getCountDelivery,
+  getDeliveryItem,
+  getDeliveryItembyDeliveryID,
+  approveAccept,
+} = countDeliveryDB;
 
-const countDelivery = () => {
+const countDelivery = (mainScreen: BrowserWindow) => {
   ipcMain.handle(
     "get-history-export",
     async (
@@ -18,8 +23,14 @@ const countDelivery = () => {
     const result = await getDeliveryItem(id);
     return result;
   });
-  ipcMain.handle("get-delivery-item-by-delivery-id", async (event, ID: number) => {
-    return await getDeliveryItembyDeliveryID(ID);
+  ipcMain.handle(
+    "get-delivery-item-by-delivery-id",
+    async (event, ID: number) => {
+      return await getDeliveryItembyDeliveryID(ID);
+    }
+  );
+  ipcMain.handle("approve-export", async (event, id: number | string) => {
+    return await approveAccept(id);
   });
 };
 export default countDelivery;

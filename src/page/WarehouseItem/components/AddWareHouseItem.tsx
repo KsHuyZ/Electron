@@ -21,17 +21,12 @@ import { ipcRenderer } from "electron";
 import dayjs from "dayjs";
 import React from "react";
 import useDebounce from "@/hook/useDebounce";
+import ModalCreateEntry from "./ModalCreateEntry";
 
 interface PropsAddWareHouseItem {
   isShowModal: boolean;
   onCloseModal: () => void;
-  idWareHouse?: string;
-  isEdit: boolean;
-  itemEdit:
-  | Omit<DataType, "date_created_at" | "date_updated_at">
-  | undefined;
-  setIsEdit: (status: boolean) => void;
-  fetching: () => Promise<void>;
+  onCreateItem: (item: DataType) => void
 }
 
 const defaultQuality: OptionSelect[] = [
@@ -51,27 +46,26 @@ const defaultQuality: OptionSelect[] = [
     label: "Chất lượng loại 4",
     value: QUALITY.QUALITY_4,
   },
+  {
+    label: "Chất lượng loại 5",
+    value: "5"
+  }
 ];
 
 const AddWareHouseItem = React.memo(
   ({
     isShowModal = false,
     onCloseModal,
-    idWareHouse,
-    isEdit,
-    itemEdit,
-    setIsEdit,
-    fetching,
+    onCreateItem
+
   }: PropsAddWareHouseItem) => {
+
     const [formWareHouseItem] = Form.useForm();
-    const [price, setPrice] = useState<any>();
-    const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>();
+    const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>([]);
     const [loadingButton, setLoadingButton] = useState<boolean>(false);
     const [options, setOptions] = useState<{ value: string }[]>([]);
     const [inputValue, setInputValue] = useState('');
-
     const debouncedInputValue = useDebounce<string>(inputValue, 500);
-
 
     useEffect(() => {
       if (debouncedInputValue) handleOnChangeSearch(debouncedInputValue);
@@ -84,28 +78,27 @@ const AddWareHouseItem = React.memo(
         /\B(?=(\d{3})+(?!\d))/g,
         "."
       );
-      setPrice(formattedNumericValue);
       formWareHouseItem.setFieldsValue({ ...option.data, date_expried: option.data.date_expried ? dayjs(option.data.date_expried) : null, idSource: option.data.id_Source, quality: 1, price: formattedNumericValue })
     };
 
-    useEffect(() => {
-      if (isEdit) {
-        const parsedDate = itemEdit?.date_expried ? dayjs(itemEdit?.date_expried) : null;
-        formWareHouseItem.setFieldsValue({
-          name: itemEdit?.name,
-          price:
-            itemEdit?.price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") ||
-            "",
-          unit: itemEdit?.unit,
-          quality: defaultQuality[Number(itemEdit?.quality) -1],
-          note: itemEdit?.note,
-          quantity_plane: itemEdit?.quantity_plane,
-          quantity_real: itemEdit?.quantity,
-          date_expried: parsedDate,
-          idSource: itemEdit?.id_Source,
-        });
-      }
-    }, [isEdit]);
+    // useEffect(() => {
+    //   if (isEdit) {
+    //     const parsedDate = itemEdit?.date_expried ? dayjs(itemEdit?.date_expried) : null;
+    //     formWareHouseItem.setFieldsValue({
+    //       name: itemEdit?.name,
+    //       price:
+    //         itemEdit?.price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") ||
+    //         "",
+    //       unit: itemEdit?.unit,
+    //       quality: itemEdit?.quality,
+    //       note: itemEdit?.note,
+    //       quantity_plane: itemEdit?.quantity_plane,
+    //       quantity_real: itemEdit?.quantity,
+    //       date_expried: parsedDate,
+    //       idSource: itemEdit?.id_Source,
+    //     });
+    //   }
+    // }, [isEdit]);
 
     useEffect(() => {
       getAllItemSource();
@@ -115,51 +108,51 @@ const AddWareHouseItem = React.memo(
       const { date_expried } = values;
       const dateFormat = formatDate(date_expried, false, "no_date");
 
-      if (idWareHouse === undefined) {
-        message.error(ERROR_SERVER.ERROR_1);
-        return;
-      }
+      // if (idWareHouse === undefined) {
+      //   message.error(ERROR_SERVER.ERROR_1);
+      //   return;
+      // }
       setLoadingButton(true);
-
-      const params: FormWareHouseItem = {
+      const idSourceSelect = formWareHouseItem.getFieldValue("idSource")
+      const sourceSelect = listOptionSource?.find(item => item.value === idSourceSelect)
+      const params: any = {
         ...values,
         price: convertPrice(values.price),
-        id_wareHouse: Number(idWareHouse),
         date_expried: dateFormat,
         status: STATUS.TEMPORARY_IMPORT,
         date: formatDate(new Date(), true, "date_First"),
         date_created_at: formatDate(new Date(), true, "no_date"),
         date_updated_at: formatDate(new Date(), true, "no_date"),
+        nameSource: sourceSelect?.label,
       };
 
-      if (isEdit) {
-        const paramsEdit = {
-          ...params,
-          idIntermediary: itemEdit?.IDIntermediary,
-          idWarehouseItem: itemEdit?.IDWarehouseItem,
-          quantity: itemEdit?.quantity,
-        };
-        const response = await ipcRenderer.invoke(
-          "update-warehouseitem",
-          paramsEdit
-        );
-        if (response) {
-          console.log(response);
-          message.success("Cập nhật sản phẩm thành công");
-        }
-      } else {
-
-        const response = await ipcRenderer.invoke(
-          "create-product-item",
-          JSON.stringify(params)
-        );
-        if (response) {
-          message.success("Tạo sản phẩm thành công");
-        }
-      }
+      // if (isEdit) {
+      //   const paramsEdit = {
+      //     ...params,
+      //     idIntermediary: itemEdit?.IDIntermediary,
+      //     idWarehouseItem: itemEdit?.IDWarehouseItem,
+      //     quantity: itemEdit?.quantity,
+      //   };
+      //   const response = await ipcRenderer.invoke(
+      //     "update-warehouseitem",
+      //     paramsEdit
+      //   );
+      //   if (response) {
+      //     console.log(response);
+      //     message.success("Cập nhật sản phẩm thành công");
+      //   }
+      // } else {
+      //   // const response = await ipcRenderer.invoke(
+      //   //   "create-product-item",
+      //   //   JSON.stringify(params)
+      //   // );
+      //   // if (response) {
+      //   //   message.success("Tạo sản phẩm thành công");
+      //   // }
+      // }
       setLoadingButton(false);
       handleClean();
-      await fetching();
+      onCreateItem(params)
     };
 
     const handleInputPrice = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,7 +162,7 @@ const AddWareHouseItem = React.memo(
         /\B(?=(\d{3})+(?!\d))/g,
         "."
       );
-      setPrice(formattedNumericValue);
+
       formWareHouseItem.setFieldValue("price", formattedNumericValue);
     };
 
@@ -227,7 +220,7 @@ const AddWareHouseItem = React.memo(
             form="formWareHouseItem"
             loading={loadingButton}
           >
-            {isEdit ? "Cập Nhật" : "Thêm mới"}
+            {"Thêm mới"}
           </Button>
         </Space>
       );
@@ -236,12 +229,12 @@ const AddWareHouseItem = React.memo(
     const handleClean = () => {
       formWareHouseItem.resetFields();
       onCloseModal();
-      setIsEdit(false);
+      // setIsEdit(false);
     };
 
     return (
       <Modal
-        title={isEdit ? "CẬP NHẬT SẢN PHẨM" : "THÊM SẢN PHẨM"}
+        title={"THÊM SẢN PHẨM"}
         centered
         open={isShowModal}
         onCancel={handleClean}
@@ -268,13 +261,12 @@ const AddWareHouseItem = React.memo(
               >
                 <AutoComplete
                   options={options}
-                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
+                  // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                   onSelect={onSelect}
                   value={inputValue}
                   onChange={setInputValue}
-                // onSearch={handleOnChangeSearch}
+                  autoFocus
                 />
-                {/* <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} /> */}
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -286,10 +278,9 @@ const AddWareHouseItem = React.memo(
                 ]}
               >
                 <Input
-                  value={price}
                   onChange={handleInputPrice}
                   addonAfter="vnđ"
-                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
+                // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
               {/* <InputPrice name="price" label="Gias"/> */}
@@ -307,7 +298,7 @@ const AddWareHouseItem = React.memo(
               >
                 <Select
                   options={defaultQuality}
-                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
+                // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>
@@ -330,7 +321,7 @@ const AddWareHouseItem = React.memo(
               >
                 <Input
                   style={{ width: "100%" }}
-                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
+                // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>
@@ -353,11 +344,11 @@ const AddWareHouseItem = React.memo(
               >
                 <Input
                   style={{ width: "100%" }}
-                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
+                // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            {/* <Col span={8}>
               <Form.Item
                 label="Nguồn hàng"
                 name="idSource"
@@ -371,7 +362,7 @@ const AddWareHouseItem = React.memo(
                 <Select
                   showSearch
                   optionFilterProp="children"
-                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
+                  // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                   filterOption={(input, option) =>
                     (option?.label ?? "")
                       .toLowerCase()
@@ -380,7 +371,7 @@ const AddWareHouseItem = React.memo(
                   options={listOptionSource}
                 />
               </Form.Item>
-            </Col>
+            </Col> */}
             <Col span={8}>
               <Form.Item
                 label="Ngày hết hạn"
@@ -406,14 +397,29 @@ const AddWareHouseItem = React.memo(
                   },
                 ]}
               >
-                <Input disabled={itemEdit && itemEdit.status === 3 ? true : false} />
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label="Xuất xứ"
+                name="origin"
+                initialValue={"Vietnam"}
+                rules={[
+                  {
+                    required: true,
+                    message: getMessage(ERROR.ERROR_1, "Đơn vị tính"),
+                  },
+                ]}
+              >
+                <Input />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item label="Chú thích" name="note">
                 <Input.TextArea
                   rows={4}
-                  disabled={itemEdit && itemEdit.status === 3 ? true : false}
+
                 />
               </Form.Item>
             </Col>

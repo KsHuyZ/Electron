@@ -13,6 +13,7 @@ export const formExportBill = async (data: {
   total: number;
   date: any;
   title: string;
+  temp?: boolean;
   nameSource: string;
 }) => {
   const { items, name, note, nature, total, date, title, nameSource, ID } =
@@ -161,7 +162,7 @@ export const formExportBill = async (data: {
         <h3 class="name">${data.name.toUpperCase() ?? ""}</h3>
       </div>
       <div class="center-top">
-        <h1>PHIẾU XUẤT KHO</h1>
+        <h1>PHIẾU ${data.temp ? "TẠM" : ""} XUẤT KHO</h1>
       </div>
       <div class="right-top">
         <p class="right">Số lệnh: ${ID ? ID : Number(count) + 1}</p>
@@ -244,7 +245,7 @@ export const formExportBill = async (data: {
     </div>
     <p class="thanhtien"><b>(${toVietnamese(totalMoney)} Việt Nam Đồng)</b></p>
   </div>
-  <p style="margin-left: 3%;">Ghi chú: </p>
+  <p style="margin-left: 3%;">Ghi chú: ${data.note ?? ""}</p>
   <div class="date">
     <p class="date1">Giao nhận ngày...tháng...năm... </p>
     <p class="date2">Ngày ${dateStringReverse(

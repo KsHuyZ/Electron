@@ -16,10 +16,12 @@ const countDelivery = {
     note: string,
     total: string | number,
     title: string,
-    date: Moment | null
+    date: Moment | null,
+    author: string,
+    numContract: string | number
   ) => {
     const createQuery =
-      "INSERT INTO CoutDelivery(id_WareHouse, name, nature, Note,Total,title,date) VALUES (?,?,?,?,?,?,?)";
+      "INSERT INTO CoutDelivery(id_WareHouse, name, nature, Note,Total,title,date, author, numContract) VALUES (?,?,?,?,?,?,?, ?,?)";
     try {
       const ID = await runQueryReturnID(createQuery, [
         idWarehouse,
@@ -29,6 +31,8 @@ const countDelivery = {
         total,
         title,
         date,
+        author,
+        numContract,
       ]);
       return ID;
     } catch (error) {
@@ -43,12 +47,13 @@ const countDelivery = {
   },
   createDeliveryItem: async (
     idCoutDelivery: number | unknown,
-    idIntermediary: number | string
+    idIntermediary: number | string,
+    quantity: number
   ) => {
     const createQuery =
-      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermediary) VALUES(?,?)";
+      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermediary, quantity) VALUES(?,?, ?)";
     try {
-      await runQuery(createQuery, [idCoutDelivery, idIntermediary]);
+      await runQuery(createQuery, [idCoutDelivery, idIntermediary, quantity]);
       return true;
     } catch (error) {
       console.log(error);
@@ -57,7 +62,7 @@ const countDelivery = {
   },
   getCountDelivery: async (pageSize: number, currentPage: number) => {
     const offsetValue = (currentPage - 1) * pageSize;
-    const selectQuery = `select ce.ID, ce.name, ce.nature,ce.title, ce.Note, ce.Total as Totalprice, ce.date,w.name as nameReceiving,ce.id_WareHouse, COUNT(ce.ID) OVER() AS total  from CoutDelivery ce
+    const selectQuery = `select ce.ID, ce.name, ce.nature,ce.title, ce.Note, ce.Total as Totalprice, ce.date,w.name as nameReceiving,ce.id_WareHouse,ce.status,ce.author, ce.numContract, COUNT(ce.ID) OVER() AS total  from CoutDelivery ce
     JOIN warehouse w on w.ID = ce.id_WareHouse
     ORDER BY ce.ID DESC LIMIT ? OFFSET ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [
@@ -68,7 +73,7 @@ const countDelivery = {
     return { rows, total: countResult };
   },
   getDeliveryItem: async (id: number) => {
-    const selectQuery = `select di.ID,wi.name, wi.ID as IDWarehouseItem, wi.price, i.quality, i.quantity, w.name as nameWareHouse from Delivery_Item di
+    const selectQuery = `select di.ID,wi.name, wi.ID as IDWarehouseItem, wi.price, i.quality, di.quantity, w.name as nameWareHouse from Delivery_Item di
     join Intermediary i on i.ID = di.id_intermediary
     join warehouseitem wi on wi.ID = i.id_WareHouseItem
     join warehouse w on w.ID = i.prev_idwarehouse
@@ -77,7 +82,7 @@ const countDelivery = {
     return rows;
   },
   getDeliveryItembyDeliveryID: async (id: number) => {
-    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, i.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Delivery_Item ci
+    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Delivery_Item ci
     join Intermediary i on i.ID = ci.id_intermediary
     join WareHouseItem wi on wi.ID = i.id_WareHouseItem
    join warehouse w on w.ID = i.prev_idwarehouse
@@ -108,7 +113,7 @@ const countDelivery = {
       quantityPlane,
       IDWarehouseItem,
     ]);
-    await countDelivery.createDeliveryItem(idCoutDelivery, id);
+    await countDelivery.createDeliveryItem(idCoutDelivery, id, quantity);
     return isSuccess && updateW;
   },
   deleteDeliveryItem: async (id: number | string) => {
@@ -128,9 +133,11 @@ const countDelivery = {
     nature: string,
     Total: number,
     date: string,
-    title: string
+    title: string,
+    author: string,
+    numContract: number | string
   ) => {
-    const updateQuery = `UPDATE CoutDelivery SET id_WareHouse = ?, name = ?, nature = ?, Total = ?, date = ?, title = ? where id = ?`;
+    const updateQuery = `UPDATE CoutDelivery SET id_WareHouse = ?, name = ?, nature = ?, Total = ?, date = ?, title = ?, author = ?, numContract = ? where id = ?`;
     const isSuccess = await runQuery(updateQuery, [
       idWareHouse,
       name,
@@ -139,6 +146,8 @@ const countDelivery = {
       date,
       title,
       id,
+      author,
+      numContract,
     ]);
     return isSuccess;
   },
@@ -164,7 +173,9 @@ const countDelivery = {
     nature: string,
     total: number,
     date: string,
-    title: string
+    title: string,
+    author: string,
+    numContract: number | string
   ) => {
     const { updateWarehouseItemExport } = wareHouseItemDB;
 
@@ -208,8 +219,15 @@ const countDelivery = {
       nature,
       total,
       date,
-      title
+      title,
+      author,
+      numContract
     );
+  },
+  approveAccept: async (id: number | string) => {
+    const updateQuery = `UPDATE CoutDelivery SET status = 1 where id = ?`;
+    const isSuccess = await runQuery(updateQuery, [id]);
+    return isSuccess;
   },
 };
 

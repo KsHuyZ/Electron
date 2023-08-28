@@ -9,18 +9,16 @@ import {
   Space,
   Button,
   DatePicker,
-  Tag,
   Table,
   message,
 } from "antd";
-import { ModalEntryForm } from "../types";
+import { ModalEntryForm } from "../../EntryForm/types";
 import { nameOf, OptionSelect, FormatTypeTable } from "@/types";
 import { ColumnsType } from "antd/es/table";
 import { DataType } from "@/page/WarehouseItem/types";
 import {
   formatNumberWithCommas,
   getDateExpried,
-  removeItemChildrenInTable,
   formatDate,
   convertDataHasReceiving
 } from "@/utils";
@@ -34,14 +32,20 @@ import dayjs from "dayjs";
 interface PropsModal {
   isShowModal: any;
   onCloseModal: () => void;
-  idSource?: string;
-  nameSource?: string;
-  idReceiving?: string;
-  listItem: FormatTypeTable<DataType> | [];
-  fetching: () => Promise<void>;
-  removeItemList: (IDIntermediary: string[]) => void;
-  listWareHouse?: OptionSelect[];
+  listItem: DataType[];
+  idReceiving: number | unknown;
 }
+
+const removeItemChildrenInTable = (
+  arrays: FormatTypeTable<DataType>[]
+): DataType[] => {
+  const newArray = JSON.parse(JSON.stringify(arrays));
+  for (let i = 0; i < newArray.length; i++) {
+    const item = newArray[i];
+    item.totalPrice = Number(item.price) * Number(item.quantity_real);
+  }
+  return newArray;
+};
 
 const defaultOptionNature: OptionSelect[] = [
   {
@@ -67,81 +71,41 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     isShowModal,
     onCloseModal,
     listItem,
-    removeItemList,
-    nameSource,
-    fetching,
-    idSource,
-    idReceiving,
-    listWareHouse
+    idReceiving
   } = props;
 
-  const [loadingButton, setLoadingButton] = useState<boolean>(false);
-  const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(
-    removeItemChildrenInTable(listItem as any)
-  );
-  const [paginationInfo, setPaginationInfo] = useState({
-    current: 1,
-    pageSize: 10,
-  });
+  const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>([]);
+
+  const [listWareHouse, setListWareHouse] = useState<{ name: string, ID: number }[]>([])
   const formRef = useRef<FormInstance>(null);
 
-  useEffect(() => {
-    ipcRenderer.on("import-warehouse", importWarehouseCallBack);
-    return () => {
-      ipcRenderer.removeListener("import-warehouse", importWarehouseCallBack);
-    };
-  }, []);
+  const handleGetAllSource = async () => {
+    const result = await ipcRenderer.invoke("receiving-list")
+    setListWareHouse(result.rows)
+  }
 
   useEffect(() => {
-    formRef.current?.setFieldsValue({
-      ...defaultInput
-    })
+    handleGetAllSource()
   }, [])
+
+  useEffect(() => {
+    if (isShowModal) {
+      return formRef.current?.setFieldsValue({
+        ...defaultInput, idReceiving
+      })
+    }
+    handleClean()
+  }, [isShowModal])
+
+  useEffect(() => {
+    setListItemEntryForm(removeItemChildrenInTable(listItem))
+  }, [listItem])
 
   const columns: ColumnsType<DataType> = [
     {
       title: 'Tên Kho Hàng',
-      dataIndex: 'prev_idwarehouse',
-      render: (value, row: DataType, index) => {
-        const trueIndex =
-          index + paginationInfo.pageSize * (paginationInfo.current - 1);
-        const obj = {
-          children: (<b>{!value ? row.nameWareHouse : listWareHouse[Number(value) - 1]?.label}</b>),
-          props: {} as any
-        };
-        if (!row.prev_idwarehouse) {
-          if (index > 0 && row.id_WareHouse === listItemEntryForm[trueIndex - 1].id_WareHouse) {
-            obj.props.rowSpan = 0;
-            // obj.props.colSpan = 2;
-          }
-          else {
-            for (let i = 0; trueIndex + i !== listItemEntryForm.length && row.id_WareHouse === listItemEntryForm[trueIndex + i].id_WareHouse; i += 1) {
-              obj.props.rowSpan = i + 1;
-            }
-          }
-        }
-        else {
-          if (index > 0 && row.prev_idwarehouse === listItemEntryForm[trueIndex - 1].prev_idwarehouse) {
-            obj.props.rowSpan = 0;
-            // obj.props.colSpan = 2;
-          }
-          else {
-            for (let i = 0; trueIndex + i !== listItemEntryForm.length && row.prev_idwarehouse === listItemEntryForm[trueIndex + i].prev_idwarehouse; i += 1) {
-              obj.props.rowSpan = i + 1;
-            }
-          }
-        }
-        return obj;
-      },
+      dataIndex: 'nameWareHouse',
       width: 200,
-    },
-    {
-      title: "Mã mặt hàng",
-      dataIndex: "IDWarehouseItem",
-      width: 150,
-      render: (record) => {
-        return `MH${record < 10 ? "0" : ""}${record}`;
-      },
     },
     {
       title: "Tên mặt hàng",
@@ -172,7 +136,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
         },
         {
           title: "Thực tế",
-          dataIndex: "quantity",
+          dataIndex: "quantity_real",
           width: 200,
           render: (record) => (
             <span>{new Intl.NumberFormat().format(record)}</span>
@@ -216,6 +180,13 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     },
   ];
 
+  const optionSource: OptionSelect[] = listWareHouse.map(source => (
+    {
+      label: source?.name,
+      value: source?.ID
+    }
+  ));
+
   const handleSubmitForm = async () => {
     try {
       await formRef?.current!.validateFields();
@@ -252,23 +223,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     );
   };
 
-  const importWarehouseCallBack = async (
-    event: Electron.IpcRendererEvent,
-    isSuccess: boolean
-  ) => {
-    if (!isSuccess) {
-      return message.error("Nhập kho thất bại. Hãy thử lại");
-    } else {
-      await fetching();
-      message.success("Nhập kho thành công");
-      handleClean();
-      return;
-    }
-  };
-
   const handleClean = () => {
     onCloseModal();
     formRef.current?.resetFields();
+    setListItemEntryForm([])
   };
 
   const onFinishFormManagement = async (values: ModalEntryForm) => {
@@ -276,23 +234,25 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       message.error("Không có sản phẩm để làm phiếu");
       return;
     }
+    const idSource = formRef.current?.getFieldValue("idReceiving")
 
+    const sourceSelect = listWareHouse?.find(item => item.ID === idSource)
     const params: any = {
       ...values,
-      items: convertDataHasReceiving(listItemEntryForm, listWareHouse!),
+      items: listItemEntryForm,
       name: values.name,
       note: values.note,
       nature: values.nature,
       date: formatDate(values.date, false, "no_date"),
       total: totalPrice,
       title: values.title,
-      nameSource: nameSource,
-      idSource,
+      nameSource: sourceSelect?.name,
     };
 
-    const result = await ipcRenderer.invoke(!idReceiving ? "print-form-import" : "print-form-export", { ...params });
-    if (result) {
-      removeItemList(listItemEntryForm.map(i => i.IDIntermediary))
+    try {
+      await ipcRenderer.invoke("temp-export-warehouse", params);
+    } catch (error) {
+      message.error('Loi server')
     }
   };
 
@@ -301,20 +261,19 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       (cur) => cur.IDIntermediary !== item.IDIntermediary
     );
     setListItemEntryForm(filterItem);
-    removeItemList([item.IDIntermediary]);
   };
 
   const totalPrice = useMemo(() => {
     return listItemEntryForm.reduce(
       (accumulator, currentValue) =>
-        accumulator + Number(currentValue.price) * currentValue.quantity!,
+        accumulator + Number(currentValue.price) * currentValue.quantity_real!,
       0
     );
   }, [listItemEntryForm]);
 
   return (
     <Modal
-      title={`LÀM PHIẾU ${idReceiving ? "XUẤT" : "NHẬP"}`}
+      title={`LÀM PHIẾU TẠM XUẤT`}
       centered
       open={isShowModal}
       onCancel={handleClean}
@@ -339,12 +298,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           </Col>
           <Col span={8}>
             <Form.Item
-              label={!idReceiving ? "Tên loại phiếu" : "Cấp theo"}
+              label={"Cấp theo"}
               name={nameOfEntryForm("title")}
               rules={[
                 {
                   required: true,
-                  message: getMessage(ERROR.ERROR_1, !idReceiving ? "Tên loại phiếu" : "Cấp theo"),
+                  message: getMessage(ERROR.ERROR_1, "Cấp theo"),
                 },
               ]}
             >
@@ -352,8 +311,13 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label={!idReceiving ? "Nguồn nhập" : "Đơn vị nhận"} name={nameOfEntryForm(!idReceiving ? "idSource" : "idReceiving")}>
-              <Input placeholder={nameSource} disabled />
+            <Form.Item label={"Đơn vị nhận"} name={"idReceiving"} rules={[
+              {
+                required: true,
+                message: getMessage(ERROR.ERROR_1, "Nguồn nhập"),
+              },
+            ]}>
+              <Select options={optionSource} />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -418,9 +382,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           </Col>
         </Row>
 
-        <Space align="center">
-          <h3>SẢN PHẨM THUỘC {nameSource?.toLocaleUpperCase() ?? ""}</h3>
-        </Space>
         <Table
           columns={columns}
           dataSource={listItemEntryForm as any}
@@ -431,6 +392,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           rowKey={(item: DataType) => item.IDIntermediary}
         />
       </Form>
+
     </Modal>
   );
 };
