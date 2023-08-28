@@ -2,10 +2,10 @@ import  ExcelJS from 'exceljs';
 import toVietnamese from './toVietnamese';
 import { InfoParamsType } from '../types';
 
-export const formFileExcel = async(infoParams: InfoParamsType, nameWareHouse: string, items : any, filePath: string) =>{
+export const formFileExcel = async(infoParams: InfoParamsType, items : any, filePath: string) =>{
 
     const workbook = new ExcelJS.Workbook();
-    let worksheet = workbook.addWorksheet(`Danh sách hàng tồn Kho ${nameWareHouse}`);
+    let worksheet = workbook.addWorksheet(`${infoParams.nameWareHouse}`);
 
     console.log(items);
     

@@ -93,4 +93,10 @@ export type IPostMultipleItem = {
 export type InfoParamsType = {
   nameForm: string;
   isForm: boolean;
+  nameWareHouse: string;
+};
+
+export type IDateRangerItem = {
+  start: string;
+  end: string;
 };

@@ -11,6 +11,7 @@ import {
   Intermediary,
   WarehouseItem,
   InfoParamsType,
+  IDateRangerItem,
 } from "../../types";
 import { startPrint } from "../../module/print";
 import { formExportBill } from "../../utils/formExportBill";
@@ -64,6 +65,7 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
     createWareHouseItemMultiple,
     getAllWarehouseItemandWHName,
     getWarehouseItemByName,
+    getAllWareHouseByDateCreated,
   } = wareHouseItemDB;
 
   ipcMain.handle(
@@ -622,10 +624,29 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
     const infoParams: InfoParamsType = {
       nameForm: "BÁO CÁO SỐ LƯỢNG HÀNG TỒN",
       isForm: false,
+      nameWareHouse: `Danh sách hàng tồn Kho ${nameWareHouse}`,
     };
 
     try {
-      formFileExcel(infoParams, nameWareHouse, items, filePath);
+      formFileExcel(infoParams, items, filePath);
+      return { status: "success" };
+    } catch (error) {
+      return { status: "error" };
+    }
+  });
+
+  ipcMain.handle("export-report-new-item", async (event, payload: any) => {
+    const { date, idWareHouse, filePath } = payload;
+    const items: any = await getAllWareHouseByDateCreated(idWareHouse, date);
+
+    const infoParams: InfoParamsType = {
+      nameForm: "BÁO CÁO MẶT HÀNG MỚI",
+      isForm: false,
+      nameWareHouse: "Danh sách mặt hàng mới",
+    };
+
+    try {
+      formFileExcel(infoParams, items, filePath);
 
       return { status: "success" };
     } catch (error) {
@@ -635,7 +656,7 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
 
   ipcMain.handle("export-request-xlsx", async (event, payload: string) => {
     const result = await dialog.showSaveDialog({
-      defaultPath: `[${payload}]-${new Date().toDateString()}.xlsx`,
+      defaultPath: `[${payload}]-${new Date().getFullYear()}.xlsx`,
       filters: [
         { name: "Excel Files", extensions: ["xlsx"] },
         { name: "All Files", extensions: ["*"] },

@@ -1,6 +1,6 @@
 import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input, Upload } from "antd";
 import "./styles/wareHouseItem.scss";
-import { UilFilter, UilSearch } from '@iconscout/react-unicons'
+import { UilFilter, UilSearch, UilExport } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
 import { useEffect, useState } from "react";
@@ -17,6 +17,7 @@ import FilterWareHouseItem from "./components/FilterWareHouseItem";
 import { useSearchParams } from "react-router-dom";
 import type { UploadProps } from "antd";
 import ModalCreateEntry from "./components/ModalCreateEntry";
+import ExportFiles from "./components/ExportFiles";
 
 const { confirm } = Modal;
 
@@ -59,6 +60,7 @@ const WareHouseItem = () => {
   const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([]);
   const [isListenChange, setIsListenChange] = useState(false);
   const [isShowSearch, setIsShowSearch] = useState(false);
+  const [isShowExportFile, setIsShowExportFile] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [nameSearch, setNameSearch] = useState('');
   const [isSearch, setIsSearch] = useState<boolean>(false);
@@ -337,7 +339,7 @@ const WareHouseItem = () => {
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
                     <Button className={listItemHasChoose.length > 0 ? 'active-border' : ''} disabled={listItemHasChoose.length > 0 ? false : true} onClick={() => setStatusModal(STATUS_MODAL.TRANSFER)}>Chuyển Kho</Button>
                     <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button>
-                    <Button className="default" onClick={handleExportReport} type="primary">Xuất báo cáo hàng tồn</Button>
+                    <Button className={isShowExportFile ? `default active-search` : `default`} icon={<UilExport />} onClick={() => setIsShowExportFile(!isShowExportFile)}>Xuất Excel</Button>
                     <Link className="btn btn-upload" to={`/upload-multiple/${idWareHouse}/${nameWareHouse}`}>Thêm Sản Phẩm từ File</Link>
                   </Space>
 
@@ -349,6 +351,16 @@ const WareHouseItem = () => {
                   handleIsSearch={(envSearch) => setIsSearch(envSearch)}
                   handleChangeName={(value) => setNameSearch(value)}
                 />)}
+
+                {
+                  isShowExportFile && (
+                    <ExportFiles
+                      nameWareHouse={nameWareHouse!}
+                      idWareHouse={idWareHouse!}
+                    />
+                  )
+                }
+
             </Card>
             <span style={{ marginLeft: 8, paddingBottom: 8 }}>
               {listItemHasChoose.length > 0 ? `Đã chọn ${listItemHasChoose.length} mặt hàng` : ''}
