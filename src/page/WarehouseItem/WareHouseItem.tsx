@@ -297,22 +297,6 @@ const WareHouseItem = () => {
     }
   }
 
-  const tempImportWarehouseItemCallBack = () => {
-    setTimeout(() => {
-      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-      setIsShowModal(false)
-      message.success("Tạm nhập mặt hàng thành công")
-    }, 500)
-  }
-
-  useEffect(() => {
-    ipcRenderer.on("temp-import-success", tempImportWarehouseItemCallBack)
-    return () => {
-      ipcRenderer.removeListener("temp-import-success", tempImportWarehouseItemCallBack)
-    }
-  }, [])
-
-
   return (
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
@@ -352,14 +336,14 @@ const WareHouseItem = () => {
                   handleChangeName={(value) => setNameSearch(value)}
                 />)}
 
-                {
-                  isShowExportFile && (
-                    <ExportFiles
-                      nameWareHouse={nameWareHouse!}
-                      idWareHouse={idWareHouse!}
-                    />
-                  )
-                }
+              {
+                isShowExportFile && (
+                  <ExportFiles
+                    nameWareHouse={nameWareHouse!}
+                    idWareHouse={idWareHouse!}
+                  />
+                )
+              }
 
             </Card>
             <span style={{ marginLeft: 8, paddingBottom: 8 }}>
@@ -393,6 +377,7 @@ const WareHouseItem = () => {
         onCloseModal={() => setIsShowModal(false)}
         idWareHouse={idWareHouse}
         nameWareHouse={nameWareHouse}
+        reFetch={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
       />
 
       {

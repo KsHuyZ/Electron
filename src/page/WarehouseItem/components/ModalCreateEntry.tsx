@@ -20,7 +20,6 @@ import {
   formatNumberWithCommas,
   getDateExpried,
   formatDate,
-  convertDataHasReceiving
 } from "@/utils";
 import { getMessage, ERROR } from "@/page/WarehouseItem/constants/messValidate";
 import { UilMultiply } from "@iconscout/react-unicons";
@@ -35,6 +34,7 @@ interface PropsModal {
   onCloseModal: () => void;
   nameWareHouse?: string;
   idWareHouse?: number | string;
+  reFetch: () => void;
 }
 
 const removeItemChildrenInTable = (
@@ -72,7 +72,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     isShowModal,
     onCloseModal,
     idWareHouse,
-    nameWareHouse
+    nameWareHouse,
+    reFetch
   } = props;
 
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(
@@ -266,6 +267,14 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
 
     const result = await ipcRenderer.invoke("create-product-item", { ...params });
+    if (result) {
+      setTimeout(() => {
+        reFetch()
+        message.success("Tạm nhập mặt hàng thành công")
+        handleClean()
+      }, 500)
+
+    }
     // if (result) {
     //   setListItemEntryForm([])
     // }

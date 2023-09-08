@@ -37,14 +37,13 @@ const defaultTable: TableData<DataType[]> = {
     rows: defaultRows,
 };
 interface TableListProps {
-    id?: string | number;
-    isShow: boolean; onCloseModal: () => void;
+    isShow: boolean;
+    onCloseModal: () => void;
     setListItem: Dispatch<SetStateAction<DataType[]>>;
-    isExport: boolean;
     listItem: DataType[];
 }
 
-const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listItem }: TableListProps) => {
+const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem }: TableListProps) => {
     const [nameSearch, setNameSearch] = useState("");
     const [isSearch, setIsSearch] = useState<Boolean>(false);
     const [listData, setListData] = useState<TableData<FormatTypeTable<DataType>[]>>(defaultTable);
@@ -159,7 +158,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listIt
             getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
             getListWareHouse();
         }
-    }, [isExport, isShow, id]);
+    }, [isShow]);
 
     useEffect(() => {
         if (listItem.length === 0) {
@@ -171,10 +170,10 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listIt
         if (isSearch) {
             getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
         }
-    }, [isSearch, isExport, selectSearch]);
+    }, [isSearch, selectSearch]);
 
     const getListWareHouse = async () => {
-        const result = await ipcRenderer.invoke(isExport ? "receiving-list" : "get-warehouse-no-pagination");
+        const result = await ipcRenderer.invoke("receiving-list");
         if (result as any) {
             const option: OptionSelect[] = result.rows.map((item: any) => ({
                 label: item.name,
@@ -201,7 +200,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listIt
             itemWareHouse: selectSearch?.select ?? ''
         };
 
-        const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, id: id, paramsSearch: paramsSearch, isEdit: true, isExport });
+        const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, paramsSearch: paramsSearch, isEdit: true, isExport: true });
         if (result) {
             setListData((prev) => (
                 {
@@ -290,7 +289,7 @@ const ListEntryForm = ({ id, isShow, onCloseModal, setListItem, isExport, listIt
                                     </Col>
                                     <Col span={10} className="col-item-filter">
                                         <div className="form-item" style={{ width: '70%' }}>
-                                            <label htmlFor="">{isExport ? "Đơn vị nhận" : "Kho Hàng"}</label>
+                                            <label htmlFor="">Đơn vị nhận</label>
                                             <Select
                                                 style={{ width: '100%' }}
                                                 allowClear

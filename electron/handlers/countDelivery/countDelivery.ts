@@ -24,7 +24,7 @@ const countDelivery = (mainScreen: BrowserWindow) => {
     return result;
   });
   ipcMain.handle(
-    "get-delivery-item-by-delivery-id",
+    "get-export-item-by-id",
     async (event, ID: number) => {
       return await getDeliveryItembyDeliveryID(ID);
     }

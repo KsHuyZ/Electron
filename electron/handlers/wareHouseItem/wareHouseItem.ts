@@ -139,19 +139,19 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
     return response;
   });
 
-  ipcMain.handle(
-    "update-warehouseitem",
-    async (event, data: WarehouseItem & Intermediary) => {
-      const newWareHouse = await updateWareHouseItem(data);
-      return newWareHouse;
-    }
-  );
+  // ipcMain.handle(
+  //   "update-warehouseitem",
+  //   async (event, data: WarehouseItem & Intermediary) => {
+  //     const newWareHouse = await updateWareHouseItem(data);
+  //     return newWareHouse;
+  //   }
+  // );
 
   // listen delete event
   ipcMain.handle(
     "delete-warehouseitem",
     async (event, id: number, id_wareHouse: number) => {
-      const isSuccess = await deleteWareHouseItem(id, id_wareHouse);
+      const isSuccess = await deleteWareHouseItem(id);
       return isSuccess;
     }
   );
@@ -171,49 +171,67 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
     async (event: IpcMainEvent, data: any) => {
       const {
         items,
-        nameSource,
         name,
         note,
         nature,
         total,
         date,
         title,
-        nameWareHouse,
         author,
         id_Source,
         numContract,
         idWareHouse,
       } = data;
-      startPrint(
-        {
-          htmlString: await formImportBill({
-            items,
-            nameSource,
-            temp: true,
-            name,
-            note,
-            nature,
-            total,
-            date,
-            title,
-            nameWareHouse,
-            numContract,
-          }),
-        },
-        undefined
-      );
+      try {
+        const ID = await createTempCountCoupon(
+          name,
+          id_Source,
+          idWareHouse,
+          nature,
+          note,
+          total,
+          date,
+          title,
+          author,
+          numContract
+        );
+        await createMutipleWarehouseItem(ID, items, id_Source, idWareHouse);
+        return true;
+      } catch (error) {
+        console.log(error);
+        return false;
+      }
 
-      isForm = "temp-import";
-      currentItems = items;
-      currentAuthor = author;
-      currentDate = date;
-      currentName = name;
-      currentIDSource = id_Source;
-      currentReceivingID = idWareHouse;
-      currentNature = nature;
-      currentTitle = title;
-      currentTotal = total;
-      currentNumContract = numContract;
+      // startPrint(
+      //   {
+      //     htmlString: await formImportBill({
+      //       items,
+      //       nameSource,
+      //       temp: true,
+      //       name,
+      //       note,
+      //       nature,
+      //       total,
+      //       date,
+      //       title,
+      //       nameWareHouse,
+      //       numContract,
+      //     }),
+      //   },
+      //   undefined
+      // );
+
+      // isForm = "temp-import";
+      // currentItems = items;
+      // currentAuthor = author;
+      // currentDate = date;
+      // currentName = name;
+      // currentIDSource = id_Source;
+      // currentReceivingID = idWareHouse;
+      // currentNature = nature;
+      // currentTitle = title;
+      // currentTotal = total;
+      // currentNumContract = numContract;
     }
   );
 
@@ -269,7 +287,8 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
     async (
       event,
       data: {
-        items: DataType[];
+        ID: number;
+        items: Intermediary[];
         name: string;
         note: string;
         nature: string;
@@ -280,9 +299,11 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         idSource: string | number;
         author: string;
         numContract: number;
+        idWareHouse: number;
       }
     ) => {
       const {
+        ID,
         items,
         name,
         note,
@@ -293,25 +314,30 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         idSource,
         author,
         numContract,
+        idWareHouse,
       } = data;
-      startPrint(
-        {
-          htmlString: await formImportBill(data),
-        },
-        undefined
+
+      const isSuccess = await importWarehouse(
+        items,
+        name,
+        note,
+        nature,
+        total,
+        title,
+        date,
+        idSource,
+        author,
+        numContract,
+        ID,
+        idWareHouse
       );
-      currentName = name;
-      currentNote = note;
-      currentTotal = total;
-      currentNature = nature;
-      currentDate = date;
-      currentItems = items;
-      isForm = "import";
-      currentTitle = title;
-      currentIDSource = idSource;
-      currentAuthor = author;
-      currentNumContract = numContract;
-      return true;
+      return isSuccess;
+      // startPrint(
+      //   {
+      //     htmlString: await formImportBill(data),
+      //   },
+      //   undefined
+      // );
     }
   );
 
@@ -321,7 +347,7 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
       event,
       data: {
         name: string;
-        items: DataType[];
+        items: Intermediary[];
         note: string;
         nature: string;
         date: any;
@@ -346,37 +372,40 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         numContract,
         idReceiving,
       } = data;
+
+      const isSuccess = await tempExportWarehouse(
+        items,
+        idReceiving,
+        name,
+        note,
+        nature,
+        total,
+        title,
+        date,
+        author,
+        numContract
+      );
+      return isSuccess;
       // const isSuccess = await tempExportWareHouse(id_receiving, id_list);
       // return isSuccess;
-      startPrint(
-        {
-          htmlString: await formExportBill({ ...data, temp: true }),
-        },
-        undefined
-      );
-      currentName = name;
-      currentNote = note;
-      currentTotal = total;
-      currentNature = nature;
-      currentDate = date;
-      currentItems = items;
-      currentTitle = title;
-      currentAuthor = author;
-      currentNumContract = numContract;
-      currentReceivingID = idReceiving;
-      isForm = "temp-export";
+      // startPrint(
+      //   {
+      //     htmlString: await formExportBill({ ...data, temp: true }),
+      //   },
+      //   undefined
+      // );
     }
   );
 
   ipcMain.handle(
-    "print-import-edit",
+    "import-edit",
     async (
       event,
       data: {
         ID: number;
         removeItemList: DataType[];
         newItemList: DataType[];
-        items: DataType[];
+        items: (WarehouseItem & Intermediary)[];
         name: string;
         note: string;
         nature: string;
@@ -387,6 +416,7 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         idSource: number;
         author: string;
         numContract: number;
+        idWareHouse: number;
       }
     ) => {
       const {
@@ -403,28 +433,37 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         idSource,
         author,
         numContract,
+        idWareHouse,
       } = data;
+      try {
+        const isSuccess = await editCountCoupon(
+          removeItemList,
+          newItemList,
+          items,
+          ID,
+          idSource,
+          name,
+          nature,
+          total,
+          date,
+          title,
+          author,
+          numContract,
+          note,
+          idWareHouse
+        );
+        return isSuccess;
+      } catch (error) {
+        console.log(error);
+        return false;
+      }
 
-      startPrint(
-        {
-          htmlString: await formImportBill(data),
-        },
-        undefined
-      );
-      currentName = name;
-      currentDate = date;
-      currentItems = items;
-      currentNature = nature;
-      currentNote = note;
-      currentRemoveItem = removeItemList;
-      currentTitle = title;
-      currentTotal = total;
-      currentNewItem = newItemList;
-      currentID = ID;
-      currentIDSource = idSource;
-      currentAuthor = author;
-      currentNumContract = numContract;
-      isForm = "edit-import";
+      // startPrint(
+      //   {
+      //     htmlString: await formImportBill(data),
+      //   },
+      //   undefined
+      // );
     }
   );
 
@@ -509,38 +548,6 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
           );
 
           mainScreen.webContents.send("export-warehouse", { isSuccess });
-        } else if (isForm === "import") {
-          const isSuccess = await importWarehouse(
-            currentItems,
-            currentName,
-            currentNote,
-            currentNature,
-            currentTotal,
-            currentTitle,
-            currentDate,
-            currentIDSource,
-            currentAuthor,
-            currentNumContract
-          );
-          if (isSuccess) {
-            mainScreen.webContents.send("import-warehouse", { isSuccess });
-          }
-        } else if (isForm === "edit-import") {
-          await editCountCoupon(
-            currentRemoveItem,
-            currentNewItem,
-            currentItems,
-            currentID,
-            currentIDSource,
-            currentName,
-            currentNature,
-            currentTotal,
-            currentDate,
-            currentTitle,
-            currentAuthor,
-            currentNumContract
-          );
-          sendResponse("edit-import-success");
         } else if (isForm === "edit-export") {
           editCountDelivery(
             currentEditItem,
@@ -558,43 +565,6 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
             currentNumContract
           );
           mainScreen.webContents.send("edit-export-success");
-        } else if (isForm === "temp-import") {
-          try {
-            const ID = await createTempCountCoupon(
-              currentName,
-              currentIDSource,
-              currentNature,
-              currentNote,
-              currentTotal,
-              currentDate,
-              currentTitle,
-              currentAuthor,
-              currentNumContract
-            );
-            await createMutipleWarehouseItem(
-              ID,
-              currentItems,
-              currentIDSource,
-              currentReceivingID
-            );
-            mainScreen.webContents.send("temp-import-success");
-          } catch (error) {
-            console.log(error);
-          }
-        } else if (isForm === "temp-export") {
-          await tempExportWarehouse(
-            currentItems,
-            currentReceivingID,
-            currentName,
-            currentNote,
-            currentNature,
-            currentTotal,
-            currentTitle,
-            currentDate,
-            currentAuthor,
-            currentNumContract
-          );
-          mainScreen.webContents.send("temp-export-warehouse-success");
         }
       })
       .catch((error) => console.log(error));

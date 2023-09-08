@@ -30,12 +30,16 @@ import { ipcRenderer } from "electron";
 import dayjs from "dayjs";
 import TableListItem from "./TableListItem";
 import { CountDeliveryType } from "../History";
+import AddWareHouseItem from "@/page/WarehouseItem/components/AddWareHouseItem";
+import { useNavigate } from "react-router-dom";
 
 interface PropsModal {
   isShowModal: boolean;
   onCloseModal: () => void;
   select?: CountDeliveryType;
-  isExport: boolean;
+  path: string;
+  reFetch: () => void;
+  isOfficial: boolean
 }
 
 const defaultOptionNature: OptionSelect[] = [
@@ -168,7 +172,6 @@ const EditableCell: React.FC<EditableCellProps> = ({
   const inputRef = useRef<InputRef>(null);
   const { isError, setIsError } = useContext(CheckingErrorContext);
   const form = useContext(EditableContext)!;
-
   useEffect(() => {
     if (editing) {
       inputRef.current!.focus();
@@ -210,6 +213,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
   return <td {...restProps}>{childNode}</td>;
 };
 
+
 const nameOfEntryForm = nameOf<ModalEntryForm>();
 
 const ModalCreateEntry: React.FC<PropsModal> = (props) => {
@@ -218,8 +222,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     isShowModal,
     onCloseModal,
     select,
-    isExport
+    path,
+    reFetch,
+    isOfficial
   } = props;
+
+  const navigate = useNavigate()
 
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>([]);
   const [itemEditList, setItemEditList] = useState<DataType[]>([])
@@ -227,26 +235,31 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const [newItemList, setNewItemList] = useState<DataType[]>([])
   const [listItemHasChoose, setListItemHasChoose] = useState<DataType[]>([])
   const [listSource, setListSource] = useState<{ name: string, ID: number }[]>([])
-  const [paginationInfo, setPaginationInfo] = useState({
-    current: 1,
-    pageSize: 10,
-  });
-  const [srcOrWh, setSrcOrWh] = useState<number>()
+  const [listWarehouse, setListWarehouse] = useState<{ name: string, ID: number }[]>([])
   const [isError, setIsError] = useState(false);
   const [showAddItem, setShowAddItem] = useState<boolean>(false)
   const [currentListItem, setCurrentListItem] = useState<DataType[]>([])
+  const [isValidForm, setIsValidForm] = useState<{ message: string, isValid: boolean }>({ isValid: true, message: "" })
   const formRef = useRef<FormInstance>(null);
-
+  const isExport = path.includes("export")
+  const isTemp = path.includes("temp")
+  let errorData = false
+  console.log(isValidForm)
   const optionSource: OptionSelect[] = listSource.map(source => (
     {
       label: source?.name,
       value: source?.ID
     }
   ));
-
+  const optionWareHouse: OptionSelect[] = listWarehouse.map(source => (
+    {
+      label: source?.name,
+      value: source?.ID
+    }
+  ))
   const handleGetCouponItemByCouponId = async () => {
     if (select) {
-      const result = await ipcRenderer.invoke(isExport ? "get-delivery-item-by-delivery-id" : "get-coupon-item-by-coupon-id", select?.ID)
+      const result = await ipcRenderer.invoke(`get-${path}-item-by-id`, select?.ID)
       setListItemEntryForm(removeItemChildrenInTable(result as any))
       setCurrentListItem(result)
       formRef.current?.setFieldsValue(select)
@@ -270,8 +283,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   }
 
   const handleGetAllSource = async () => {
-    const result = await ipcRenderer.invoke(isExport ? "receiving-list" : "get-all-no-pagination")
+    const result = await ipcRenderer.invoke(path.includes("export") ? "receiving-list" : "get-all-no-pagination")
     setListSource(result.rows)
+  }
+  const handleGetAllWareHouse = async () => {
+    const result = await ipcRenderer.invoke("get-warehouse-no-pagination")
+    setListWarehouse(result.rows)
   }
 
   useEffect(() => {
@@ -281,12 +298,14 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   }, [isShowModal])
 
   useEffect(() => {
+
     if (listItemHasChoose.length !== 0) {
       const removeIds = new Set(removeItemList.map(item => item.IDIntermediary));
       const newArray = currentListItem.filter(item => !removeIds.has(item.IDIntermediary))
       setListItemEntryForm((removeItemChildrenInTable([...newArray, ...listItemHasChoose])))
       setNewItemList(listItemHasChoose)
     }
+
   }, [listItemHasChoose])
 
   useEffect(() => {
@@ -295,46 +314,18 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
 
   useEffect(() => {
     handleGetAllSource()
-  }, [isExport])
+    if (path.includes("import")) {
+      handleGetAllWareHouse()
+    }
+  }, [path])
+
+
 
   const columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
       title: "Tên Kho Hàng",
       dataIndex: "nameWareHouse",
-      render: (value, row: any, index) => {
-        const trueIndex =
-          index + paginationInfo.pageSize * (paginationInfo.current - 1);
-        const obj = {
-          children: <b>{value?.toUpperCase() ?? ""}</b>,
-          props: {} as any,
-        };
-        if (
-          index > 0 &&
-          row.id_WareHouse === listItemEntryForm[trueIndex - 1].id_WareHouse
-        ) {
-          obj.props.rowSpan = 0;
-
-        } else {
-          for (
-            let i = 0;
-            trueIndex + i !== listItemEntryForm.length &&
-            row.id_WareHouse === listItemEntryForm[trueIndex + i].id_WareHouse;
-            i += 1
-          ) {
-            obj.props.rowSpan = i + 1;
-          }
-        }
-        return obj;
-      },
       width: 200,
-    },
-    {
-      title: "Mã mặt hàng",
-      dataIndex: "IDWarehouseItem",
-      width: 150,
-      render: (record) => {
-        return `MH${record < 10 ? "0" : ""}${record}`;
-      },
     },
     {
       title: "Tên mặt hàng",
@@ -439,7 +430,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           htmlType="submit"
           onClick={handleSubmitForm}
         >
-          Làm lại phiếu
+          Lưu
         </Button>
       </Space>
     );
@@ -448,6 +439,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const handleClean = () => {
     onCloseModal();
     formRef.current?.resetFields();
+    setIsValidForm({ message: "", isValid: true })
   };
 
   const onFinishFormManagement = async (values: ModalEntryForm) => {
@@ -455,7 +447,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       message.error("Không có sản phẩm để làm phiếu");
       return;
     }
-    const idWarehouse = formRef.current?.getFieldValue(isExport ? "id_WareHouse" : "id_Source")
+    if (!isValidForm.isValid) {
+      return message.error(isValidForm.message)
+    }
+    const idWarehouse = formRef.current?.getFieldValue(path.includes("export") ? "id_WareHouse" : "id_Source")
     const item = listSource.find(src => src.ID === idWarehouse)
     const params: any = {
       ...values,
@@ -471,10 +466,25 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       title: values.title,
       nameSource: item?.name,
       id_WareHouse: idWarehouse,
-      idSource: idWarehouse
+      idSource: idWarehouse,
     };
+    // const result = await ipcRenderer.invoke(`print-${path}-edit`, { ...params });
+    const result = await ipcRenderer.invoke(!isOfficial ? `${path}-edit` : "print-form-import", { ...params })
+    if (result || result.success) {
+      if (!isOfficial) {
+        reFetch()
+        message.success("Sửa phiếu thành công")
+        handleClean()
+      } else {
+        message.success("làm phiếu thành công")
+        handleClean()
+        navigate("/history/import")
+      }
 
-    const result = await ipcRenderer.invoke(`print-${isExport ? "export" : "import"}-edit`, { ...params });
+    } else {
+      if (!result.success) return message.error("Lỗi. một số dữ liệu có thể đã cập nhật")
+      message.error("Lỗi")
+    }
   };
 
   const handleRemoveItem = (id: string) => {
@@ -498,12 +508,13 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     },
   };
 
+
   const totalPrice = useMemo(() => {
     return listItemEntryForm.reduce(
       (accumulator, currentValue) =>
         accumulator + Number(currentValue.price) * currentValue.quantity!,
       0
-    );
+    )
   }, [listItemEntryForm]);
 
   const newColumn = columns.map((col) => {
@@ -530,10 +541,44 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     setIsError: handleSetError
   }
 
+  const handleAddNewItem = async (item: DataType) => {
+    setListItemEntryForm(prev => removeItemChildrenInTable([...prev, { ...item, quantity: item.quantity_real, IDWarehouse: select?.idWareHouse }]))
+  }
+
+  const handleValidateQuantity = (quantity: number, quantityI: number, quantityOrigin: number) => {
+    if (quantity - quantityOrigin + quantityI >= 0) return true
+    return false
+  }
+
+  const handleValidForm = (record: DataType & { quantityI: number, quantityOrigin: number }, index: number) => {
+    if ((!record.price || !record.date_expried) && isOfficial) {
+      if (isValidForm.isValid && isShowModal) {
+        errorData = true
+        if (errorData && index === listItemEntryForm.length - 1) {
+          setIsValidForm({ isValid: false, message: "Các mặt hàng chưa được nhập đầy đủ thông tin" })
+        }
+      }
+      return "red"
+    }
+    if (!handleValidateQuantity(Number(record.quantity), record.quantityI, record.quantityOrigin)) {
+      if (isValidForm.isValid && isShowModal) {
+        errorData = true
+        if (errorData && index === listItemEntryForm.length - 1) {
+          setIsValidForm({ isValid: false, message: "Bạn đã xuất hoặc chuyển mặt hàng sang kho khác với số lượng lớn hơn" })
+        }
+      }
+      return "red"
+    }
+    if (!errorData && index === listItemEntryForm.length - 1 && !isValidForm.isValid) {
+      setIsValidForm({ isValid: true, message: "" })
+    }
+    return "black"
+
+  }
   return (
     <CheckingErrorContext.Provider value={contextValue}>
       <Modal
-        title={`Sửa phiếu ${isExport ? "xuất" : "nhập"}`}
+        title={`Sửa phiếu ${isTemp ? "tạm" : ""} ${isExport ? "xuất" : "nhập"}`}
         centered
         open={isShowModal}
         onCancel={handleClean}
@@ -572,9 +617,15 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             </Col>
             <Col span={8}>
               <Form.Item label={isExport ? "Đơn vị nhận" : "Nguồn nhập"} name={isExport ? "id_WareHouse" : "id_Source"}>
-                <Select options={optionSource} onChange={(value) => setSrcOrWh(value)} />
+                <Select options={optionSource} />
               </Form.Item>
             </Col>
+            {path.includes("import") ? <Col span={8}>
+              <Form.Item label={"Thuộc kho"} name={"idWareHouse"}>
+                <Select options={optionWareHouse} />
+              </Form.Item>
+            </Col> : null}
+
             <Col span={8}>
               <Form.Item
                 label="Loại nhập"
@@ -623,8 +674,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
                 <Input />
               </Form.Item>
             </Col>
-            <Col span={16}>
-              <Form.Item label="Chú thích" name={"Note"}>
+            <Col span={path.includes("import") ? 8 : 16}>
+              <Form.Item label="Chú thích" name={"note"}>
                 <Input.TextArea rows={4} />
               </Form.Item>
             </Col>
@@ -636,31 +687,40 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             </Col>
           </Row>
 
-          <Space align="center" >
+          {!isOfficial ? <Space align="center">
             <Button
+              style={{ margin: "10px 0" }}
               type="primary"
               onClick={() => setShowAddItem(true)}
             >
-              Thay đổi sản phẩm
+              Thêm sản phẩm
             </Button>
-          </Space>
+          </Space> : null}
           <Table
             columns={newColumn as any}
             dataSource={listItemEntryForm as any}
             bordered
             pagination={false}
-            components={components}
+            components={isOfficial ? undefined : components}
             scroll={{ y: 500 }}
             style={{ maxWidth: "1200px" }}
+            onRow={(record, index) => ({
+              style: {
+                color: handleValidForm(record, index),
+              }
+            })}
             rowKey={(item: DataType) => item.IDIntermediary}
           />
         </Form>
-        <TableListItem id={srcOrWh ? srcOrWh : isExport ? select?.id_WareHouse : select?.id_Source}
+        {isExport ? <TableListItem
           isShow={showAddItem}
           onCloseModal={() => setShowAddItem(false)}
           setListItem={setListItemHasChoose}
-          isExport={isExport}
-          listItem={listItemHasChoose} />
+          listItem={listItemHasChoose}
+        /> : <AddWareHouseItem
+          isShowModal={showAddItem}
+          onCloseModal={() => setShowAddItem(false)}
+          onCreateItem={handleAddNewItem} />}
       </Modal>
     </CheckingErrorContext.Provider>
   );
