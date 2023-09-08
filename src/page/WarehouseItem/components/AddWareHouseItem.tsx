@@ -107,18 +107,13 @@ const AddWareHouseItem = React.memo(
     const onFinishFormManagement = async (values: WarehouseItem) => {
       const { date_expried } = values;
       const dateFormat = formatDate(date_expried, false, "no_date");
-
-      // if (idWareHouse === undefined) {
-      //   message.error(ERROR_SERVER.ERROR_1);
-      //   return;
-      // }
       setLoadingButton(true);
       const idSourceSelect = formWareHouseItem.getFieldValue("idSource")
       const sourceSelect = listOptionSource?.find(item => item.value === idSourceSelect)
       const params: any = {
         ...values,
         price: convertPrice(values.price),
-        date_expried: dateFormat,
+        date_expried: date_expried ? dateFormat : null,
         status: STATUS.TEMPORARY_IMPORT,
         date: formatDate(new Date(), true, "date_First"),
         date_created_at: formatDate(new Date(), true, "no_date"),
@@ -280,10 +275,8 @@ const AddWareHouseItem = React.memo(
                 <Input
                   onChange={handleInputPrice}
                   addonAfter="vnđ"
-                // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
-              {/* <InputPrice name="price" label="Gias"/> */}
             </Col>
             <Col span={8}>
               <Form.Item
@@ -376,12 +369,6 @@ const AddWareHouseItem = React.memo(
               <Form.Item
                 label="Ngày hết hạn"
                 name="date_expried"
-                rules={[
-                  {
-                    required: true,
-                    message: getMessage(ERROR.ERROR_1, "Ngày hết hạn"),
-                  },
-                ]}
               >
                 <DatePicker style={{ width: "100%" }} />
               </Form.Item>

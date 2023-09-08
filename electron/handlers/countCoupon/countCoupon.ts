@@ -22,7 +22,7 @@ const countCoupon = (mainScreen: BrowserWindow) => {
   ipcMain.handle("get-import-item", async (event, id: number) => {
     return await getCouponItem(id);
   });
-  ipcMain.handle("get-coupon-item-by-coupon-id", async (event, ID: number) => {
+  ipcMain.handle("get-import-item-by-id", async (event, ID: number) => {
     return await getCouponItembyCouponID(ID);
   });
   ipcMain.handle("approve-import", async (event, id: number | string) => {

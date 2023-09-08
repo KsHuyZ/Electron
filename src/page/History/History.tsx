@@ -10,6 +10,7 @@ import { UilExclamationCircle, UilPen } from '@iconscout/react-unicons'
 import ModalCreateEntry from './components/ModalCreateEntry'
 import toastify from '@/lib/toastify'
 import { getPath } from './utils';
+import { UilPrint } from "@iconscout/react-unicons";
 
 const dataTab = [
     {
@@ -46,7 +47,8 @@ export type CountDeliveryType = {
     nameSource: string;
     id_Source: number | string;
     id_WareHouse: number | string;
-    status: number | string
+    status: number | string,
+    idWareHouse?: number
 }
 
 
@@ -57,6 +59,7 @@ const History = () => {
     const [showUpdateModal, setShowUpdateModal] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams();
     const [currentSelect, setCurrentSelect] = useState<CountDeliveryType>()
+    const [isOfficial, setIsOfficial] = useState<boolean>(false)
     const current = searchParams.get("current");
     const pageSize = searchParams.get("pageSize");
 
@@ -90,8 +93,6 @@ const History = () => {
     };
 
     const { notifySuccess } = toastify
-
-    const isExport = location.pathname.startsWith("/history/export")
     const pathName = location.pathname
     let columns: ColumnsType<CountDeliveryType> = [
         {
@@ -147,12 +148,17 @@ const History = () => {
             dataIndex: "Note"
         },
         {
-            title: "Cập nhật",
+            title: "Hành động",
             render: (_, value) => (
-                canUpdate && value.status !== 1 ? <Space size="middle">
-                    <UilPen style={{ cursor: "pointer", color: "#00b96b" }} onClick={() => handleShowModalUpdate(value)} />
-                    {getPath(pathName).includes("temp") ? null : <Button type='text' onClick={() => handleApprove(value)}>Duyệt phiếu</Button>}
-                </Space> : <></>
+                <Space size="middle">
+                    {canUpdate && value.status !== 1 ? (
+                        <>
+                            <UilPen style={{ cursor: "pointer" }} onClick={() => handleShowModalUpdate(value)} />
+                            {getPath(pathName).includes("temp") ? <Button type='text' onClick={() => handleShowModalOfficial(value)}>Làm phiếu {getPath(pathName).includes("export") ? "xuất" : "nhập"}</Button> : <Button type='text' onClick={() => handleApprove(value)}>Duyệt phiếu</Button>}
+                        </>
+                    ) : <></>}
+                    <UilPrint style={{ cursor: "pointer" }} />
+                </Space>
             )
         }
     ]
@@ -176,12 +182,15 @@ const History = () => {
         setCurrentSelect(value)
         setShowUpdateModal(true)
     }
-
+    const handleShowModalOfficial = (value: CountDeliveryType) => {
+        handleShowModalUpdate(value)
+        setIsOfficial(true)
+    }
     const handleGetData = async () => {
         const result = await ipcRenderer.invoke(`get-history-${getPath(pathName)}`, { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize })
         return setTableData({ ...result, pagination: { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize }, loading: false })
     }
-    console.log(tableData.rows)
+
     const handleTableChange = (pagination: TablePaginationConfig) => {
         const { current, pageSize, total } = pagination
         setSearchParams(prev => ({ ...prev, current, pageSize }))
@@ -243,9 +252,12 @@ const History = () => {
                 onCloseModal={() => {
                     setCurrentSelect(undefined)
                     setShowUpdateModal(false)
+                    setIsOfficial(false)
                 }}
                 select={currentSelect}
-                isExport={isExport}
+                path={getPath(pathName)}
+                reFetch={handleGetData}
+                isOfficial={isOfficial}
             />
         </>
     )

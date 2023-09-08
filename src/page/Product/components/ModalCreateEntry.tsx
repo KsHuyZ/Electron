@@ -34,6 +34,8 @@ interface PropsModal {
   onCloseModal: () => void;
   listItem: DataType[];
   idReceiving: number | unknown;
+  reFetch: () => Promise<void>;
+  onCloseTransferModal: () => void
 }
 
 const removeItemChildrenInTable = (
@@ -71,7 +73,9 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     isShowModal,
     onCloseModal,
     listItem,
-    idReceiving
+    idReceiving,
+    reFetch,
+    onCloseTransferModal
   } = props;
 
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>([]);
@@ -250,7 +254,13 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
 
     try {
-      await ipcRenderer.invoke("temp-export-warehouse", params);
+      const result: boolean = await ipcRenderer.invoke("temp-export-warehouse", params);
+      if (result) {
+        await reFetch()
+        message.success("Tạm xuất kho thành công")
+        handleClean()
+        return onCloseTransferModal()
+      }
     } catch (error) {
       message.error('Loi server')
     }

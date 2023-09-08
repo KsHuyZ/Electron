@@ -109,6 +109,15 @@ const tempCountDelivery = {
     const rows: any = await runQueryGetAllData(selectQuery, [id]);
     return rows;
   },
+  getTemptDeliveryItembyID: async (id: number) => {
+    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Delivery_Temp_Item ci
+    join Intermediary i on i.ID = ci.id_intermediary
+    join WareHouseItem wi on wi.ID = i.id_WareHouseItem
+   join warehouse w on w.ID = i.prev_idwarehouse
+    where ci.id_Temp_Cout_Delivery = ?`;
+    const rows: any = await runQueryGetAllData(selectQuery, [id]);
+    return rows;
+  },
 };
 
 export default tempCountDelivery;

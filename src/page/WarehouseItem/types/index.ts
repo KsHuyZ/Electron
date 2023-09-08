@@ -22,6 +22,7 @@ type DataType = {
   prev_idwarehouse?: number;
   totalPrice?: number;
   newQuantity?: number;
+  IDWarehouse?: number;
 };
 
 type WarehouseItem = {

@@ -399,6 +399,8 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
           onCloseModal={() => setShowEntry(false)}
           listItem={listItemTransfer}
           idReceiving={item}
+          reFetch={props.fetching}
+          onCloseTransferModal={setIsShow}
         />
       </Modal>
     </CheckingErrorContext.Provider>

@@ -143,9 +143,9 @@ const Source = {
             }status ${
               isExport ? "= 2" : `IN(${!isEdit ? "3," : ""}1,5)`
             } AND i.quantity > 0`
-          : `WHERE ${!isExport ? `wi.id_Source = ${id} AND ` : ""}status ${
-              isExport ? "= 2" : `IN(${!isEdit ? "3," : ""}1,5)`
-            } AND i.quantity > 0`;
+          : `WHERE ${!isExport ? `wi.id_Source = ${id} AND ` : ""}status IN(${
+              !isEdit ? "3," : ""
+            }1,5) AND i.quantity > 0`;
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
         i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity,
@@ -167,6 +167,7 @@ const Source = {
           }
         });
       });
+      
       const countResult = rows.length > 0 ? rows[0].total : 0;
       return { rows, total: countResult };
     } catch (err) {

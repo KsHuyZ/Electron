@@ -6,7 +6,7 @@ export type WarehouseItem = {
   name: string;
   price: number;
   unit: string;
-  date_expried: Moment | null;
+  date_expried: any |string | null;
   date_created_at: Moment | null;
   date_updated_at: Moment | null;
   quantity_plane: number;
@@ -16,9 +16,10 @@ export type WarehouseItem = {
 };
 
 export type Intermediary = {
-  idIntermediary: number;
+  IDIntermediary: number;
   id_wareHouse: number;
-  id_wareHouse_item: number;
+  IDWarehouse?: number;
+  IDWarehouseItem: number;
   quantity_real?: number;
   status: number;
   quality: number;
