@@ -458,34 +458,25 @@ const wareHouseItem = {
       unit,
       quality,
       date_expried,
-      date_created_at,
-      date_updated_at,
       note,
       quantity_plane,
-      quantity_real,
-      id_wareHouse,
-      status,
       quantity,
-      idWarehouseItem,
+      IDWarehouseItem,
       IDIntermediary,
-      origin,
       quantityOrigin,
     } = data;
     try {
       await runQuery(
-        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, date_created_at = ?, date_updated_at = ?, note = ?, quantity_plane = ?, origin = ? WHERE ID = ?`,
+        `UPDATE warehouseItem SET name = ?, price = ?, unit = ?, id_Source = ?, date_expried = ?, note = ?, quantity_plane = ? WHERE ID = ?`,
         [
           name,
           price,
           unit,
           idSource,
           date_expried,
-          date_created_at,
-          date_updated_at,
           note,
           quantity_plane,
-          idWarehouseItem,
-          origin,
+          IDWarehouseItem,
         ]
       );
 
@@ -500,7 +491,7 @@ const wareHouseItem = {
       return { success: true };
     } catch (error) {
       console.log(error);
-      return { success: false, error };
+      throw Error(error);
     }
   },
   deleteWareHouseItemInWarehouse: async (ID: number) => {
@@ -537,26 +528,37 @@ const wareHouseItem = {
       return false;
     }
   },
-  deleteWareHouseItem: async (ID: number | string) => {
+  deleteWareHouseItem: async (
+    IDWarehouseItem: number | string,
+    IDIntermediary: number | string
+  ) => {
     try {
+      let isError = false;
       const rows: any = await runQueryGetAllData(
-        `select id_WareHouseItem from Intermediary WHERE ID = ?`,
-        [ID]
+        `select status from Intermediary Where id_WareHouseItem = ?`,
+        [IDWarehouseItem]
       );
-      if (rows.length) {
-        rows.forEach(async ({ id_WareHouseItem }) => {
-          await runQuery(`DELETE FROM Intermediary WHERE ID = ?`, [
-            id_WareHouseItem,
-          ]);
+
+      if (rows.length > 0) {
+        rows.forEach(async ({ status }) => {
+          if (status === 5) {
+            isError = true;
+          }
+          await runQuery(
+            `DELETE FROM Intermediary WHERE id_WareHouseItem = ?`,
+            [IDWarehouseItem]
+          );
         });
       }
+      if (isError) {
+        throw new Error("Mặt hàng đã được tạm xuất. Không thể xuất đi!");
+      }
       await runQuery("DELETE FROM Coupon_Temp_Item WHERE id_intermediary = ?", [
-        ID,
+        IDIntermediary,
       ]);
-      return true;
+      return { success: true };
     } catch (error) {
-      console.log(error);
-      return false;
+      return { success: false, error: error.message };
     }
   },
   changeWareHouse: async (

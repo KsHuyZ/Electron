@@ -38,7 +38,7 @@ const dataTab = [
 export type CountDeliveryType = {
     ID: number;
     nature: string;
-    Note: string;
+    note: string;
     name: string;
     title: string;
     TotalPrice: number;
@@ -145,7 +145,7 @@ const History = () => {
         },
         {
             title: "Ghi chú",
-            dataIndex: "Note"
+            dataIndex: "note"
         },
         {
             title: "Hành động",
@@ -190,7 +190,6 @@ const History = () => {
         const result = await ipcRenderer.invoke(`get-history-${getPath(pathName)}`, { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize })
         return setTableData({ ...result, pagination: { current: tableData.pagination.current, pageSize: tableData.pagination.pageSize }, loading: false })
     }
-
     const handleTableChange = (pagination: TablePaginationConfig) => {
         const { current, pageSize, total } = pagination
         setSearchParams(prev => ({ ...prev, current, pageSize }))

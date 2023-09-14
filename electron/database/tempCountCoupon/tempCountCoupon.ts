@@ -93,6 +93,8 @@ const tempCountCoupon = {
   },
   updateTempCoutCoupon: async (
     ID: number,
+    idSource: number,
+    idWareHouse: number,
     name: string,
     nature: string,
     total: number,
@@ -102,10 +104,12 @@ const tempCountCoupon = {
     numContract: number,
     note: string
   ) => {
-    const updateQuery = `UPDATE CoutTempCoupon SET name = ?, nature = ? , total = ?, date = ?, title = ?, author = ?, numContract = ?, note = ? WHERE ID = ?`;
+    const updateQuery = `UPDATE CoutTempCoupon SET name = ?,id_Source = ?, idWareHouse =?, nature = ? , total = ?, date = ?, title = ?, author = ?, numContract = ?, note = ? WHERE ID = ?`;
     try {
       await runQuery(updateQuery, [
         name,
+        idSource,
+        idWareHouse,
         nature,
         total,
         date,
@@ -123,7 +127,6 @@ const tempCountCoupon = {
   },
   editTempCountCoupon: async (
     removeItemList: DataType[],
-    newItemList: (WarehouseItem & Intermediary)[],
     items: (WarehouseItem & Intermediary & { quantityOrigin: number })[],
     ID: number,
     idSource: number,
@@ -137,28 +140,30 @@ const tempCountCoupon = {
     note: string,
     idWareHouse: number
   ) => {
-    const { deleteWareHouseItem } = wareHouseItemDB;
-
     try {
+      const { deleteWareHouseItem } = wareHouseItemDB;
+      let isError = { error: false, message: "" };
       removeItemList.forEach(async (item) => {
-        await deleteWareHouseItem(item.IDIntermediary);
+        const result = await deleteWareHouseItem(
+          item.IDWarehouseItem,
+          item.IDIntermediary
+        );
+        if (!result.success) {
+          isError = { error: true, message: result.error };
+        }
       });
 
       items.forEach(async (item) => {
         if (item.IDIntermediary) {
-          const result = await updateWareHouseItem(
-            ID,
-            idSource,
-            item,
-            idWareHouse
-          );
-          if ((result.success = false)) throw new Error(result.error);
+          await updateWareHouseItem(ID, idSource, item, idWareHouse);
         } else {
           await createWareHouseItem(ID, idWareHouse, idSource, item, 1);
         }
       });
       await tempCountCoupon.updateTempCoutCoupon(
         ID,
+        idSource,
+        idWareHouse,
         name,
         nature,
         total,
@@ -168,10 +173,12 @@ const tempCountCoupon = {
         numContract,
         note
       );
-      return true;
+      if (isError.error) {
+        throw new Error(isError.message);
+      }
+      return { success: true };
     } catch (error) {
-      console.log(error);
-      return { success: false, error };
+      return { success: false, message: error.message };
     }
   },
 };

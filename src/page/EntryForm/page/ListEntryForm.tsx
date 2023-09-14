@@ -8,7 +8,6 @@ import { ResponseIpc,TableData,FormatTypeTable,OptionSelect, QUALITY_PRODUCT, ST
 import { TablePaginationConfig } from "antd/es/table";
 import { useSearchParams, useParams } from "react-router-dom";
 import { ipcRenderer } from "electron";
-import TableTree from "@/components/TreeTable/TreeTable";
 import ModalCreateEntry from "../components/ModalCreateEntry";
 import TableWareHouse from "@/page/WarehouseItem/components/TableWareHouse";
 
@@ -295,9 +294,6 @@ const ListEntryForm = () =>{
     }
     return false;
   }, [listItemHasChoose]);
-  
-      console.log(listData);
-      
 
     return (
         <Row className="filter-bar">
@@ -329,13 +325,6 @@ const ListEntryForm = () =>{
                     />
                   </div>
                 </Col>
-                <Col span={4}>
-                  <Space direction="horizontal" size={24}>
-                    {/* <Button className={true ? `default active-search` : `default`} icon={<UilFilter />}>Lọc</Button> */}
-                    <Button className={checkingStatus() ? 'active-border' : ''} disabled={checkingStatus() ? false : true} onClick={() => setStatusModal(true)}>Làm Phiếu Nhập</Button>
-                    {/* <Button className="default" onClick={() => setIsShowModal(true)} type="primary">Thêm Sản Phẩm</Button> */}
-                  </Space>
-                </Col>
               </Row>
             </Card>
             <span style={{ marginLeft: 8, paddingBottom: 8 }}>
@@ -362,21 +351,6 @@ const ListEntryForm = () =>{
           />
         </div>
       </Col>
-      
-      {
-        statusModal &&(
-          <ModalCreateEntry
-            isShowModal={statusModal}
-            onCloseModal={() => setStatusModal(false)}
-            listItem={listItemHasChoose as any}
-            idSource={id}
-            nameSource={nameSource}
-            removeItemList={removeItemList}
-              fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
-              listWareHouse={listWareHouse}
-          />
-        )
-      }
     </Row>
     )
 }
