@@ -32,6 +32,7 @@ import TableListItem from "./TableListItem";
 import { CountDeliveryType } from "../History";
 import AddWareHouseItem from "@/page/WarehouseItem/components/AddWareHouseItem";
 import { useNavigate } from "react-router-dom";
+import ModalDelete from "./ModalDelete";
 
 interface PropsModal {
   isShowModal: boolean;
@@ -114,7 +115,7 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef>, record: D
     case 'quantity_plane':
     case 'quantity':
     case 'price':
-      return <Tooltip placement="top" title={`Số lượng hiện có ${record[dataIndex]}`}>
+      return <Tooltip placement="top" title={`${dataIndex === "price" ? "Giá hiện tại" : "Số lượng hiện có"} ${record[dataIndex]}`}>
         <Form.Item
           style={{ margin: 0 }}
           name={dataIndex}
@@ -240,11 +241,13 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const [showAddItem, setShowAddItem] = useState<boolean>(false)
   const [currentListItem, setCurrentListItem] = useState<DataType[]>([])
   const [isValidForm, setIsValidForm] = useState<{ message: string, isValid: boolean }>({ isValid: true, message: "" })
+  const [showModalDelete, setShowModalDelete] = useState<boolean>(false)
+
   const formRef = useRef<FormInstance>(null);
   const isExport = path.includes("export")
   const isTemp = path.includes("temp")
   let errorData = false
-  console.log(isValidForm)
+
   const optionSource: OptionSelect[] = listSource.map(source => (
     {
       label: source?.name,
@@ -321,10 +324,11 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
 
 
 
-  const columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
+  let columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
       title: "Tên Kho Hàng",
       dataIndex: "nameWareHouse",
+      key: "nameWareHouse",
       width: 200,
     },
     {
@@ -399,7 +403,9 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       ),
     },
   ];
-
+  if (!isExport) {
+    columns = columns.filter(column => column.key !== "nameWareHouse")
+  }
   const handleSubmitForm = async () => {
     try {
       await formRef?.current!.validateFields();
@@ -440,6 +446,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     onCloseModal();
     formRef.current?.resetFields();
     setIsValidForm({ message: "", isValid: true })
+    setNewItemList([])
+    setRemoveItemList([])
   };
 
   const onFinishFormManagement = async (values: ModalEntryForm) => {
@@ -470,7 +478,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
     // const result = await ipcRenderer.invoke(`print-${path}-edit`, { ...params });
     const result = await ipcRenderer.invoke(!isOfficial ? `${path}-edit` : "print-form-import", { ...params })
-    if (result || result.success) {
+    if (result.success) {
       if (!isOfficial) {
         reFetch()
         message.success("Sửa phiếu thành công")
@@ -482,8 +490,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       }
 
     } else {
-      if (!result.success) return message.error("Lỗi. một số dữ liệu có thể đã cập nhật")
-      message.error("Lỗi")
+      return message.error(result.error)
     }
   };
 
@@ -507,7 +514,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       cell: EditableCell,
     },
   };
-
 
   const totalPrice = useMemo(() => {
     return listItemEntryForm.reduce(
@@ -536,6 +542,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const handleSetError = (params: boolean) => {
     setIsError(params)
   }
+
   const contextValue = {
     isError,
     setIsError: handleSetError
@@ -546,7 +553,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   }
 
   const handleValidateQuantity = (quantity: number, quantityI: number, quantityOrigin: number) => {
-    if (quantity - quantityOrigin + quantityI >= 0) return true
+
+    if (quantity - quantityOrigin + quantityI >= 0 || !quantityI || !quantityOrigin) return true
     return false
   }
 
@@ -574,6 +582,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     }
     return "black"
 
+  }
+
+  const handleBackupData = (ids: (number | string)[]) => {
+    const listItemBackup = removeItemList.filter(item => ids.includes(item.IDIntermediary))
+    setListItemEntryForm(prev => [...prev, ...listItemBackup])
+    setRemoveItemList(prev => prev.filter(item => !ids.includes(item.IDIntermediary)))
   }
   return (
     <CheckingErrorContext.Provider value={contextValue}>
@@ -695,6 +709,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             >
               Thêm sản phẩm
             </Button>
+            <Button
+              style={{ margin: "10px 0" }}
+              type="primary"
+              onClick={() => setShowModalDelete(true)}>
+              Xem mặt hàng đã xóa
+            </Button>
           </Space> : null}
           <Table
             columns={newColumn as any}
@@ -712,6 +732,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
             rowKey={(item: DataType) => item.IDIntermediary}
           />
         </Form>
+        <ModalDelete listItemDelete={removeItemList}
+          isShow={showModalDelete}
+          closeModal={() => setShowModalDelete(false)}
+          onSubmit={(ids) => handleBackupData(ids)} />
         {isExport ? <TableListItem
           isShow={showAddItem}
           onCloseModal={() => setShowAddItem(false)}

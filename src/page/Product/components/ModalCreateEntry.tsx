@@ -230,7 +230,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const handleClean = () => {
     onCloseModal();
     formRef.current?.resetFields();
-    setListItemEntryForm([])
   };
 
   const onFinishFormManagement = async (values: ModalEntryForm) => {

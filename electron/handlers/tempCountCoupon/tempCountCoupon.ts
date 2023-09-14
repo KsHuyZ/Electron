@@ -1,5 +1,6 @@
 import { ipcMain } from "electron";
 import tempCountCouponDB from "../../database/tempCountCoupon/tempCountCoupon";
+import { handleTransaction } from "../../utils";
 
 const tempCountCoupon = () => {
   const {
@@ -28,7 +29,6 @@ const tempCountCoupon = () => {
     const {
       ID,
       removeItemList,
-      newItemList,
       items,
       name,
       note,
@@ -41,10 +41,10 @@ const tempCountCoupon = () => {
       numContract,
       idWareHouse,
     } = data;
-    try {
-      const result = await editTempCountCoupon(
+
+    const result = await handleTransaction(() =>
+      editTempCountCoupon(
         removeItemList,
-        newItemList,
         items,
         ID,
         idSource,
@@ -57,12 +57,9 @@ const tempCountCoupon = () => {
         numContract,
         note,
         idWareHouse
-      );
-      return result;
-    } catch (error) {
-      console.log(error);
-      return error;
-    }
+      )
+    );
+    return result;
   });
 };
 export default tempCountCoupon;

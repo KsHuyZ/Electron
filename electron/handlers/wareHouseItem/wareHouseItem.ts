@@ -30,7 +30,6 @@ const { tempExportWarehouse } = tempCountDelivery;
 import fs from "fs";
 import countDelivery from "../../database/countDelivery/countDelivery";
 import { formFileExcel } from "../../utils/formFileExcel";
-import { sendResponse } from "../../utils";
 import tempCountDelivery from "../../database/tempCountDelivery";
 
 let currentName = "";
@@ -47,7 +46,6 @@ let currentEditItem = [];
 let currentAuthor = "";
 let currentNumContract;
 let currentID;
-let currentIDSource;
 let currentReceivingID;
 
 const wareHouseItem = (mainScreen: BrowserWindow) => {
