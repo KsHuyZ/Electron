@@ -31,6 +31,7 @@ import fs from "fs";
 import countDelivery from "../../database/countDelivery/countDelivery";
 import { formFileExcel } from "../../utils/formFileExcel";
 import tempCountDelivery from "../../database/tempCountDelivery";
+import { handleTransaction } from "../../utils";
 
 let currentName = "";
 let currentNote = "";
@@ -146,13 +147,13 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
   // );
 
   // listen delete event
-  ipcMain.handle(
-    "delete-warehouseitem",
-    async (event, id: number, id_wareHouse: number) => {
-      const isSuccess = await deleteWareHouseItem(id);
-      return isSuccess;
-    }
-  );
+  // ipcMain.handle(
+  //   "delete-warehouseitem",
+  //   async (event, id: number, id_wareHouse: number) => {
+  //     const isSuccess = await deleteWareHouseItem(id);
+  //     return isSuccess;
+  //   }
+  // );
 
   //Change warehouse
   ipcMain.handle(
@@ -238,7 +239,8 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
     async (
       event,
       data: {
-        items: DataType[];
+        ID: number;
+        items: Intermediary[];
         name: string;
         note: string;
         nature: string;
@@ -248,9 +250,11 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         nameSource: string;
         author: string;
         numContract: number | string;
+        id_WareHouse: number;
       }
     ) => {
       const {
+        ID,
         items,
         name,
         note,
@@ -260,24 +264,31 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         title,
         author,
         numContract,
+        id_WareHouse,
       } = data;
-      startPrint(
-        {
-          htmlString: await formExportBill(data),
-        },
-        undefined
+      const result = await handleTransaction(
+        async () =>
+          await exportWarehouse(
+            ID,
+            items,
+            id_WareHouse,
+            name,
+            note,
+            nature,
+            total,
+            title,
+            date,
+            author,
+            numContract
+          )
       );
-      currentName = name;
-      currentNote = note;
-      currentTotal = total;
-      currentNature = nature;
-      currentDate = date;
-      currentItems = items;
-      currentTitle = title;
-      currentAuthor = author;
-      currentNumContract = numContract;
-      isForm = "export";
-      return null;
+      return result;
+      // startPrint(
+      //   {
+      //     htmlString: await formExportBill(data),
+      //   },
+      //   undefined
+      // );
     }
   );
   ipcMain.handle(
@@ -315,19 +326,22 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         idWareHouse,
       } = data;
 
-      const isSuccess = await importWarehouse(
-        items,
-        name,
-        note,
-        nature,
-        total,
-        title,
-        date,
-        idSource,
-        author,
-        numContract,
-        ID,
-        idWareHouse
+      const isSuccess = await handleTransaction(
+        async () =>
+          await importWarehouse(
+            items,
+            name,
+            note,
+            nature,
+            total,
+            title,
+            date,
+            idSource,
+            author,
+            numContract,
+            ID,
+            idWareHouse
+          )
       );
       return isSuccess;
       // startPrint(
@@ -466,7 +480,7 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
   );
 
   ipcMain.handle(
-    "print-export-edit",
+    "export-edit",
     async (
       event,
       data: {
@@ -489,8 +503,6 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
     ) => {
       const {
         ID,
-        itemEditList,
-        newItemList,
         removeItemList,
         items,
         name,
@@ -503,28 +515,29 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         author,
         numContract,
       } = data;
-      startPrint(
-        {
-          htmlString: await formExportBill(data),
-        },
-        undefined
+      const result = await handleTransaction(
+        async () =>
+          await editCountDelivery(
+            removeItemList,
+            items,
+            ID,
+            id_WareHouse,
+            name,
+            nature,
+            total,
+            date,
+            title,
+            author,
+            numContract
+          )
       );
-
-      currentName = name;
-      currentEditItem = itemEditList;
-      currentNewItem = newItemList;
-      currentDate = date;
-      currentItems = items;
-      currentNature = nature;
-      currentNote = note;
-      currentRemoveItem = removeItemList;
-      currentTitle = title;
-      currentTotal = total;
-      currentID = ID;
-      currentReceivingID = id_WareHouse;
-      isForm = "edit-export";
-      currentAuthor = author;
-      currentNumContract = numContract;
+      return result;
+      // startPrint(
+      //   {
+      //     htmlString: await formExportBill(data),
+      //   },
+      //   undefined
+      // );
     }
   );
 
@@ -533,36 +546,6 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
     await print(url, options)
       .then(async () => {
         if (isForm === "export") {
-          const isSuccess = await exportWarehouse(
-            currentItems,
-            currentName,
-            currentNote,
-            currentNature,
-            currentTotal,
-            currentTitle,
-            currentDate,
-            currentAuthor,
-            currentNumContract
-          );
-
-          mainScreen.webContents.send("export-warehouse", { isSuccess });
-        } else if (isForm === "edit-export") {
-          editCountDelivery(
-            currentEditItem,
-            currentNewItem,
-            currentRemoveItem,
-            currentItems,
-            currentID,
-            currentReceivingID,
-            currentName,
-            currentNature,
-            currentTotal,
-            currentDate,
-            currentTitle,
-            currentAuthor,
-            currentNumContract
-          );
-          mainScreen.webContents.send("edit-export-success");
         }
       })
       .catch((error) => console.log(error));

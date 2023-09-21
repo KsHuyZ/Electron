@@ -82,13 +82,33 @@ const tempCountCoupon = {
     return rows;
   },
   getTempCouponItembyCouponID: async (id: number) => {
-    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,i.prev_idwarehouse,i.status,wi.name, cu.quantity,i.quantity AS quantityI,cu.quantity AS quantityOrigin,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit FROM Coupon_Temp_Item cu
+    const selectQuery = `select cu.ID, wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,i.prev_idwarehouse,i.status,wi.name, cu.quantity,i.quantity AS quantityI,cu.quantity AS quantityOrigin,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.quantity_plane AS quantityPlaneOrigin,wi.date_expried, wi.price,wi.price AS priceOrigin, wi.unit FROM Coupon_Temp_Item cu
     join Intermediary i on i.ID = cu.id_intermediary
     join WareHouseItem wi on wi.ID = i.id_WareHouseItem
     join WareHouse w on w.ID = IDWarehouse
     where cu.id_Temp_Cout_Coupon = ?`;
-    const rows: any = await runQueryGetAllData(selectQuery, [id]);
+    let rows: any = await runQueryGetAllData(selectQuery, [id]);
+    const promises = await rows.map(async (row, index) => {
+      const status = await tempCountCoupon.getListStatusItem(
+        row.IDIntermediary
+      );
 
+      if (status.some((element) => [2, 4, 5].includes(element.status))) {
+        return { ...row, isExport: true };
+      }
+      return row;
+    });
+    const rowsWithStatus = await Promise.all(promises);
+    return rowsWithStatus;
+  },
+  getListStatusItem: async (id: number) => {
+    const selectQuery = `SELECT i2.status
+    FROM Intermediary i1
+    JOIN Intermediary i2 ON i1.id_WareHouseItem = i2.id_WareHouseItem
+    WHERE i1.ID = ?
+    `;
+    const rows: any = await runQueryGetAllData(selectQuery, [id]);
+    console.log(rows);
     return rows;
   },
   updateTempCoutCoupon: async (
@@ -152,14 +172,14 @@ const tempCountCoupon = {
           isError = { error: true, message: result.error };
         }
       });
-
       items.forEach(async (item) => {
         if (item.IDIntermediary) {
-          await updateWareHouseItem(ID, idSource, item, idWareHouse);
+          await updateWareHouseItem(idSource, item, idWareHouse);
         } else {
           await createWareHouseItem(ID, idWareHouse, idSource, item, 1);
         }
       });
+
       await tempCountCoupon.updateTempCoutCoupon(
         ID,
         idSource,

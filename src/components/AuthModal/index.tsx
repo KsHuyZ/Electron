@@ -1,6 +1,6 @@
-import { Form, Modal, Input, Row, Col, Space,Button } from "antd";
+import { Form, Modal, Input, Row, Col, Space, Button, InputRef } from "antd";
 import { LockOutlined, UnlockOutlined } from '@ant-design/icons';
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 
 interface PropsModal {
@@ -9,9 +9,12 @@ interface PropsModal {
 }
 
 const AuthModal = (props: PropsModal) => {
-    
+
     const [form] = Form.useForm();
+
     const [isShowModal, setIsShowModal] = useState(false)
+
+    const inputRef = useRef<InputRef | null>(null)
 
     const onFinish = async () => {
         const password = form.getFieldValue('password')
@@ -23,12 +26,20 @@ const AuthModal = (props: PropsModal) => {
         handleClean()
     };
 
+    useEffect(() => {
+        const handle = setTimeout(() => {
+            inputRef.current?.focus()
+        }, 300)
+        return () => {
+            clearTimeout(handle)
+        }
+    }, [isShowModal])
+
     const handleShowForm = () => {
         if (props.canUpdate) return props.setCanUpdate(false)
         setIsShowModal(true)
     }
 
-    
     const handleClean = () => {
         form.resetFields()
         setIsShowModal(false)
@@ -36,14 +47,14 @@ const AuthModal = (props: PropsModal) => {
 
     return (
         <>
-        <Row style={{ margin: '0 0 10px 0 ' }}>
+            <Row style={{ margin: '0 0 10px 0 ' }}>
                 <Col span={24}>
                     <Space>
                         <Button className="default" type="primary" onClick={handleShowForm} icon={props.canUpdate ? <LockOutlined /> : <UnlockOutlined />}>{!props.canUpdate ? "Chỉnh sửa" : "Khóa chỉnh sửa"}</Button>
                     </Space>
                 </Col>
             </Row>
-        <Modal
+            <Modal
                 title={`Nhập đúng mật khẩu để được phép chỉnh sửa`}
                 centered
                 open={isShowModal}
@@ -57,7 +68,7 @@ const AuthModal = (props: PropsModal) => {
                             message: "Hãy nhập mật khẩu để sửa phiếu",
                         },
                     ]}>
-                        <Input.Password />
+                        <Input.Password ref={inputRef} />
                     </Form.Item>
                 </Form>
             </Modal>

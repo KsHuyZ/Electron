@@ -3,7 +3,7 @@ import { UilSearch, UilFilter } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 
 import { useEffect, useState } from "react";
-import { renderTextStatus, formatNumberWithCommas, getDateExpried } from "@/utils";
+import { renderTextStatus, formatNumberWithCommas, getDateExpried, defaultRows } from "@/utils";
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "../WarehouseItem/types";
 import TableWareHouse from "../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
@@ -12,24 +12,6 @@ import { TablePaginationConfig } from "antd/es/table";
 import TransferModal from "../WarehouseItem/components/TransferModal";
 import FilterWareHouseItem from "../WarehouseItem/components/FilterWareHouseItem";
 import { useSearchParams } from "react-router-dom";
-
-const defaultRows: DataType[] = [
-  {
-    IDIntermediary: '',
-    name: '',
-    price: '',
-    unit: '',
-    quality: null,
-    note: '',
-    quantity_plane: null,
-    quantity_real: null,
-    status: null,
-    date_expried: '',
-    date_created_at: '',
-    date_updated_at: '',
-    nameWareHouse: ''
-  }
-];
 
 const defaultTable: TableData<DataType[]> = {
   pagination: {
@@ -82,24 +64,11 @@ const Product = () => {
     },
     {
       title: "Số lượng",
-      children: [
-        {
-          title: "Dự tính",
-          dataIndex: "quantity_plane",
-          width: 200,
-          render: (record) => (
-            <span>  {new Intl.NumberFormat().format(record)}</span>
-          )
-        },
-        {
-          title: "Thực tế",
-          dataIndex: "quantity",
-          width: 200,
-          render: (record) => (
-            <span>{new Intl.NumberFormat().format(record)}</span>
-          )
-        }
-      ]
+      dataIndex: "quantity",
+      width: 200,
+      render: (record) => (
+        <span>{new Intl.NumberFormat().format(record)}</span>
+      )
     },
     {
       title: 'Đơn vị tính',

@@ -95,7 +95,7 @@ const countCoupon = {
     return rows;
   },
   getCouponItembyCouponID: async (id: number) => {
-    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,i.prev_idwarehouse,i.status,wi.name, ci.quantity,i.quantity as quantityI, ci.quantity as quantityOrigin, CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Coupon_Item ci
+    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,i.prev_idwarehouse,i.status,wi.name, ci.quantity ,i.quantity as quantityI, ci.quantity as quantityOrigin, CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane, wi.quantity_plane AS quantityPlaneOrigin,wi.date_expried, wi.price, wi.price as priceOrigin, wi.unit from Coupon_Item ci
     join Intermediary i on i.ID = ci.id_intermediary
     join WareHouseItem wi on wi.ID = i.id_WareHouseItem
     join WareHouse w on w.ID = IDWarehouse

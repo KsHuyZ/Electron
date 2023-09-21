@@ -34,10 +34,10 @@ const countDelivery = {
         author,
         numContract,
       ]);
-      return ID;
+      return { success: true, ID };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, message: error.message };
     }
   },
   countDeliveryRow: async () => {
@@ -82,7 +82,7 @@ const countDelivery = {
     return rows;
   },
   getDeliveryItembyDeliveryID: async (id: number) => {
-    const selectQuery = `select wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Delivery_Item ci
+    const selectQuery = `select ci.ID,wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Delivery_Item ci
     join Intermediary i on i.ID = ci.id_intermediary
     join WareHouseItem wi on wi.ID = i.id_WareHouseItem
    join warehouse w on w.ID = i.prev_idwarehouse
@@ -90,41 +90,65 @@ const countDelivery = {
     const rows: any = await runQueryGetAllData(selectQuery, [id]);
     return rows;
   },
-
   exportWarehouseEdit: async (
     id: number | string,
-    IDWarehouseItem: number | string,
-    name: string,
-    price: number,
-    dateExpried: string,
-    quantityPlane: number,
     idCoutDelivery: number,
     quantity: number,
-    quality: number,
-    idWarehouse: number
+    idWarehouse: number,
+    idReceiving: number
   ) => {
-    const updateQueryI = `UPDATE Intermediary SET status = 4, quantity = ?,id_WareHouse = ? WHERE ID = ?`;
-    const updateQueryW = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
-    const isSuccess = await runQuery(updateQueryI, [quantity, idWarehouse, id]);
-    const updateW = await runQuery(updateQueryW, [
-      name,
-      price,
-      dateExpried,
-      quantityPlane,
-      IDWarehouseItem,
-    ]);
-    await countDelivery.createDeliveryItem(idCoutDelivery, id, quantity);
-    return isSuccess && updateW;
+    const updateQueryI = `UPDATE Intermediary SET status = 4, quantity = ?,prev_idwarehouse =?,id_WareHouse = ? WHERE ID = ?`;
+    try {
+      const isSuccess = await runQuery(updateQueryI, [
+        quantity,
+        idWarehouse,
+        idReceiving,
+        id,
+      ]);
+      await countDelivery.createDeliveryItem(idCoutDelivery, id, quantity);
+      return { success: isSuccess, message: "" };
+    } catch (error) {
+      console.log(error);
+      return { success: false, message: error.message };
+    }
   },
   deleteDeliveryItem: async (id: number | string) => {
-    const deleteQuery = `DELETE FROM Delivery_Item WHERE id_intermediary = ?`;
+    const deleteQuery = `DELETE FROM Delivery_Item WHERE ID = ?`;
     const isSuccess = await runQuery(deleteQuery, [id]);
     return isSuccess;
   },
-  backtoTempExport: async (id: number | string) => {
-    const updateQuery = `UPDATE Intermediary SET status = 2 WHERE ID = ?`;
-    const isSuccess = await runQuery(updateQuery, [id]);
-    return isSuccess;
+  backtoImportWarehouseItem: async (
+    id: number | string,
+    idWarehouse: number,
+    idWareHouseItem: number | string,
+    quality: number,
+    quantity: number
+  ) => {
+    const { getWareHouseItemByWareHouseItemIDAndWarehouseID } = wareHouseItemDB;
+    try {
+      const result = await getWareHouseItemByWareHouseItemIDAndWarehouseID(
+        idWareHouseItem,
+        idWarehouse,
+        quality
+      );
+      if (!result) {
+        await runQuery(
+          `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status
+          , quality, quantity) VALUES (?, ?, ?, ?, ?)`,
+          [idWarehouse, idWareHouseItem, quality, quantity]
+        );
+      } else {
+        await runQuery(
+          `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`,
+          [quantity, result.IDIntermediary]
+        );
+      }
+      await runQuery("UPDATE Intermediary set quantity = 0 WHERE ID = ?", [id]);
+      return { success: true, message: "" };
+    } catch (error) {
+      console.log(error);
+      return { success: false, message: error.message };
+    }
   },
   updateCountDelivery: async (
     id: number,
@@ -151,20 +175,7 @@ const countDelivery = {
     ]);
     return isSuccess;
   },
-  updateWHItem: async (
-    idWareHouse: number | string,
-    idIntermediary: number | string
-  ) => {
-    const updateQuery = `UPDATE Intermediary SET id_WareHouse = ? WHERE ID = ?`;
-    const isSuccess = await runQuery(updateQuery, [
-      idWareHouse,
-      idIntermediary,
-    ]);
-    return isSuccess;
-  },
   editCountDelivery: async (
-    itemEditList: DataType[],
-    newItemList: DataType[],
     removeItemList: DataType[],
     items: DataType[],
     ID: number,
@@ -178,56 +189,116 @@ const countDelivery = {
     numContract: number | string
   ) => {
     const { updateWarehouseItemExport } = wareHouseItemDB;
+    let isError = { error: false, message: "" };
 
-    itemEditList.forEach(async (item) => {
-      await updateWarehouseItemExport(
-        item.name,
-        item.price,
-        idWarehouse,
-        item.date_expried,
-        item.quantity_plane,
-        item.quantity,
-        item.IDWarehouseItem,
-        item.IDIntermediary
-      );
-    });
-    newItemList.forEach(async (item) => {
-      await countDelivery.exportWarehouseEdit(
-        item.IDIntermediary,
-        item.IDWarehouseItem,
-        item.name,
-        item.price,
-        item.date_expried,
-        item.quantity_plane,
+    try {
+      removeItemList.forEach(async (item) => {
+        const result = await countDelivery.backtoImportWarehouseItem(
+          item.IDIntermediary,
+          item.id_prev_warehouse,
+          item.IDWarehouseItem,
+          item.quality,
+          item.quality
+        );
+        if (!result.success) isError = { error: true, message: result.message };
+        await countDelivery.deleteDeliveryItem(item.ID);
+      });
+
+      items.forEach(async (item) => {
+        if (item.status === 3) {
+          const result = await countDelivery.exportWarehouseEdit(
+            item.IDIntermediary,
+            ID,
+            item.quantity,
+            item.id_WareHouse,
+            idWarehouse
+          );
+          if (!result.success)
+            isError = { error: true, message: result.message };
+        } else if (item.status === 4) {
+        }
+        const result = await updateWarehouseItemExport(
+          idWarehouse,
+          item.quantity,
+          item.IDIntermediary
+        );
+        if (!result.success) {
+          isError = { error: true, message: result.message };
+        }
+      });
+
+      await countDelivery.updateCountDelivery(
         ID,
-        item.quantity,
-        item.quality,
-        item.id_WareHouse
+        idWarehouse,
+        name,
+        nature,
+        total,
+        date,
+        title,
+        author,
+        numContract
       );
-    });
-    removeItemList.forEach(async (item) => {
-      await countDelivery.backtoTempExport(item.IDIntermediary);
-      await countDelivery.deleteDeliveryItem(item.IDIntermediary);
-    });
-    items.forEach(async (item) => {
-      await countDelivery.updateWHItem(item.id_WareHouse, item.IDIntermediary);
-    });
-    await countDelivery.updateCountDelivery(
-      ID,
-      idWarehouse,
-      name,
-      nature,
-      total,
-      date,
-      title,
-      author,
-      numContract
-    );
+      console.log(isError);
+      if (isError.error) throw new Error(isError.message);
+      return { success: true, message: "" };
+    } catch (error) {
+      console.log(error);
+      return { success: false, message: error.message };
+    }
   },
   approveAccept: async (id: number | string) => {
     const updateQuery = `UPDATE CoutDelivery SET status = 1 where id = ?`;
     const isSuccess = await runQuery(updateQuery, [id]);
     return isSuccess;
+  },
+  getWareHouseItemOfficialInWareHouse: async (
+    id: number,
+    pageSize: number,
+    currentPage: number,
+    paramsSearch: { name: string; itemWareHouse: string }
+  ) => {
+    const { name, itemWareHouse } = paramsSearch;
+    const offsetValue = (currentPage - 1) * pageSize;
+    const whereConditions: string[] = [];
+    const queryParams: any[] = [pageSize, offsetValue];
+
+    if (name) {
+      whereConditions.unshift(`wi.name LIKE ?`);
+      queryParams.unshift(`%${name}%`);
+    }
+    if (itemWareHouse) {
+      whereConditions.unshift(`i.id_WareHouse = ?`);
+      queryParams.unshift(itemWareHouse);
+    }
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(" AND ")}  ${
+            id ? `AND wi.id_Source = ${id} AND ` : ""
+          } 
+          status = 3 AND i.quantity > 0`
+        : `WHERE ${
+            id ? `wi.id_Source = ${id} AND ` : ""
+          } status =3 AND i.quantity > 0`;
+    const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
+    wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+    i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity, i.quantity AS quantityRemain,
+    h.name as nameWareHouse,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse,
+    i.date, COUNT(i.ID) OVER() AS total 
+    FROM warehouseItem wi
+    JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
+    JOIN WareHouse h ON h.ID = IDWarehouse
+    ${whereClause}
+    ORDER BY i.ID DESC
+    LIMIT ? OFFSET ?`;
+
+    try {
+      const rows: any = await runQueryGetAllData(selectQuery, queryParams);
+      const countResult = rows.length > 0 ? rows[0].total : 0;
+      return { rows, total: countResult };
+    } catch (error) {
+      console.log(error);
+      return { rows: [], total: 0 };
+    }
   },
 };
 

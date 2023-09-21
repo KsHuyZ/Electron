@@ -80,7 +80,7 @@ export const formatDate = (
 
   let formattedDate = "";
 
-  if(!newDate){
+  if (!newDate) {
     const currentYear = new Date().getFullYear();
     return dayjs(new Date(currentYear, 0, 1)).format(`YYYY/MM/DD`);
   }
@@ -316,3 +316,26 @@ export const convertDataHasReceiving = (
     return element;
   });
 };
+
+export const defaultRows: DataType[] = [
+  {
+    IDIntermediary: "",
+    name: "",
+    price: "",
+    unit: "",
+    quality: null,
+    note: "",
+    quantity_plane: null,
+    quantity_real: null,
+    status: null,
+    date_expried: "",
+    date_created_at: "",
+    date_updated_at: "",
+    nameWareHouse: "",
+    isExport: false,
+    priceOrigin: 0,
+    quantityOrigin: 0,
+    quantityRemain: 0,
+    quantityPlaneOrigin: 0,
+  },
+];
