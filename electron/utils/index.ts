@@ -84,14 +84,13 @@ export const handleTransaction = async (callback: () => Promise<any>) => {
   try {
     await runQuery("BEGIN", []);
     const result = await callback();
-    console.log(result);
+    console.log("Ketqacuoi",result);
     if (!result.success) {
       throw new Error(result.message);
     }
     await runQuery("COMMIT", []);
     return result;
   } catch (error) {
-    console.log("Final Error");
     console.error(error);
     await runQuery("ROLLBACK", []);
     return { success: false, error: error.message };

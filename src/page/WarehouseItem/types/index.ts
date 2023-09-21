@@ -23,6 +23,11 @@ type DataType = {
   totalPrice?: number;
   newQuantity?: number;
   IDWarehouse?: number;
+  isExport: boolean;
+  priceOrigin: number;
+  quantityOrigin: number;
+  quantityPlaneOrigin: number;
+  quantityRemain: number;
 };
 
 type WarehouseItem = {

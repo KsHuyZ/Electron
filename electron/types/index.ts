@@ -1,12 +1,13 @@
 import { Moment } from "moment";
 
 export type WarehouseItem = {
+  ID: number;
   idWarehouseItem: number;
   idSource: number;
   name: string;
   price: number;
   unit: string;
-  date_expried: any |string | null;
+  date_expried: any | string | null;
   date_created_at: Moment | null;
   date_updated_at: Moment | null;
   quantity_plane: number;
@@ -18,6 +19,7 @@ export type WarehouseItem = {
 export type Intermediary = {
   IDIntermediary: number;
   id_wareHouse: number;
+  id_WareHouse?: number;
   IDWarehouse?: number;
   IDWarehouseItem: number;
   quantity_real?: number;
@@ -26,9 +28,12 @@ export type Intermediary = {
   quantity: number;
   date: Moment | null;
   date_temp_export: Moment | null;
+  IDIntermediary1?: number;
+  quantityRemain: number;
 };
 
 export type DataType = {
+  ID: number;
   key?: string;
   IDIntermediary: string;
   IDWarehouseItem?: string;

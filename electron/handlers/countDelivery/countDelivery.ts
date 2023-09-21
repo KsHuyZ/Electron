@@ -6,6 +6,7 @@ const {
   getDeliveryItem,
   getDeliveryItembyDeliveryID,
   approveAccept,
+  getWareHouseItemOfficialInWareHouse,
 } = countDeliveryDB;
 
 const countDelivery = (mainScreen: BrowserWindow) => {
@@ -23,14 +24,35 @@ const countDelivery = (mainScreen: BrowserWindow) => {
     const result = await getDeliveryItem(id);
     return result;
   });
-  ipcMain.handle(
-    "get-export-item-by-id",
-    async (event, ID: number) => {
-      return await getDeliveryItembyDeliveryID(ID);
-    }
-  );
+  ipcMain.handle("get-export-item-by-id", async (event, ID: number) => {
+    return await getDeliveryItembyDeliveryID(ID);
+  });
   ipcMain.handle("approve-export", async (event, id: number | string) => {
     return await approveAccept(id);
   });
+  ipcMain.handle(
+    "get-warehouse-item-official",
+    async (
+      event,
+      data: {
+        pageSize: number;
+        currentPage: number;
+        id?: number;
+        paramsSearch?: any;
+      } = {
+        pageSize: 10,
+        currentPage: 1,
+      }
+    ) => {
+      const { pageSize, currentPage, paramsSearch, id } = data;
+      const result = await getWareHouseItemOfficialInWareHouse(
+        id,
+        pageSize,
+        currentPage,
+        paramsSearch
+      );
+      return result;
+    }
+  );
 };
 export default countDelivery;

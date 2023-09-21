@@ -1,12 +1,32 @@
 import sqlite3 from "sqlite3";
-import { BrowserWindow } from "electron";
 import db from "../../utils/connectDB";
 import { Source } from "../../types";
-import { ISearchWareHouseItem } from "../../types";
 import { runQueryGetData } from "../../utils";
+import wareHouseItem from "../wareHouseItem/wareHouseItem";
+
+// ${
+//   isEdit
+//     ? ` AND IDWarehouseItem NOT IN (
+//   SELECT id_WareHouseItem
+//   FROM Intermediary
+//   WHERE (status = 1 OR status = 3)
+//   INTERSECT
+//   SELECT id_WareHouseItem
+//   FROM Intermediary
+//   WHERE (status = 2 OR status = 5)`
+//     : ""
+// }
+// )
+// OR id_WareHouseItem NOT IN (
+//   SELECT id_WareHouseItem
+//   FROM Intermediary
+//   WHERE quality IS NOT NULL
+//   GROUP BY id_WareHouseItem
+//   HAVING COUNT(DISTINCT quality) > 1
+// )
 
 sqlite3.verbose();
-
+const { getWareHouseItemByWareHouseItemIDAndWarehouseID } = wareHouseItem;
 const Source = {
   createItemSource: async (data: Source) => {
     const selectQuery = `SELECT ID FROM Source WHERE LOWER(name) = LOWER(?)`;
@@ -135,20 +155,33 @@ const Source = {
         whereConditions.unshift(`i.id_WareHouse = ?`);
         queryParams.unshift(itemWareHouse);
       }
-
+      const isExportQuery = ` AND IDWarehouseItem NOT IN (
+        SELECT id_WareHouseItem
+        FROM Intermediary
+        WHERE (status = 1 OR status = 3)
+        INTERSECT
+        SELECT id_WareHouseItem
+        FROM Intermediary
+        WHERE (status = 2 OR status = 5)) OR (
+          (EXISTS (
+              SELECT 1
+              FROM Intermediary t3
+              WHERE t3.id_WareHouseItem = IDWarehouseItem
+                AND (t3.quality <> quality OR t3.id_WareHouse <> IDWarehouse AND t3.status <> 5 AND status NOT IN(2,4) AND quantity > 0)
+)))`;
       const whereClause =
         whereConditions.length > 0
           ? `WHERE ${whereConditions.join(" AND ")} AND ${
               !isExport ? `wi.id_Source = ${id} AND ` : ""
-            }status ${
-              isExport ? "= 2" : `IN(${!isEdit ? "3," : ""}1,5)`
-            } AND i.quantity > 0`
+            }status IN(${!isExport ? "5," : ""}1,3) AND i.quantity > 0 ${
+              isExport ? isExportQuery : ""
+            }`
           : `WHERE ${!isExport ? `wi.id_Source = ${id} AND ` : ""}status IN(${
-              !isEdit ? "3," : ""
-            }1,5) AND i.quantity > 0`;
+              !isExport ? "5," : ""
+            }1,3) AND i.quantity > 0 ${isExport ? isExportQuery : ""}`;
       const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
         wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
-        i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity,
+        i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity, i.quantity AS quantityRemain,
         h.name as nameWareHouse,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse,
         i.date, COUNT(i.ID) OVER() AS total 
         FROM warehouseItem wi
@@ -157,7 +190,6 @@ const Source = {
         ${whereClause}
         ORDER BY i.ID DESC
         LIMIT ? OFFSET ?`;
-
       const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, ...queryParams, (err, rows) => {
           if (err) {
@@ -167,8 +199,8 @@ const Source = {
           }
         });
       });
-      
       const countResult = rows.length > 0 ? rows[0].total : 0;
+
       return { rows, total: countResult };
     } catch (err) {
       console.log(err);

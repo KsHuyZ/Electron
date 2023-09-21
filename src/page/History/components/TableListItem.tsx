@@ -3,29 +3,12 @@ import { UilFilter, UilSearch } from '@iconscout/react-unicons'
 import { Row, Col, Card, Input, Button, Space, Tag, Select, Modal } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import { DataType, ISearchWareHouseItem, STATUS_MODAL } from "@/page/WarehouseItem/types";
-import { formatNumberWithCommas, getDateExpried, renderTextStatus, createFormattedTable, removeItemChildrenInTable } from "@/utils";
+import { formatNumberWithCommas, getDateExpried, renderTextStatus, createFormattedTable, removeItemChildrenInTable, defaultRows } from "@/utils";
 import { ResponseIpc, TableData, FormatTypeTable, OptionSelect } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
 import { ipcRenderer } from "electron";
 import TableWareHouse from "@/page/WarehouseItem/components/TableWareHouse";
 
-const defaultRows: DataType[] = [
-    {
-        IDIntermediary: '',
-        name: '',
-        nameWareHouse: '',
-        price: '',
-        unit: '',
-        quality: null,
-        note: '',
-        quantity_plane: null,
-        quantity_real: null,
-        status: null,
-        date_expried: '',
-        date_created_at: '',
-        date_updated_at: '',
-    }
-];
 
 const defaultTable: TableData<DataType[]> = {
     pagination: {
@@ -41,9 +24,10 @@ interface TableListProps {
     onCloseModal: () => void;
     setListItem: Dispatch<SetStateAction<DataType[]>>;
     listItem: DataType[];
+    isTemp: boolean;
 }
 
-const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem }: TableListProps) => {
+const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem, isTemp }: TableListProps) => {
     const [nameSearch, setNameSearch] = useState("");
     const [isSearch, setIsSearch] = useState<Boolean>(false);
     const [listData, setListData] = useState<TableData<FormatTypeTable<DataType>[]>>(defaultTable);
@@ -98,24 +82,11 @@ const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem }: TableLis
         },
         {
             title: "Số lượng",
-            children: [
-                {
-                    title: "Dự tính",
-                    dataIndex: "quantity_plane",
-                    width: 200,
-                    render: (record) => (
-                        <span>  {new Intl.NumberFormat().format(record)}</span>
-                    )
-                },
-                {
-                    title: "Thực tế",
-                    dataIndex: "quantity",
-                    width: 200,
-                    render: (record) => (
-                        <span>{new Intl.NumberFormat().format(record)}</span>
-                    )
-                }
-            ]
+            dataIndex: "quantity",
+            width: 200,
+            render: (record) => (
+                <span>{new Intl.NumberFormat().format(record)}</span>
+            )
         },
         {
             title: 'Đơn vị tính',
@@ -173,7 +144,7 @@ const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem }: TableLis
     }, [isSearch, selectSearch]);
 
     const getListWareHouse = async () => {
-        const result = await ipcRenderer.invoke("receiving-list");
+        const result = await ipcRenderer.invoke("get-warehouse-no-pagination");
         if (result as any) {
             const option: OptionSelect[] = result.rows.map((item: any) => ({
                 label: item.name,
@@ -200,7 +171,7 @@ const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem }: TableLis
             itemWareHouse: selectSearch?.select ?? ''
         };
 
-        const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke("source-entry-form-request-read", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, paramsSearch: paramsSearch, isEdit: true, isExport: true });
+        const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke(isTemp ? "source-entry-form-request-read" : "get-warehouse-item-official", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, paramsSearch: paramsSearch, isEdit: true, isExport: true });
         if (result) {
             setListData((prev) => (
                 {
@@ -225,7 +196,6 @@ const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem }: TableLis
 
     const handleDataRowSelected = (listRows: DataType[]) => {
         setListItemHasChoose(listRows);
-        // if (listRows.length === 0) return setListItem([])
     };
 
     const handleChangeInput = (key: string, event: any) => {
@@ -237,7 +207,6 @@ const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem }: TableLis
         } else {
             setNameSearch(event.target.value);
         }
-
     }
 
     const handleSearchName = () => {
@@ -289,7 +258,7 @@ const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem }: TableLis
                                     </Col>
                                     <Col span={10} className="col-item-filter">
                                         <div className="form-item" style={{ width: '70%' }}>
-                                            <label htmlFor="">Đơn vị nhận</label>
+                                            <label htmlFor="">Kho</label>
                                             <Select
                                                 style={{ width: '100%' }}
                                                 allowClear

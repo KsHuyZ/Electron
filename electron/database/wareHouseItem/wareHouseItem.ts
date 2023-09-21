@@ -445,14 +445,13 @@ const wareHouseItem = {
       return [];
     }
   },
-
   updateWareHouseItem: async (
-    ID: unknown | number,
     idSource: number,
     data: WarehouseItem & Intermediary & { quantityOrigin: number },
     idWareHouse: number
   ) => {
     const {
+      ID,
       name,
       price,
       unit,
@@ -486,7 +485,8 @@ const wareHouseItem = {
         `UPDATE Intermediary SET quality = ?, quantity = quantity + ?, id_WareHouse = ? WHERE ID = ?`,
         [quality, quantityMinius, idWareHouse, IDIntermediary]
       );
-      const updateCoutCouponItem = `UPDATE Coupon_Temp_Item SET quantity = ?, id_Warehouse = ? WHERE id_Temp_Cout_Coupon = ?`;
+      console.log(ID, quantity);
+      const updateCoutCouponItem = `UPDATE Coupon_Temp_Item SET quantity = ?, id_Warehouse = ? WHERE ID= ?`;
       await runQuery(updateCoutCouponItem, [quantity, idWareHouse, ID]);
       return { success: true };
     } catch (error) {
@@ -762,7 +762,6 @@ const wareHouseItem = {
           }
         }
       });
-
       await Promise.all(promises);
 
       return true;
@@ -772,7 +771,9 @@ const wareHouseItem = {
     }
   },
   exportWarehouse: async (
+    ID: number,
     intermediary: Intermediary[],
+    idReceiving: number,
     name: string,
     note: string,
     nature: string,
@@ -784,8 +785,8 @@ const wareHouseItem = {
   ) => {
     try {
       const { createCountDelivery, createDeliveryItem } = countDelivery;
-      const ID = await createCountDelivery(
-        intermediary[0]["id_WareHouse"],
+      const result = await createCountDelivery(
+        idReceiving,
         name,
         nature,
         note,
@@ -795,19 +796,22 @@ const wareHouseItem = {
         author,
         numContract
       );
+      if (!result.success) throw new Error(result.message);
       const promises = intermediary.map(async (item) => {
         const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
-        await runQueryReturnID(insertQuery, [item["IDIntermediary"]]);
-        await createDeliveryItem(ID, item["IDIntermediary"], item.quantity);
+        await runQueryReturnID(insertQuery, [item.IDIntermediary]);
+        await createDeliveryItem(result.ID, item.IDIntermediary, item.quantity);
       });
       await Promise.all(promises);
-      return true;
+      await runQuery(`UPDATE CoutTempDelivery SET status = 1 WHERE ID = ?`, [
+        ID,
+      ]);
+      return { success: true, message: "" };
     } catch (error) {
-      console.log(error);
-      return false;
+      console.error("Lỗi", error);
+      return { success: false, message: error.message };
     }
   },
-
   importWarehouse: async (
     intermediary: Intermediary[],
     name: string,
@@ -866,13 +870,12 @@ const wareHouseItem = {
       await Promise.all(promises);
       const updateQuery = `UPDATE CoutTempCoupon SET status = 1 WHERE ID = ?`;
       await runQuery(updateQuery, [idTempCoutCoupon]);
-      return true;
+      return { success: true };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, error };
     }
   },
-
   getAllWarehouseItemandWHName: async (id: number) => {
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
@@ -888,13 +891,10 @@ const wareHouseItem = {
       index: index + 1,
     }));
   },
-
   getAllWareHouseByDateCreated: async (
     id: number,
     dateRanger: IDateRangerItem
   ) => {
-    console.log(dateRanger);
-
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
      i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
@@ -917,37 +917,45 @@ const wareHouseItem = {
       index: index + 1,
     }));
   },
-
   updateWarehouseItemExport: async (
-    name: string,
-    price: number,
     idWarehouse: number | string,
-    dateExpried: string,
-    quantityPlane: number,
     quantity: number,
-    idWareHouseItem: number | string,
     idIntermediary: number | string
   ) => {
-    const updateQuery = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ? WHERE ID = ?`;
     const updateIntMediary = `UPDATE Intermediary SET quantity = ?,id_WareHouse = ? WHERE ID = ?`;
-    const result1 = await runQuery(updateQuery, [
-      name,
-      price,
-      dateExpried,
-      quantityPlane,
-      idWareHouseItem,
-    ]);
-    const result2 = await runQuery(updateIntMediary, [
-      quantity,
-      idWarehouse,
-      idIntermediary,
-    ]);
-    return result1 && result2;
+    try {
+      const result = await runQuery(updateIntMediary, [
+        quantity,
+        idWarehouse,
+        idIntermediary,
+      ]);
+      return { success: result, message: "" };
+    } catch (error) {
+      console.log(error);
+      return { success: false, message: error.message };
+    }
   },
   getWarehouseItemByName: async (name: string) => {
     const selectQuery = `select DISTINCT * from warehouseitem where name like ? limit 3`;
     const result: any = await runQueryGetAllData(selectQuery, [`%${name}%`]);
     return result;
+  },
+  getWareHouseItemByWareHouseItemIDAndWarehouseID: async (
+    warehouseItemID: number | string,
+    wareHouseID: number,
+    quality: number,
+    dateExpried?: string
+  ) => {
+    const selectQuery = `SELECT wi.ID as IDWarehouseItem, i.ID as IDIntermediary, i.quantity
+    FROM warehouseItem wi
+    JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
+    WHERE i.id_WareHouse = ? AND IDWarehouseItem = ? AND i.quality = ?`;
+    const rows: any = await runQueryGetData(selectQuery, [
+      wareHouseID,
+      warehouseItemID,
+      quality,
+    ]);
+    return rows;
   },
 };
 
