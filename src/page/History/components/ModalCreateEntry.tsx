@@ -109,7 +109,6 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, rec
         style={{ margin: 0 }}
         name={dataIndex}
         rules={[
-          { validator: numberValidator },
           ({ getFieldValue }) => ({
             validator(_, value) {
               if (!value) {
@@ -120,7 +119,7 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, rec
           }),
         ]}
       >
-        <DatePicker ref={ref} onOk={save} onChange={save} />
+        <DatePicker ref={ref} onBlur={save} onChange={save} />
       </Form.Item>
     case 'quantity_plane':
     case 'quantity':
@@ -195,6 +194,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
     if (editing) {
       inputRef.current!.focus();
     }
+
   }, [editing]);
 
   const toggleEdit = () => {
