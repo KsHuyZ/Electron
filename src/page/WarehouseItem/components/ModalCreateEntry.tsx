@@ -35,6 +35,8 @@ interface PropsModal {
   nameWareHouse?: string;
   idWareHouse?: number | string;
   reFetch: () => void;
+  listWarehouseItem?: DataType[];
+  source?: number;
 }
 
 const removeItemChildrenInTable = (
@@ -73,7 +75,9 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     onCloseModal,
     idWareHouse,
     nameWareHouse,
-    reFetch
+    reFetch,
+    listWarehouseItem,
+    source
   } = props;
 
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>(
@@ -94,7 +98,14 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   }, [])
 
   useEffect(() => {
+    if (listWarehouseItem && listWarehouseItem.length > 0) {
+      setListItemEntryForm(removeItemChildrenInTable(listWarehouseItem))
+    }
+  }, [listWarehouseItem])
+
+  useEffect(() => {
     if (isShowModal) {
+      if (source) formRef.current?.setFieldValue("id_Source", source)
       return formRef.current?.setFieldsValue({
         ...defaultInput
       })
@@ -241,7 +252,9 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const handleClean = () => {
     onCloseModal();
     formRef.current?.resetFields();
-    setListItemEntryForm([])
+    if (!source) {
+      setListItemEntryForm([])
+    }
   };
 
   const onFinishFormManagement = async (values: ModalEntryForm) => {

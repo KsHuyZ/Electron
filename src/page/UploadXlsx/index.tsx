@@ -10,7 +10,7 @@ import dayjs from "dayjs";
 import { ipcRenderer } from 'electron';
 import { useParams, useNavigate } from 'react-router-dom';
 import { isDate } from '../../utils';
-
+import ModalCreateEntry from '../WarehouseItem/components/ModalCreateEntry';
 
 interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
   editing: boolean;
@@ -76,7 +76,7 @@ interface CustomColumnType<RecordType> extends ColumnType<RecordType> {
 const UploadXlsx = () => {
 
   const [excelFile, setExcelFile] = useState<ArrayBuffer | null>(null);
-  const [excelData, setExcelData] = useState<any[] | null>(null);
+  const [excelData, setExcelData] = useState<any[]>([]);
   const [typeError, setTypeError] = useState<string | null>(null);
   const [nameFile, setNameFile] = useState<string>('');
   const [listSheet, setListSheet] = useState<string[]>();
@@ -88,19 +88,11 @@ const UploadXlsx = () => {
   const refInputFile = useRef<any>(null);
   const [item, setItem] = useState<number>();
   const [isErrorSelect, setIsErrorSelect] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false)
   const { idWareHouse, nameWareHouse } = useParams();
   const navigate = useNavigate();
 
   const columns: CustomColumnType<IFileUpload>[] = [
-    // {
-    //   title: 'Mã mặt hàng',
-    //   dataIndex: 'key',
-    //   editable: true,
-    //   width: 150,
-    //   render: (record) => {
-    //     return `${record}`
-    //   }
-    // },
     {
       title: 'Tên mặt hàng',
       dataIndex: 'name',
@@ -198,9 +190,7 @@ const UploadXlsx = () => {
   ];
 
   useEffect(() => {
-    new Promise(async () => {
-      await getAllItemSource();
-    })
+    getAllItemSource();
   }, [])
 
   useEffect(() => {
@@ -236,9 +226,7 @@ const UploadXlsx = () => {
   const save = async (key: React.Key) => {
     try {
       let row = (await form.validateFields()) as IFileUpload;
-
       row['date_expried'] = row['date_expried'] ? formatDate(row['date_expried'], false, 'no_date') : ''
-
       const newData = [...excelData as any];
       const index = newData.findIndex((item) => key === item.key);
       if (index > -1) {
@@ -263,7 +251,7 @@ const UploadXlsx = () => {
     setNameFile('');
     setExcelFile(null);
     setTypeError(null);
-    setExcelData(null);
+    setExcelData([]);
     setListSheet([]);
     refInputFile.current.value = null;
   }
@@ -311,10 +299,11 @@ const UploadXlsx = () => {
         date_updated_at: formatDate(new Date(), true, 'no_date')
       };
 
-      const response = await ipcRenderer.invoke('create-multiple-product-item', JSON.stringify(excelData), item, paramsOther);
-      if (response) {
-        navigate(`/home/${idWareHouse}/${nameWareHouse}`, { replace: true });
-      }
+      // const response = await ipcRenderer.invoke('create-multiple-product-item', JSON.stringify(excelData), item, paramsOther);
+      // if (response) {
+      //   navigate(`/home/${idWareHouse}/${nameWareHouse}`, { replace: true });
+      // }
+      setShowModal(true)
 
 
 
@@ -330,6 +319,10 @@ const UploadXlsx = () => {
         firstErrorNode.focus();
       }
     }
+  }
+
+  const handleNavigate = () => {
+    navigate(`/home/${idWareHouse}/${nameWareHouse}`, { replace: true });
   }
 
   const handleChangeSheet = (value: string) => {
@@ -350,7 +343,7 @@ const UploadXlsx = () => {
         setExcelData(chosenRows.slice(1));
       } else {
         message.error('Dữ liệu không trùng khớp');
-        setExcelData(null);
+        setExcelData([]);
 
       }
     }
@@ -499,7 +492,15 @@ const UploadXlsx = () => {
           )
         )
       }
-
+      <ModalCreateEntry
+        isShowModal={showModal}
+        onCloseModal={() => setShowModal(false)}
+        reFetch={handleNavigate}
+        listWarehouseItem={excelData}
+        source={item}
+        idWareHouse={idWareHouse}
+        nameWareHouse={nameWareHouse}
+      />
     </Row>
   )
 }
