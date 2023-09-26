@@ -104,9 +104,15 @@ const countCoupon = {
     return rows;
   },
   updateCouponItem: async (quantity: number, id: string | number) => {
-    const updateQuery = `UPDATE Coupon_Item SET quantity = ? WHERE id_intermediary = ?`;
-    const isSuccess = await runQuery(updateQuery, [quantity, id]);
-    return isSuccess;
+    try {
+      await runQuery(
+        `UPDATE Coupon_Item SET quantity = ? WHERE id_intermediary = ?`,
+        [quantity, id]
+      );
+      return { success: true, message: "" };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   },
   updateCountCoupon: async (
     id: number,
@@ -120,18 +126,22 @@ const countCoupon = {
     numContract: number | string
   ) => {
     const updateQuery = `UPDATE CoutCoupon SET id_Source = ?, name = ?, nature = ?, Total = ?, date = ?, title = ?, author = ?, numContract = ? where id = ?`;
-    const isSuccess = await runQuery(updateQuery, [
-      idSource,
-      name,
-      nature,
-      Total,
-      date,
-      title,
-      author,
-      numContract,
-      id,
-    ]);
-    return isSuccess;
+    try {
+      await runQuery(updateQuery, [
+        idSource,
+        name,
+        nature,
+        Total,
+        date,
+        title,
+        author,
+        numContract,
+        id,
+      ]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   },
   importWarehouseEdit: async (
     id: number | string,
@@ -147,40 +157,53 @@ const countCoupon = {
     ID: unknown | number,
     quantityOrigin: number
   ) => {
-    const quantityMinius = quantity - quantityOrigin;
-    const updateQueryI = `UPDATE Intermediary SET status = ${
-      status === 5 || status === 1 ? 2 : 3
-    }, quantity = quantity + ?, id_WareHouse = ? WHERE ID = ?`;
-    const updateQueryW = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ?,id_Source = ? WHERE ID = ?`;
-    const isSuccess = await runQuery(updateQueryI, [
-      quantityMinius,
-      idWareHouse,
-      id,
-    ]);
-    const updateW = await runQuery(updateQueryW, [
-      name,
-      price,
-      dateExpried,
-      quantityPlane,
-      idSource,
-      IDWarehouseItem,
-    ]);
-
-    return isSuccess && updateW;
+    try {
+      const quantityInWareHouse: any = await runQueryGetData(
+        "SELECT quantity FROM Intermediary WHERE ID = ?",
+        [id]
+      );
+      const finalQuantity =
+        quantity - quantityOrigin + quantityInWareHouse.quantity;
+      if (finalQuantity < 0)
+        throw new Error("Bạn không thể sửa quá số lượng xuống nữa");
+      const updateQueryI = `UPDATE Intermediary SET status = ${
+        status === 5 || status === 1 ? 2 : 3
+      }, quantity = ?, id_WareHouse = ? WHERE ID = ?`;
+      const updateQueryW = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ?,id_Source = ? WHERE ID = ?`;
+      await runQuery(updateQueryI, [finalQuantity, idWareHouse, id]);
+      await runQuery(updateQueryW, [
+        name,
+        price,
+        dateExpried,
+        quantityPlane,
+        idSource,
+        IDWarehouseItem,
+      ]);
+      return { success: true, message: "" };
+    } catch (error) {
+      console.log(error.message);
+      return { success: false, message: error.message };
+    }
   },
 
   backtoTempImport: async (item: DataType) => {
-    const updateQuery = `UPDATE Intermediary SET status = ${
-      item.status === 2 ? 5 : 1
-    },quantity = 0 WHERE ID = ?`;
-    const isSuccess = await runQuery(updateQuery, [item.IDIntermediary]);
-    return isSuccess;
+    try {
+      const updateQuery = `UPDATE Intermediary SET status = ${
+        item.status === 2 ? 5 : 1
+      },quantity = 0 WHERE ID = ?`;
+      await runQuery(updateQuery, [item.IDIntermediary]);
+      return { success: true, message: "" };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   },
   deleteCouponItem: async (id: number | string) => {
-    const deleteQuery = `DELETE FROM Coupon_Item WHERE id_intermediary = ?`;
-    console.log(id);
-    const isSuccess = await runQuery(deleteQuery, [id]);
-    return isSuccess;
+    try {
+      await runQuery(`DELETE FROM Coupon_Item WHERE id_intermediary = ?`, [id]);
+      return { success: true, message: "" };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   },
   editCountCoupon: async (
     removeItemList: DataType[],
@@ -199,18 +222,25 @@ const countCoupon = {
     idWareHouse: number
   ) => {
     try {
+      let isError = { error: false, message: "" };
       removeItemList.forEach(async (item) => {
-        await countCoupon.backtoTempImport(item);
-        await countCoupon.deleteCouponItem(item.IDIntermediary);
+        const result1 = await countCoupon.backtoTempImport(item);
+        if (!result1.success)
+          isError = { error: true, message: result1.message };
+        const result2 = await countCoupon.deleteCouponItem(item.IDIntermediary);
+        if (!result2.success)
+          isError = { error: true, message: result2.message };
       });
-
+      if (isError.error) throw new Error(isError.message);
       items.forEach(async (item) => {
         if (item.IDIntermediary) {
-          await countCoupon.updateCouponItem(
+          const result1 = await countCoupon.updateCouponItem(
             item.quantity,
             item.IDIntermediary
           );
-          await countCoupon.importWarehouseEdit(
+          if (!result1.success)
+            isError = { error: true, message: result1.message };
+          const result2 = await countCoupon.importWarehouseEdit(
             item.IDIntermediary,
             item.IDWarehouseItem,
             item.name,
@@ -224,12 +254,22 @@ const countCoupon = {
             ID,
             item["quantityOrigin"]
           );
+          if (!result2.success)
+            isError = { error: true, message: result2.message };
         } else {
-          await createWareHouseItem(ID, idWareHouse, idSource, item, 3);
+          const result = await createWareHouseItem(
+            ID,
+            idWareHouse,
+            idSource,
+            item,
+            3
+          );
+          if (!result.success)
+            isError = { error: true, message: result.message };
         }
       });
-
-      await countCoupon.updateCountCoupon(
+      if (isError.error) throw new Error(isError.message);
+      const result = await countCoupon.updateCountCoupon(
         ID,
         idSource,
         name,
@@ -240,10 +280,11 @@ const countCoupon = {
         author,
         numContract
       );
-      return true;
+      if (!result.success) throw new Error(result.message);
+      return { success: true };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, message: error.message };
     }
   },
   approveAccept: async (id: number | string) => {

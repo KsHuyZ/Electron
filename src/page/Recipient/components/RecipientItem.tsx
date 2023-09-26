@@ -1,5 +1,4 @@
 import { Row, Col, Card, Select, Button, Space, Tag, Modal, message, Input } from "antd";
-// import "./styles/wareHouseItem.scss";
 import { UilSearch, UilFilter } from '@iconscout/react-unicons'
 import type { ColumnsType } from 'antd/es/table';
 

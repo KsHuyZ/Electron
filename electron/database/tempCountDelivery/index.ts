@@ -204,7 +204,12 @@ const tempCountDelivery = {
   },
   deleteDeliveryItem: async (id: number) => {
     const deleteQuery = `DELETE FROM Delivery_Temp_Item WHERE ID = ?`;
-    await runQuery(deleteQuery, [id]);
+    try {
+      await runQuery(deleteQuery, [id]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   },
   updateTempExportItem: async (
     ID: number,
@@ -258,12 +263,14 @@ const tempCountDelivery = {
           item.quantity,
           item.quality
         );
-        await tempCountDelivery.deleteDeliveryItem(item.ID);
         if (!result.success) {
           isError = { error: true, message: result.message };
         }
+        const result1 = await tempCountDelivery.deleteDeliveryItem(item.ID);
+        if (result1.success)
+          isError = { error: true, message: result1.message };
       });
-
+      if (isError.error) throw new Error(isError.message);
       items.forEach(
         async ({
           ID,
@@ -289,8 +296,6 @@ const tempCountDelivery = {
               isError = { error: true, message: result.message };
             }
           } else if (status === 1 || status === 3) {
-            // bug
-
             const changeWareHouseQuery = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, prev_idwarehouse, status, quality, quantity) VALUES (?, ?,?,?, ?, ?)`;
             const updateWareHouseQuery = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? `;
             const newID: any = await runQueryReturnID(changeWareHouseQuery, [
@@ -314,6 +319,7 @@ const tempCountDelivery = {
           }
         }
       );
+      if (isError.error) throw new Error(isError.message);
       const result = await tempCountDelivery.updateTempCountDelivery(
         ID,
         idReceiving,

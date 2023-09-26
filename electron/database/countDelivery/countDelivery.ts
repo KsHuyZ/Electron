@@ -113,9 +113,12 @@ const countDelivery = {
     }
   },
   deleteDeliveryItem: async (id: number | string) => {
-    const deleteQuery = `DELETE FROM Delivery_Item WHERE ID = ?`;
-    const isSuccess = await runQuery(deleteQuery, [id]);
-    return isSuccess;
+    try {
+      await runQuery(`DELETE FROM Delivery_Item WHERE ID = ?`, [id]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   },
   backtoImportWarehouseItem: async (
     id: number | string,
@@ -162,18 +165,22 @@ const countDelivery = {
     numContract: number | string
   ) => {
     const updateQuery = `UPDATE CoutDelivery SET id_WareHouse = ?, name = ?, nature = ?, Total = ?, date = ?, title = ?, author = ?, numContract = ? where id = ?`;
-    const isSuccess = await runQuery(updateQuery, [
-      idWareHouse,
-      name,
-      nature,
-      Total,
-      date,
-      title,
-      id,
-      author,
-      numContract,
-    ]);
-    return isSuccess;
+    try {
+      await runQuery(updateQuery, [
+        idWareHouse,
+        name,
+        nature,
+        Total,
+        date,
+        title,
+        id,
+        author,
+        numContract,
+      ]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   },
   editCountDelivery: async (
     removeItemList: DataType[],
@@ -201,9 +208,11 @@ const countDelivery = {
           item.quality
         );
         if (!result.success) isError = { error: true, message: result.message };
-        await countDelivery.deleteDeliveryItem(item.ID);
+        const result1 = await countDelivery.deleteDeliveryItem(item.ID);
+        if (!result1.success)
+          isError = { error: true, message: result1.message };
       });
-
+      if (isError.error) throw new Error(isError.message);
       items.forEach(async (item) => {
         if (item.status === 3) {
           const result = await countDelivery.exportWarehouseEdit(
@@ -216,17 +225,17 @@ const countDelivery = {
           if (!result.success)
             isError = { error: true, message: result.message };
         } else if (item.status === 4) {
-        }
-        const result = await updateWarehouseItemExport(
-          idWarehouse,
-          item.quantity,
-          item.IDIntermediary
-        );
-        if (!result.success) {
-          isError = { error: true, message: result.message };
+          const result = await updateWarehouseItemExport(
+            idWarehouse,
+            item.quantity,
+            item.IDIntermediary
+          );
+          if (!result.success) {
+            isError = { error: true, message: result.message };
+          }
         }
       });
-
+      if (isError.error) throw new Error(isError.message);
       await countDelivery.updateCountDelivery(
         ID,
         idWarehouse,

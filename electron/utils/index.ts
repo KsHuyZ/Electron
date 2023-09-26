@@ -1,4 +1,3 @@
-import { BrowserWindow } from "electron";
 import db from "./connectDB";
 
 export const runQuery = (query, params) => {
@@ -6,7 +5,7 @@ export const runQuery = (query, params) => {
     db.run(query, params, function (err) {
       if (err) {
         console.log(err);
-        reject(err);
+        reject(err.message);
       } else {
         resolve(true);
       }
@@ -84,7 +83,7 @@ export const handleTransaction = async (callback: () => Promise<any>) => {
   try {
     await runQuery("BEGIN", []);
     const result = await callback();
-    console.log("Ketqacuoi",result);
+    console.log("Ketqacuoi", result);
     if (!result.success) {
       throw new Error(result.message);
     }
@@ -93,6 +92,7 @@ export const handleTransaction = async (callback: () => Promise<any>) => {
   } catch (error) {
     console.error(error);
     await runQuery("ROLLBACK", []);
+
     return { success: false, error: error.message };
   }
 };

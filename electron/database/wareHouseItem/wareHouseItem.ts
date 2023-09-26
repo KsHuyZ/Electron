@@ -345,10 +345,9 @@ const wareHouseItem = {
         ]);
       }
 
-      return true;
+      return { success: true };
     } catch (error) {
-      console.log(error);
-      return false;
+      return { success: false, message: error.message };
     }
   },
   createWareHouseItemMultiple: async (
@@ -480,18 +479,15 @@ const wareHouseItem = {
       );
 
       const quantityMinius = quantity - quantityOrigin;
-
       await runQuery(
         `UPDATE Intermediary SET quality = ?, quantity = quantity + ?, id_WareHouse = ? WHERE ID = ?`,
         [quality, quantityMinius, idWareHouse, IDIntermediary]
       );
-      console.log(ID, quantity);
       const updateCoutCouponItem = `UPDATE Coupon_Temp_Item SET quantity = ?, id_Warehouse = ? WHERE ID= ?`;
       await runQuery(updateCoutCouponItem, [quantity, idWareHouse, ID]);
       return { success: true };
     } catch (error) {
-      console.log(error);
-      throw Error(error);
+      return { success: false, message: error.message };
     }
   },
   deleteWareHouseItemInWarehouse: async (ID: number) => {
