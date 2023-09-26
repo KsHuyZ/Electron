@@ -625,7 +625,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   return (
     <CheckingErrorContext.Provider value={contextValue}>
       <Modal
-        title={`Sửa phiếu ${isTemp ? "tạm" : ""} ${isExport ? "xuất" : "nhập"}`}
+        title={`${isOfficial ? "Làm phiếu" : `Sửa phiếu ${isTemp ? "tạm" : ""}`} ${isExport ? "xuất" : "nhập"}`}
         centered
         open={isShowModal}
         onCancel={handleClean}

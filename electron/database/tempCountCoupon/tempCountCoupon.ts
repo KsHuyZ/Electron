@@ -139,10 +139,10 @@ const tempCountCoupon = {
         note,
         ID,
       ]);
-      return true;
+      return { success: true };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, message: error.message };
     }
   },
   editTempCountCoupon: async (
@@ -172,15 +172,28 @@ const tempCountCoupon = {
           isError = { error: true, message: result.error };
         }
       });
+      if (isError.error) throw new Error(isError.message);
       items.forEach(async (item) => {
         if (item.IDIntermediary) {
-          await updateWareHouseItem(idSource, item, idWareHouse);
+          const result = await updateWareHouseItem(idSource, item, idWareHouse);
+          if (!result.success)
+            isError = { error: true, message: isError.message };
         } else {
-          await createWareHouseItem(ID, idWareHouse, idSource, item, 1);
+          const result = await createWareHouseItem(
+            ID,
+            idWareHouse,
+            idSource,
+            item,
+            1
+          );
+          if (!result.success)
+            isError = { error: true, message: isError.message };
         }
       });
-
-      await tempCountCoupon.updateTempCoutCoupon(
+      if (isError.error) {
+        throw new Error(isError.message);
+      }
+      const result = await tempCountCoupon.updateTempCoutCoupon(
         ID,
         idSource,
         idWareHouse,
@@ -193,6 +206,7 @@ const tempCountCoupon = {
         numContract,
         note
       );
+      if (!result.success) throw new Error(result.message);
       if (isError.error) {
         throw new Error(isError.message);
       }

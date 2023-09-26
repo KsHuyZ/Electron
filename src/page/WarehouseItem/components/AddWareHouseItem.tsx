@@ -341,30 +341,6 @@ const AddWareHouseItem = React.memo(
                 />
               </Form.Item>
             </Col>
-            {/* <Col span={8}>
-              <Form.Item
-                label="Nguồn hàng"
-                name="idSource"
-                rules={[
-                  {
-                    required: true,
-                    message: getMessage(ERROR.ERROR_1, "Nguồn hàng"),
-                  },
-                ]}
-              >
-                <Select
-                  showSearch
-                  optionFilterProp="children"
-                  // disabled={itemEdit && itemEdit.status === 3 ? true : false}
-                  filterOption={(input, option) =>
-                    (option?.label ?? "")
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  options={listOptionSource}
-                />
-              </Form.Item>
-            </Col> */}
             <Col span={8}>
               <Form.Item
                 label="Ngày hết hạn"

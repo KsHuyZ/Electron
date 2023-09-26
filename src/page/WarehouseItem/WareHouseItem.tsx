@@ -35,6 +35,11 @@ const defaultRows: DataType[] = [
     date_expried: '',
     date_created_at: '',
     date_updated_at: '',
+    isExport: false,
+    priceOrigin: 0,
+    quantityPlaneOrigin: 0,
+    quantityRemain: 0,
+    quantityOrigin: 0,
   }
 ];
 
@@ -160,22 +165,6 @@ const WareHouseItem = () => {
         )
       }
     },
-    {
-      title: "Hành động",
-      dataIndex: "action",
-      fixed: "right",
-      width: 150,
-      render: (_, record: DataType) => (
-        <Space size="middle">
-          <UilPen style={{ cursor: "pointer" }} onClick={() => {
-            setIsEdit(true);
-            setItemEdit(record)
-            setIsShowModal(true)
-          }} />
-          {record.status !== 3 && <UilMultiply style={{ cursor: "pointer" }} onClick={() => handleRemoveItem(record)} />}
-        </Space>
-      ),
-    }
   ];
 
 
