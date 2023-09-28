@@ -83,10 +83,8 @@ const UploadXlsx = () => {
   const [isFetch, setIsFetch] = useState(false);
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState('');
-  const [listOptionSource, setListOptionSource] = useState<OptionSelect[]>();
   const refError = useRef<any>(null);
   const refInputFile = useRef<any>(null);
-  const [item, setItem] = useState<number>();
   const [isErrorSelect, setIsErrorSelect] = useState(false);
   const [showModal, setShowModal] = useState<boolean>(false)
   const { idWareHouse, nameWareHouse } = useParams();
@@ -190,10 +188,6 @@ const UploadXlsx = () => {
   ];
 
   useEffect(() => {
-    getAllItemSource();
-  }, [])
-
-  useEffect(() => {
     if (isFetch) {
       if (excelFile !== null) {
         const workbook = XLSX.read(excelFile, { type: 'buffer' });
@@ -281,34 +275,11 @@ const UploadXlsx = () => {
   // submit event
   const handleFileSubmit = async (e: any) => {
     e.preventDefault();
-
     try {
       await form.validateFields();
-      if (!item) {
-        refError.current.focus();
-        setIsErrorSelect(true);
-        return;
-      }
-      // submit
-
-      const paramsOther = {
-        id_wareHouse: Number(idWareHouse),
-        status: STATUS.TEMPORARY_IMPORT,
-        date: formatDate(new Date(), true, 'date_First'),
-        date_created_at: formatDate(new Date(), true, 'no_date'),
-        date_updated_at: formatDate(new Date(), true, 'no_date')
-      };
-
-      // const response = await ipcRenderer.invoke('create-multiple-product-item', JSON.stringify(excelData), item, paramsOther);
-      // if (response) {
-      //   navigate(`/home/${idWareHouse}/${nameWareHouse}`, { replace: true });
-      // }
       setShowModal(true)
-
-
-
     } catch (error: any) {
-
+      console.log(error)
       message.error(`MH ${error?.values?.name} đang thiếu dữ liệu`);
       const firstErrorField = error?.errorFields[0];
       const firstErrorNode = document.getElementById(
@@ -365,28 +336,6 @@ const UploadXlsx = () => {
     };
   });
 
-  const getAllItemSource = async () => {
-    try {
-      const response: { rows: ItemSource[], total: number } = await ipcRenderer.invoke('source-request-read');
-      if (response) {
-        const customOption: OptionSelect[] = response?.rows?.map((e) => ({
-          label: e.name,
-          value: e.ID
-        }));
-
-        setListOptionSource(customOption);
-
-      }
-    } catch (error) {
-      message.error('Lỗi item-source')
-    }
-  }
-
-  const handleChangeSelect = (idItem: number) => {
-    setItem(idItem);
-    setIsErrorSelect(false);
-  }
-
   return (
     <Row className="filter-bar">
       <Row style={{ width: '100%' }} align="middle">
@@ -438,27 +387,7 @@ const UploadXlsx = () => {
                     />
                   </div>
                 </Col>
-                <Col span={8}>
-                  <div className="form-item">
-                    <label htmlFor="">Nguồn Hàng</label>
-                    <Select
-                      style={{ width: '70%' }}
-                      showSearch
-                      optionFilterProp="children"
-                      filterOption={(input, option) =>
-                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                      }
-                      options={listOptionSource}
-                      value={item}
-                      className={isErrorSelect ? 'error' : ''}
-                      ref={refError}
-                      onChange={(e) => handleChangeSelect(e)}
-                    />
-                    {
-                      isErrorSelect && <p className="text-error">Vui lòng không để trống ô này</p>
-                    }
-                  </div>
-                </Col>
+
               </Row>
             </Card>
           </div>
@@ -497,7 +426,6 @@ const UploadXlsx = () => {
         onCloseModal={() => setShowModal(false)}
         reFetch={handleNavigate}
         listWarehouseItem={excelData}
-        source={item}
         idWareHouse={idWareHouse}
         nameWareHouse={nameWareHouse}
       />

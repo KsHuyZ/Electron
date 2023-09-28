@@ -369,7 +369,6 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         author: string;
         numContract: number;
         idReceiving: number;
-        nameReceiving: string;
       }
     ) => {
       const {
@@ -385,21 +384,22 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         idReceiving,
       } = data;
 
-      const isSuccess = await tempExportWarehouse(
-        items,
-        idReceiving,
-        name,
-        note,
-        nature,
-        total,
-        title,
-        date,
-        author,
-        numContract
+      const result = handleTransaction(
+        async () =>
+          await tempExportWarehouse(
+            items,
+            idReceiving,
+            name,
+            note,
+            nature,
+            total,
+            title,
+            date,
+            author,
+            numContract
+          )
       );
-      return isSuccess;
-      // const isSuccess = await tempExportWareHouse(id_receiving, id_list);
-      // return isSuccess;
+      return result;
       // startPrint(
       //   {
       //     htmlString: await formExportBill({ ...data, temp: true }),

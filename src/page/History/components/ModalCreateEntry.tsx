@@ -139,6 +139,7 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, rec
                   if (record.quantityOrigin ? (Number(value) - Number(record.quantityOrigin)) > Number(record.quantityRemain) : Number(value) - Number(record.quantityRemain) > 0)
                     return Promise.reject(`Trong kho chỉ còn ${record.quantityRemain} ${record.unit}`)
                 }
+                if (record.quantityOrigin - Number(record.quantityI) > value) return Promise.reject(`Bạn đã xuất đi ${record.quantityExport}  ${record.unit} rồi`)
                 return Promise.resolve();
               },
             }),
@@ -172,6 +173,7 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, rec
   }
 
 }
+
 
 const EditableCell: React.FC<EditableCellProps> = ({
   title,
@@ -249,7 +251,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   const navigate = useNavigate()
 
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>([]);
-  // const [itemEditList, setItemEditList] = useState<DataType[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
   const [removeItemList, setRemoveItemList] = useState<DataType[]>([])
   const [newItemList, setNewItemList] = useState<DataType[]>([])
   const [listItemHasChoose, setListItemHasChoose] = useState<(DataType & { quantityI?: number, quantityOrigin?: number })[]>([])
@@ -280,26 +282,17 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   ))
   const handleGetCouponItemByCouponId = async () => {
     if (select) {
+      setLoading(true)
       const result = await ipcRenderer.invoke(`get-${path}-item-by-id`, select?.ID)
       setListItemEntryForm(removeItemChildrenInTable(result as any))
       setCurrentListItem(result)
       formRef.current?.setFieldsValue(select)
       formRef.current?.setFieldValue("date", dayjs(select?.date))
+      setLoading(false)
     }
   }
-
   const handleSave = (data: DataType) => {
     const newList = listItemEntryForm.map(item => item.IDIntermediary === data.IDIntermediary ? data : item)
-    // const index = itemEditList.findIndex(item => item.IDIntermediary === data.IDIntermediary)
-    // setItemEditList(prev => {
-    //   let newArray = [...prev]
-    //   if (index > -1) {
-    //     newArray[index] = data
-    //   } else {
-    //     newArray = [...prev, data]
-    //   }
-    //   return newArray
-    // })
     setListItemEntryForm(removeItemChildrenInTable(newList));
   }
 
@@ -338,7 +331,6 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       handleGetAllWareHouse()
     }
   }, [path])
-
 
 
   let columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
@@ -415,8 +407,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       render: (_, record: any) => (
         <Space size="middle">
           <UilMultiply
-            style={{ cursor: "pointer", color: record.isExport ? "red" : "" }}
-            onClick={() => handleRemoveItem(record.IDIntermediary, record.isExport)}
+            style={{ cursor: "pointer", color: record.quantityExport ? "red" : "" }}
+            onClick={() => handleRemoveItem(record.IDIntermediary, record.quantityExport)}
           />
         </Space>
       ),
@@ -482,6 +474,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     if (!isValidForm.isValid) {
       return message.error(isValidForm.message)
     }
+    if (isError) return
     const idWarehouse = formRef.current?.getFieldValue(path.includes("export") ? "id_WareHouse" : "id_Source")
     const item = listSource.find(src => src.ID === idWarehouse)
     const params: any = {
@@ -516,8 +509,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     }
   };
 
-  const handleRemoveItem = (id: string, isExport: boolean) => {
-    if (isExport) {
+  const handleRemoveItem = (id: string, quantityExport: number) => {
+    if (quantityExport > 0) {
       return message.error("Bạn đã xuất mặt hàng đi. Không thể xóa")
     }
     const filterItem = listItemEntryForm.filter(
@@ -763,6 +756,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
               }
             })}
             rowKey={(item: DataType) => item.IDIntermediary}
+            loading={loading}
           />
         </Form>
         <ModalDelete listItemDelete={removeItemList}

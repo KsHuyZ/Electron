@@ -89,12 +89,16 @@ const tempCountCoupon = {
     where cu.id_Temp_Cout_Coupon = ?`;
     let rows: any = await runQueryGetAllData(selectQuery, [id]);
     const promises = await rows.map(async (row, index) => {
-      const status = await tempCountCoupon.getListStatusItem(
+      const results = await tempCountCoupon.getListStatusItem(
         row.IDIntermediary
       );
-
-      if (status.some((element) => [2, 4, 5].includes(element.status))) {
-        return { ...row, isExport: true };
+      if (results.some((element) => element.status === 5)) {
+        const quantityExport = results.reduce(
+          (accumulator: number, currentValue: any) =>
+            accumulator + currentValue.quantity,
+          0
+        );
+        return { ...row, quantityExport };
       }
       return row;
     });
@@ -102,13 +106,12 @@ const tempCountCoupon = {
     return rowsWithStatus;
   },
   getListStatusItem: async (id: number) => {
-    const selectQuery = `SELECT i2.status
+    const selectQuery = `SELECT i2.status, i2.quantity
     FROM Intermediary i1
     JOIN Intermediary i2 ON i1.id_WareHouseItem = i2.id_WareHouseItem
     WHERE i1.ID = ?
     `;
     const rows: any = await runQueryGetAllData(selectQuery, [id]);
-    console.log(rows);
     return rows;
   },
   updateTempCoutCoupon: async (
@@ -147,7 +150,8 @@ const tempCountCoupon = {
   },
   editTempCountCoupon: async (
     removeItemList: DataType[],
-    items: (WarehouseItem & Intermediary & { quantityOrigin: number })[],
+    items: (WarehouseItem &
+      Intermediary & { quantityOrigin: number; quantityI: number })[],
     ID: number,
     idSource: number,
     name: string,

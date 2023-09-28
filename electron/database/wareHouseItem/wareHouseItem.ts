@@ -230,7 +230,7 @@ const wareHouseItem = {
           )} AND i.status IN(1,3) AND i.quantity > 0`
         : "AND i.status IN(1,3) AND i.quantity > 0";
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
-    wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+    wi.id_Source, wi.date_expried, wi.note, i.quantity, i.quantity AS quantityOrigin,
      i.ID as IDIntermediary,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS id_WareHouse, i.status, i.quality, i.quantity,
       i.date,w.name AS nameWareHouse, COUNT(i.ID) OVER() AS total 
      FROM warehouseItem wi
@@ -446,7 +446,8 @@ const wareHouseItem = {
   },
   updateWareHouseItem: async (
     idSource: number,
-    data: WarehouseItem & Intermediary & { quantityOrigin: number },
+    data: WarehouseItem &
+      Intermediary & { quantityOrigin: number; quantityI: number },
     idWareHouse: number
   ) => {
     const {
@@ -462,6 +463,7 @@ const wareHouseItem = {
       IDWarehouseItem,
       IDIntermediary,
       quantityOrigin,
+      quantityI,
     } = data;
     try {
       await runQuery(
@@ -478,10 +480,11 @@ const wareHouseItem = {
         ]
       );
 
-      const quantityMinius = quantity - quantityOrigin;
+      const quantityFinal = quantityI + quantity - quantityOrigin;
+      if (quantityI < 0) throw new Error("Bạn đã xuất mặt hàng này đi rồi");
       await runQuery(
-        `UPDATE Intermediary SET quality = ?, quantity = quantity + ?, id_WareHouse = ? WHERE ID = ?`,
-        [quality, quantityMinius, idWareHouse, IDIntermediary]
+        `UPDATE Intermediary SET quality = ?, quantity = ?, id_WareHouse = ? WHERE ID = ?`,
+        [quality, quantityFinal, idWareHouse, IDIntermediary]
       );
       const updateCoutCouponItem = `UPDATE Coupon_Temp_Item SET quantity = ?, id_Warehouse = ? WHERE ID= ?`;
       await runQuery(updateCoutCouponItem, [quantity, idWareHouse, ID]);
@@ -694,9 +697,7 @@ const wareHouseItem = {
             console.log("This is row data", element);
             const { quantity, status, ID } = element;
             if (Number(quantity) < item["newQuantity"]) {
-              throw new Error(
-                "Can't export warehouseitem to receiving. Is too large"
-              );
+              throw new Error("Số lượng xuất ra lớn hơn số lượng trong kho");
             } else {
               console.log(
                 "update quantity in new warehouse and remove quantity in old warehouse"
@@ -738,17 +739,17 @@ const wareHouseItem = {
           } else {
             const ID = await runQueryReturnID(changeWareHouseQuery, [
               id_newWareHouse,
-              item["IDWarehouseItem"],
-              item["id_WareHouse"],
+              item.IDWarehouseItem,
+              item.id_WareHouse,
               item.status === 1 ? 5 : 2,
               item.quality,
-              item["newQuantity"],
+              item.quantity,
               item.date,
             ]);
 
             await runQuery(updateWareHouseQuery, [
-              item["newQuantity"],
-              item["IDIntermediary"],
+              item.quantity,
+              item.IDIntermediary,
             ]);
             await createTempDeliveryItem(
               idCoutDelivery,
@@ -759,11 +760,10 @@ const wareHouseItem = {
         }
       });
       await Promise.all(promises);
-
-      return true;
+      return { success: true };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, message: error.message };
     }
   },
   exportWarehouse: async (

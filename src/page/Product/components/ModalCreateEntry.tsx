@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, Ref, useContext } from "react";
 import {
   Modal,
   Form,
@@ -11,6 +11,8 @@ import {
   DatePicker,
   Table,
   message,
+  Tooltip,
+  InputRef,
 } from "antd";
 import { ModalEntryForm } from "../../EntryForm/types";
 import { nameOf, OptionSelect, FormatTypeTable } from "@/types";
@@ -20,7 +22,6 @@ import {
   formatNumberWithCommas,
   getDateExpried,
   formatDate,
-  convertDataHasReceiving
 } from "@/utils";
 import { getMessage, ERROR } from "@/page/WarehouseItem/constants/messValidate";
 import { UilMultiply } from "@iconscout/react-unicons";
@@ -33,9 +34,31 @@ interface PropsModal {
   isShowModal: any;
   onCloseModal: () => void;
   listItem: DataType[];
-  idReceiving: number | unknown;
   reFetch: () => Promise<void>;
-  onCloseTransferModal: () => void
+}
+
+interface EditableRowProps {
+  index: number;
+}
+const EditableRow: React.FC<EditableRowProps> = ({ index, ...props }) => {
+  const [form] = Form.useForm();
+  return (
+    <Form form={form} component={false}>
+      <EditableContext.Provider value={form}>
+        <tr {...props} />
+      </EditableContext.Provider>
+    </Form>
+  );
+};
+type EditableTableProps = Parameters<typeof Table>[0];
+type ColumnTypes = Exclude<EditableTableProps['columns'], undefined>;
+interface EditableCellProps {
+  title: React.ReactNode;
+  editable: boolean;
+  children: React.ReactNode;
+  dataIndex: keyof DataType;
+  record: DataType;
+  handleSave: (record: DataType) => void;
 }
 
 const removeItemChildrenInTable = (
@@ -44,10 +67,14 @@ const removeItemChildrenInTable = (
   const newArray = JSON.parse(JSON.stringify(arrays));
   for (let i = 0; i < newArray.length; i++) {
     const item = newArray[i];
-    item.totalPrice = Number(item.price) * Number(item.quantity_real);
+    item.totalPrice = Number(item.price) * Number(item.quantity);
   }
   return newArray;
 };
+
+const EditableContext = React.createContext<FormInstance<any> | null>(null);
+const CheckingErrorContext = React.createContext<any>(null);
+
 
 const defaultOptionNature: OptionSelect[] = [
   {
@@ -59,6 +86,101 @@ const defaultOptionNature: OptionSelect[] = [
     value: "Nhập Theo KH",
   },
 ];
+
+const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, record: DataType, dataIndex: keyof DataType, save: () => void) => {
+  const numberValidator = (_: unknown, value: any) => {
+    if (value && (isNaN(value) || parseFloat(value) <= 0)) {
+      return Promise.reject(`Giá trị phải là số và lớn hơn 0.`);
+    }
+    return Promise.resolve();
+  };
+
+  switch (dataIndex) {
+    case 'quantity':
+      return <Tooltip placement="top" title={`Số lượng hiện có ${record.quantityOrigin}`}>
+        <Form.Item
+          style={{ margin: 0 }}
+          name={dataIndex}
+          rules={[
+            { validator: numberValidator },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value) {
+                  return Promise.reject(`${title} bắt buộc nhập.`);
+                }
+
+                if (Number(value) > record.quantityOrigin)
+                  return Promise.reject(`Trong kho chỉ có ${record.quantityOrigin} ${record.unit}`)
+
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
+          <Input ref={ref} onPressEnter={save} onBlur={save} />
+        </Form.Item>
+      </Tooltip>
+
+    default:
+      break;
+  }
+
+}
+
+const EditableCell: React.FC<EditableCellProps> = ({
+  title,
+  editable,
+  children,
+  dataIndex,
+  record,
+  handleSave,
+  ...restProps
+}) => {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<InputRef>(null);
+  const { isError, setIsError } = useContext(CheckingErrorContext);
+  const form = useContext(EditableContext)!;
+  useEffect(() => {
+    if (editing) {
+      inputRef.current!.focus();
+    }
+
+  }, [editing]);
+
+  const toggleEdit = () => {
+    setEditing(!editing);
+    form.setFieldsValue({ [dataIndex]: record[dataIndex] })
+  };
+
+  const save = async () => {
+    try {
+      const values = await form.validateFields();
+      const key = Object.keys(values)[0]
+      const value = Object.values(values)[0]
+      setIsError(false);
+      toggleEdit();
+      handleSave({ ...record, [key]: value });
+    } catch (errInfo) {
+      setIsError(true);
+      console.log('Save failed:', errInfo);
+    }
+  };
+
+  let childNode = children;
+
+  if (editable) {
+    childNode = editing ? (
+      handleSelectInput(title, inputRef, record, dataIndex, save)
+    ) : (
+      <div className="editable-cell-value-wrap" style={{ paddingRight: 24 }} onClick={toggleEdit}>
+        {children}
+      </div>
+    );
+  }
+
+  return <td {...restProps}>{childNode}</td>;
+};
+
 
 const defaultInput = {
   name: 'QUÂN KHU 5 CỤC HẬU CẦN',
@@ -73,13 +195,11 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     isShowModal,
     onCloseModal,
     listItem,
-    idReceiving,
     reFetch,
-    onCloseTransferModal
   } = props;
 
   const [listItemEntryForm, setListItemEntryForm] = useState<DataType[]>([]);
-
+  const [isError, setIsError] = useState(false);
   const [listWareHouse, setListWareHouse] = useState<{ name: string, ID: number }[]>([])
   const formRef = useRef<FormInstance>(null);
 
@@ -95,7 +215,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
   useEffect(() => {
     if (isShowModal) {
       return formRef.current?.setFieldsValue({
-        ...defaultInput, idReceiving
+        ...defaultInput
       })
     }
     handleClean()
@@ -105,7 +225,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     setListItemEntryForm(removeItemChildrenInTable(listItem))
   }, [listItem])
 
-  const columns: ColumnsType<DataType> = [
+  const columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
       title: 'Tên Kho Hàng',
       dataIndex: 'nameWareHouse',
@@ -129,24 +249,13 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     },
     {
       title: "Số lượng",
-      children: [
-        {
-          title: "Dự tính",
-          dataIndex: "quantity_plane",
-          width: 200,
-          render: (record) => (
-            <span> {new Intl.NumberFormat().format(record)}</span>
-          ),
-        },
-        {
-          title: "Thực tế",
-          dataIndex: "quantity_real",
-          width: 200,
-          render: (record) => (
-            <span>{new Intl.NumberFormat().format(record)}</span>
-          ),
-        },
-      ],
+      dataIndex: "quantity",
+      width: 200,
+      editable: true,
+      key: "quantity",
+      render: (record) => (
+        <span>{new Intl.NumberFormat().format(record)}</span>
+      )
     },
     {
       title: "Giá lẻ",
@@ -184,12 +293,12 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     },
   ];
 
-  const optionSource: OptionSelect[] = listWareHouse.map(source => (
+  const optionSource: OptionSelect[] = listWareHouse.length > 0 ? listWareHouse.map(source => (
     {
       label: source?.name,
       value: source?.ID
     }
-  ));
+  )) : [];
 
   const handleSubmitForm = async () => {
     try {
@@ -237,6 +346,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       message.error("Không có sản phẩm để làm phiếu");
       return;
     }
+    if (isError) return
     const idSource = formRef.current?.getFieldValue("idReceiving")
 
     const sourceSelect = listWareHouse?.find(item => item.ID === idSource)
@@ -252,18 +362,47 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       nameSource: sourceSelect?.name,
     };
 
-    try {
-      const result: boolean = await ipcRenderer.invoke("temp-export-warehouse", params);
-      if (result) {
-        await reFetch()
-        message.success("Tạm xuất kho thành công")
-        handleClean()
-        return onCloseTransferModal()
-      }
-    } catch (error) {
-      message.error('Loi server')
+
+    const result: { success: boolean, message?: string } = await ipcRenderer.invoke("temp-export-warehouse", params);
+    if (result.success) {
+      await reFetch()
+      message.success("Tạm xuất kho thành công")
+      handleClean()
+      onCloseModal()
+    } else {
+      message.error(result.message)
     }
   };
+
+  const handleSave = (data: DataType) => {
+    const newList = listItemEntryForm.map(item => item.IDIntermediary === data.IDIntermediary ? data : item)
+    setListItemEntryForm(removeItemChildrenInTable(newList));
+  }
+
+  const newColumn = columns.map((col) => {
+    if (!col.editable) {
+      return col;
+    }
+    return {
+      ...col,
+      onCell: (record: DataType) => ({
+        record,
+        editable: col.editable,
+        dataIndex: col.dataIndex,
+        title: col.title,
+        handleSave,
+      }),
+    };
+  });
+
+  const handleSetError = (params: boolean) => {
+    setIsError(params)
+  }
+
+  const contextValue = {
+    isError,
+    setIsError: handleSetError
+  }
 
   const handleRemoveItem = (item: DataType) => {
     const filterItem = listItemEntryForm.filter(
@@ -271,138 +410,148 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     );
     setListItemEntryForm(filterItem);
   };
+  const components = {
+    body: {
+      row: EditableRow,
+      cell: EditableCell,
+    },
+  };
 
   const totalPrice = useMemo(() => {
     return listItemEntryForm.reduce(
       (accumulator, currentValue) =>
-        accumulator + Number(currentValue.price) * currentValue.quantity_real!,
+        accumulator + Number(currentValue.price) * Number(currentValue.quantity),
       0
     );
   }, [listItemEntryForm]);
 
   return (
-    <Modal
-      title={`LÀM PHIẾU TẠM XUẤT`}
-      centered
-      open={isShowModal}
-      onCancel={handleClean}
-      width={"90%"}
-      footer={<Footer />}
-    >
-      <Form layout="vertical" ref={formRef} onFinish={onFinishFormManagement}>
-        <Row gutter={32}>
-          <Col span={8}>
-            <Form.Item
-              label="Tên đơn vị"
-              name={nameOfEntryForm("name")}
-              rules={[
+    <CheckingErrorContext.Provider value={contextValue}>
+      <Modal
+        title={`LÀM PHIẾU TẠM XUẤT`}
+        centered
+        open={isShowModal}
+        onCancel={handleClean}
+        width={"90%"}
+        footer={<Footer />}
+      >
+        <Form layout="vertical" ref={formRef} onFinish={onFinishFormManagement}>
+          <Row gutter={32}>
+            <Col span={8}>
+              <Form.Item
+                label="Tên đơn vị"
+                name={nameOfEntryForm("name")}
+                rules={[
+                  {
+                    required: true,
+                    message: getMessage(ERROR.ERROR_1, "Tên đơn vị"),
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={"Cấp theo"}
+                name={nameOfEntryForm("title")}
+                rules={[
+                  {
+                    required: true,
+                    message: getMessage(ERROR.ERROR_1, "Cấp theo"),
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label={"Đơn vị nhận"} name={"idReceiving"} rules={[
                 {
                   required: true,
-                  message: getMessage(ERROR.ERROR_1, "Tên đơn vị"),
+                  message: getMessage(ERROR.ERROR_1, "Nguồn nhập"),
                 },
               ]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label={"Cấp theo"}
-              name={nameOfEntryForm("title")}
-              rules={[
+                initialValue={optionSource[0]?.value}
+              >
+                <Select options={optionSource} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label="Loại nhập"
+                name={nameOfEntryForm("nature")}
+                rules={[
+                  {
+                    required: true,
+                    message: getMessage(ERROR.ERROR_1, "Loại nhập"),
+                  },
+                ]}
+              >
+                <Select options={defaultOptionNature} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label="Thời gian làm phiếu"
+                name={nameOfEntryForm("date")}
+                initialValue={dayjs()}
+                rules={[
+                  {
+                    required: true,
+                    message: getMessage(ERROR.ERROR_1, "Thời gian làm phiếu"),
+                  },
+                ]}
+              >
+                <DatePicker style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Người làm phiếu" name={nameOfEntryForm("author")} rules={[
                 {
                   required: true,
-                  message: getMessage(ERROR.ERROR_1, "Cấp theo"),
-                },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label={"Đơn vị nhận"} name={"idReceiving"} rules={[
-              {
-                required: true,
-                message: getMessage(ERROR.ERROR_1, "Nguồn nhập"),
-              },
-            ]}>
-              <Select options={optionSource} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Loại nhập"
-              name={nameOfEntryForm("nature")}
-              rules={[
+                  message: "Người làm phiếu không được để trống"
+                }
+              ]}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Hợp đồng số" name={nameOfEntryForm("numContract")} rules={[
                 {
                   required: true,
-                  message: getMessage(ERROR.ERROR_1, "Loại nhập"),
-                },
-              ]}
-            >
-              <Select options={defaultOptionNature} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Thời gian làm phiếu"
-              name={nameOfEntryForm("date")}
-              initialValue={dayjs()}
-              rules={[
-                {
-                  required: true,
-                  message: getMessage(ERROR.ERROR_1, "Thời gian làm phiếu"),
-                },
-              ]}
-            >
-              <DatePicker style={{ width: "100%" }} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Người làm phiếu" name={nameOfEntryForm("author")} rules={[
-              {
-                required: true,
-                message: "Người làm phiếu không được để trống"
-              }
-            ]}>
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Hợp đồng số" name={nameOfEntryForm("numContract")} rules={[
-              {
-                required: true,
-                message: "Hợp đồng số không được để trống"
-              }
-            ]}>
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={16}>
-            <Form.Item label="Chú thích" name={nameOfEntryForm("note")}>
-              <Input.TextArea rows={4} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <h4>
-              Thành tiền : {`${new Intl.NumberFormat().format(totalPrice)} vnđ`}
-            </h4>
-            <h4>(Bằng chữ : {`${docso(totalPrice)} đồng`})</h4>
-          </Col>
-        </Row>
+                  message: "Hợp đồng số không được để trống"
+                }
+              ]}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={16}>
+              <Form.Item label="Chú thích" name={nameOfEntryForm("note")}>
+                <Input.TextArea rows={4} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <h4>
+                Thành tiền : {`${new Intl.NumberFormat().format(totalPrice)} vnđ`}
+              </h4>
+              <h4>(Bằng chữ : {`${docso(totalPrice)} đồng`})</h4>
+            </Col>
+          </Row>
 
-        <Table
-          columns={columns}
-          dataSource={listItemEntryForm as any}
-          bordered
-          pagination={false}
-          scroll={{ y: 500 }}
-          style={{ maxWidth: "1200px" }}
-          rowKey={(item: DataType) => item.IDIntermediary}
-        />
-      </Form>
-
-    </Modal>
+          <Table
+            columns={newColumn as any}
+            dataSource={listItemEntryForm as any}
+            bordered
+            components={components}
+            pagination={false}
+            scroll={{ y: 500 }}
+            style={{ maxWidth: "1200px" }}
+            rowKey={(item: DataType) => item.IDIntermediary}
+          />
+        </Form>
+      </Modal>
+    </CheckingErrorContext.Provider>
   );
 };
 
