@@ -33,10 +33,10 @@ const tempCountDelivery = {
         author,
         numContract,
       ]);
-      return ID;
+      return { success: true, ID };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, message: error.message };
     }
   },
   updateTempCountDelivery: async (
@@ -110,7 +110,7 @@ const tempCountDelivery = {
       const { createTempCountDelivery, createTempDeliveryItem } =
         tempCountDelivery;
       const { tempExportWareHouse } = wareHouseItem;
-      const ID = await createTempCountDelivery(
+      const result1 = await createTempCountDelivery(
         id_newWareHouse,
         name,
         nature,
@@ -121,12 +121,17 @@ const tempCountDelivery = {
         author,
         numContract
       );
-      await tempExportWareHouse(ID, id_newWareHouse, intermediary);
-
-      return true;
+      if (!result1.success) throw new Error(result1.message);
+      const result2 = await tempExportWareHouse(
+        result1.ID,
+        id_newWareHouse,
+        intermediary
+      );
+      if (!result2.success) throw new Error(result2.message);
+      return { success: true };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, message: error.message };
     }
   },
   getTempCountDelivery: async (pageSize: number, currentPage: number) => {

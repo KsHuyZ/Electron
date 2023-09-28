@@ -6,8 +6,11 @@ import { runQueryGetData } from "../../utils";
 const WareHouse = {
   //Insert warehouse and Receiving
   create_WareHouse_Receiving: async (data: WarehouseReceiving) => {
-    const selectQuery = `SELECT ID FROM warehouse WHERE LOWER(name) = LOWER(?)`;
-    const result: any = await runQueryGetData(selectQuery, [data.name]);
+    const selectQuery = `SELECT ID FROM warehouse WHERE LOWER(name) = LOWER(?) AND is_receiving = ?`;
+    const result: any = await runQueryGetData(selectQuery, [
+      data.name,
+      data.is_receiving,
+    ]);
     if (result?.ID) return false;
     return new Promise((resolve, reject) => {
       const { name, address, description, is_receiving, phone } = data;

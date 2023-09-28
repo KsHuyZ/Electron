@@ -15,11 +15,14 @@ const WareHouse = (mainScreen: BrowserWindow) => {
   } = wareHouseDB;
 
   //listen create warehouse request
-  ipcMain.handle("create-new-warehouse", async (event, data: string) => {
-    const newData = JSON.parse(data);
-    const response = await create_WareHouse_Receiving(newData);
-    return response;
-  });
+  ipcMain.handle(
+    "create-new-warehouse",
+    async (event, data: string) => {
+      const newData = JSON.parse(data);
+      const response = await create_WareHouse_Receiving(newData);
+      return response;
+    }
+  );
   //listen create receiving request
   ipcMain.handle("create-new-receiving", async (event, data: string) => {
     const newData = JSON.parse(data);

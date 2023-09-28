@@ -9,9 +9,9 @@ import TableWareHouse from "../WarehouseItem/components/TableWareHouse";
 import { ipcRenderer } from "electron";
 import { ResponseIpc, TableData, QUALITY_PRODUCT } from "@/types";
 import { TablePaginationConfig } from "antd/es/table";
-import TransferModal from "../WarehouseItem/components/TransferModal";
 import FilterWareHouseItem from "../WarehouseItem/components/FilterWareHouseItem";
 import { useSearchParams } from "react-router-dom";
+import ModalCreateEntry from "./components/ModalCreateEntry";
 
 const defaultTable: TableData<DataType[]> = {
   pagination: {
@@ -219,7 +219,7 @@ const Product = () => {
                 <Col span={12}>
                   <Space direction="horizontal" size={24}>
                     <Button className={isShowSearch ? `default active-search` : `default`} icon={<UilFilter />} onClick={() => setIsShowSearch(!isShowSearch)}>Lọc</Button>
-                    <Button onClick={() => setStatusModal(STATUS_MODAL.RECEIPT)} disabled={dataRowSelected!?.length > 0 ? false : true} type="primary">Tạm Xuất kho</Button>
+                    <Button onClick={() => setIsShowPopUp(true)} disabled={dataRowSelected!?.length > 0 ? false : true} type="primary">Tạm Xuất kho</Button>
                   </Space>
                 </Col>
               </Row>
@@ -232,7 +232,6 @@ const Product = () => {
             </Card>
           </div>
           <TableWareHouse
-            setIsShowPopUp={() => setIsShowPopUp(true)}
             isShowSelection={true}
             columns={columns}
             dataSource={listData.rows}
@@ -252,17 +251,12 @@ const Product = () => {
           />
         </div>
       </Col>
-      {
-        statusModal === STATUS_MODAL.RECEIPT && (
-          <TransferModal
-            isShow={statusModal}
-            setIsShow={handleShowTransferModal}
-            listItem={dataRowSelected}
-            removeItemList={removeItemList}
-            fetching={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
-          />
-        )
-      }
+      <ModalCreateEntry
+        isShowModal={isShowPopUp}
+        onCloseModal={() => setIsShowPopUp(false)}
+        listItem={dataRowSelected}
+        reFetch={async () => await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total)}
+      />
     </Row>
 
   )

@@ -28,6 +28,8 @@ type DataType = {
   quantityOrigin: number;
   quantityPlaneOrigin: number;
   quantityRemain: number;
+  quantityExport?: number;
+  quantityI?: number;
 };
 
 type WarehouseItem = {
