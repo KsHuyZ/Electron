@@ -669,6 +669,7 @@ const wareHouseItem = {
     id_newWareHouse: number,
     intermediary: Intermediary[]
   ) => {
+    let isError = { error: false, message: "" };
     try {
       const promises = intermediary.map(async (item) => {
         const row: any = await new Promise((resolve, reject) => {
@@ -677,8 +678,8 @@ const wareHouseItem = {
             query,
             [
               id_newWareHouse,
-              item["IDWarehouseItem"],
-              item["newQuantity"],
+              item.IDWarehouseItem,
+              item.quantity,
               item["id_WareHouse"],
             ],
             function (err, row: any) {
@@ -696,26 +697,32 @@ const wareHouseItem = {
           await row.forEach(async (element) => {
             console.log("This is row data", element);
             const { quantity, status, ID } = element;
-            if (Number(quantity) < item["newQuantity"]) {
-              throw new Error("Số lượng xuất ra lớn hơn số lượng trong kho");
+            if (Number(quantity) < item.quantity) {
+              isError = {
+                error: true,
+                message: "Số lượng xuất ra lớn hơn số lượng trong kho",
+              };
             } else {
-              console.log(
-                "update quantity in new warehouse and remove quantity in old warehouse"
-              );
               const updateQuery1 = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
               const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
-              await runQuery(updateQuery1, [item["newQuantity"], ID]);
+              await runQuery(updateQuery1, [item.quantity, ID]);
 
               await runQuery(updateQuery2, [
-                item["newQuantity"],
+                item.quantity,
                 item.IDWarehouseItem,
                 item["id_WareHouse"],
               ]);
-              await createTempDeliveryItem(
+              const result = await createTempDeliveryItem(
                 idCoutDelivery,
                 ID,
-                item["newQuantity"]
+                item.quantity
               );
+              if (!result.success) {
+                isError = {
+                  error: true,
+                  message: result.message,
+                };
+              }
             }
           });
         } else {
@@ -732,10 +739,11 @@ const wareHouseItem = {
               }
             });
           });
-          if (Number(quantity) < item["newQuantity"]) {
-            throw new Error(
-              "Can't change warehouseitem to new warehouse. Is too large"
-            );
+          if (Number(quantity) < item.quantity) {
+            isError = {
+              error: true,
+              message: "Số lượng xuất ra lớn hơn số lượng trong kho",
+            };
           } else {
             const ID = await runQueryReturnID(changeWareHouseQuery, [
               id_newWareHouse,
@@ -751,18 +759,24 @@ const wareHouseItem = {
               item.quantity,
               item.IDIntermediary,
             ]);
-            await createTempDeliveryItem(
+            const result = await createTempDeliveryItem(
               idCoutDelivery,
               ID,
-              item["newQuantity"]
+              item.quantity
             );
+            if (!result.success) {
+              isError = {
+                error: true,
+                message: result.message,
+              };
+            }
           }
         }
       });
       await Promise.all(promises);
+      if (isError.error) throw new Error(isError.message);
       return { success: true };
     } catch (error) {
-      console.log(error);
       return { success: false, message: error.message };
     }
   },
@@ -951,6 +965,25 @@ const wareHouseItem = {
       warehouseItemID,
       quality,
     ]);
+    return rows;
+  },
+  getWareHouseItemInWareHouse: async (
+    warehouseItemID: number | string,
+    wareHouseID: number,
+    quality: number,
+    status: number
+  ) => {
+    const selectQuery = `SELECT wi.ID as IDWarehouseItem, i.ID as IDIntermediary, i.quantity
+    FROM warehouseItem wi
+    JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
+    WHERE i.id_WareHouse = ? AND IDWarehouseItem = ? AND i.quality = ? AND i.status = ?`;
+    const rows: any = await runQueryGetData(selectQuery, [
+      wareHouseID,
+      warehouseItemID,
+      quality,
+      status,
+    ]);
+    console.log("rows: ", rows);
     return rows;
   },
 };

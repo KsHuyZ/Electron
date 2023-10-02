@@ -363,14 +363,14 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     };
 
 
-    const result: { success: boolean, message?: string } = await ipcRenderer.invoke("temp-export-warehouse", params);
+    const result: { success: boolean, error?: string } = await ipcRenderer.invoke("temp-export-warehouse", params);
     if (result.success) {
       await reFetch()
       message.success("Tạm xuất kho thành công")
       handleClean()
       onCloseModal()
     } else {
-      message.error(result.message)
+      message.error(result.error)
     }
   };
 
@@ -416,7 +416,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       cell: EditableCell,
     },
   };
-
+  console.log(listItemEntryForm)
   const totalPrice = useMemo(() => {
     return listItemEntryForm.reduce(
       (accumulator, currentValue) =>

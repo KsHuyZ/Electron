@@ -45,8 +45,8 @@ const EditableCell: React.FC<EditableCellProps> = ({
           rules={[
             ({ getFieldValue }) => ({
               validator(_, value) {
-                if (dataIndex === 'quality' && (Number(value) <= 0 || Number(value) > 4)) {
-                  return Promise.reject(`${title} thuộc 1 - 4`);
+                if (dataIndex === 'quality' && (Number(value) <= 0 || Number(value) > 5)) {
+                  return Promise.reject(`${title} thuộc 1 - 5`);
                 }
                 if ((dataIndex !== 'note' && dataIndex !== 'date_expried') && !value) {
                   return Promise.reject(`${title} bắt buộc nhập.`);

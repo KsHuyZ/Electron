@@ -174,18 +174,6 @@ const Product = () => {
     setStatusModal(STATUS_MODAL.CLOSE);
   }
 
-  const tempExportWareHouseCallBack = async () => {
-    await getListItem(listData.pagination.pageSize, 1, listData.pagination.total);
-    message.success("Tạm xuất kho thành công")
-    setStatusModal(STATUS_MODAL.CLOSE)
-  }
-
-  const removeItemList = (IDIntermediary: string[]) => {
-    const filterNewList = listItemHasChoose.filter(item => !IDIntermediary.includes(item.IDIntermediary));
-    setDataRowSelected(filterNewList)
-    setIsListenChange(true);
-  }
-
   const handleDataRowSelected = (listRows: DataType[]) => {
     setDataRowSelected(listRows.map((item) => ({
       ...item,
@@ -193,12 +181,6 @@ const Product = () => {
     })));
   }
 
-  useEffect(() => {
-    ipcRenderer.on("temp-export-warehouse-success", tempExportWareHouseCallBack);
-    return () => {
-      ipcRenderer.removeListener("temp-export-warehouse-success", tempExportWareHouseCallBack);
-    };
-  }, [])
 
   return (
     <Row className="filter-bar">
