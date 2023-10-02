@@ -139,7 +139,9 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, rec
                   if (record.quantityOrigin ? (Number(value) - Number(record.quantityOrigin)) > Number(record.quantityRemain) : Number(value) - Number(record.quantityRemain) > 0)
                     return Promise.reject(`Trong kho chỉ còn ${record.quantityRemain} ${record.unit}`)
                 }
-                if (record.quantityOrigin - Number(record.quantityI) > value) return Promise.reject(`Bạn đã xuất đi ${record.quantityExport}  ${record.unit} rồi`)
+                if (record.quantityOrigin - Number(record.quantityI) > value && !isExport) {
+                  return Promise.reject(`Bạn đã xuất đi ${record.quantityExport}  ${record.unit} rồi`)
+                }
                 return Promise.resolve();
               },
             }),
@@ -464,6 +466,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     setIsValidForm({ message: "", isValid: true })
     setNewItemList([])
     setRemoveItemList([])
+    setIsError(false)
   };
 
   const onFinishFormManagement = async (values: ModalEntryForm) => {
@@ -474,6 +477,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     if (!isValidForm.isValid) {
       return message.error(isValidForm.message)
     }
+    console.log(isError)
     if (isError) return
     const idWarehouse = formRef.current?.getFieldValue(path.includes("export") ? "id_WareHouse" : "id_Source")
     const item = listSource.find(src => src.ID === idWarehouse)
@@ -494,6 +498,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       idSource: idWarehouse,
     };
     const result = await ipcRenderer.invoke(!isOfficial ? `${path}-edit` : `print-form-${isExport ? "export" : "import"}`, { ...params })
+    console.log(result)
     if (result.success) {
       if (!isOfficial) {
         reFetch()

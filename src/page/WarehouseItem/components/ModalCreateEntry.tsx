@@ -233,22 +233,10 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     );
   };
 
-  const importWarehouseCallBack = async (
-    event: Electron.IpcRendererEvent,
-    isSuccess: boolean
-  ) => {
-    if (!isSuccess) {
-      return message.error("Nhập kho thất bại. Hãy thử lại");
-    } else {
-      message.success("Nhập kho thành công");
-      handleClean();
-      return;
-    }
-  };
-
   const handleClean = () => {
     onCloseModal();
     formRef.current?.resetFields();
+    setListItemEntryForm([])
   };
 
   const onFinishFormManagement = async (values: ModalEntryForm) => {

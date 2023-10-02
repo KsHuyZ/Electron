@@ -81,25 +81,6 @@ const AddWareHouseItem = React.memo(
       formWareHouseItem.setFieldsValue({ ...option.data, date_expried: option.data.date_expried ? dayjs(option.data.date_expried) : null, idSource: option.data.id_Source, quality: 1, price: formattedNumericValue })
     };
 
-    // useEffect(() => {
-    //   if (isEdit) {
-    //     const parsedDate = itemEdit?.date_expried ? dayjs(itemEdit?.date_expried) : null;
-    //     formWareHouseItem.setFieldsValue({
-    //       name: itemEdit?.name,
-    //       price:
-    //         itemEdit?.price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") ||
-    //         "",
-    //       unit: itemEdit?.unit,
-    //       quality: itemEdit?.quality,
-    //       note: itemEdit?.note,
-    //       quantity_plane: itemEdit?.quantity_plane,
-    //       quantity_real: itemEdit?.quantity,
-    //       date_expried: parsedDate,
-    //       idSource: itemEdit?.id_Source,
-    //     });
-    //   }
-    // }, [isEdit]);
-
     useEffect(() => {
       getAllItemSource();
     }, []);
@@ -115,36 +96,13 @@ const AddWareHouseItem = React.memo(
         price: convertPrice(values.price),
         date_expried: date_expried ? dateFormat : null,
         status: STATUS.TEMPORARY_IMPORT,
-        date: formatDate(new Date(), true, "date_First"),
+        date: formatDate(dayjs(), true, "date_First"),
         date_created_at: formatDate(new Date(), true, "no_date"),
         date_updated_at: formatDate(new Date(), true, "no_date"),
         nameSource: sourceSelect?.label,
       };
 
-      // if (isEdit) {
-      //   const paramsEdit = {
-      //     ...params,
-      //     idIntermediary: itemEdit?.IDIntermediary,
-      //     idWarehouseItem: itemEdit?.IDWarehouseItem,
-      //     quantity: itemEdit?.quantity,
-      //   };
-      //   const response = await ipcRenderer.invoke(
-      //     "update-warehouseitem",
-      //     paramsEdit
-      //   );
-      //   if (response) {
-      //     console.log(response);
-      //     message.success("Cập nhật sản phẩm thành công");
-      //   }
-      // } else {
-      //   // const response = await ipcRenderer.invoke(
-      //   //   "create-product-item",
-      //   //   JSON.stringify(params)
-      //   // );
-      //   // if (response) {
-      //   //   message.success("Tạo sản phẩm thành công");
-      //   // }
-      // }
+  
       setLoadingButton(false);
       handleClean();
       onCreateItem(params)

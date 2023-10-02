@@ -82,13 +82,29 @@ const countDelivery = {
     return rows;
   },
   getDeliveryItembyDeliveryID: async (id: number) => {
-    const selectQuery = `select ci.ID,wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried, wi.price, wi.unit from Delivery_Item ci
+    const { getWareHouseItemInWareHouse } = wareHouseItemDB;
+
+    const selectQuery = `select ci.ID,wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried,ci.quantity as quantityOrigin,i.status,wi.price, wi.unit from Delivery_Item ci
     join Intermediary i on i.ID = ci.id_intermediary
     join WareHouseItem wi on wi.ID = i.id_WareHouseItem
    join warehouse w on w.ID = i.prev_idwarehouse
     where ci.id_Cout_Delivery = ?`;
     const rows: any = await runQueryGetAllData(selectQuery, [id]);
-    return rows;
+    const promises = await rows.map(async (row, index) => {
+      const quantityInWareHouse = await getWareHouseItemInWareHouse(
+        row.IDWarehouseItem,
+        row.IDWarehouse,
+        row.quality,
+        3
+      );
+      return {
+        ...row,
+        quantityRemain: quantityInWareHouse.quantity,
+        IDIntermediary1: quantityInWareHouse.IDIntermediary,
+      };
+    });
+    const newRows = await Promise.all(promises);
+    return newRows;
   },
   exportWarehouseEdit: async (
     id: number | string,
@@ -182,6 +198,18 @@ const countDelivery = {
       return { success: false, message: error.message };
     }
   },
+  updateCountDeliveryItem: async (ID: number, quantity: number) => {
+    console.log(ID);
+    try {
+      await runQuery(`UPDATE Delivery_Item SET quantity = ? WHERE ID = ?`, [
+        quantity,
+        ID,
+      ]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  },
   editCountDelivery: async (
     removeItemList: DataType[],
     items: DataType[],
@@ -197,7 +225,6 @@ const countDelivery = {
   ) => {
     const { updateWarehouseItemExport } = wareHouseItemDB;
     let isError = { error: false, message: "" };
-
     try {
       removeItemList.forEach(async (item) => {
         const result = await countDelivery.backtoImportWarehouseItem(
@@ -232,6 +259,13 @@ const countDelivery = {
           );
           if (!result.success) {
             isError = { error: true, message: result.message };
+          }
+          const result1 = await countDelivery.updateCountDeliveryItem(
+            item.ID,
+            item.quantity
+          );
+          if (!result1.success) {
+            isError = { error: true, message: result1.message };
           }
         }
       });

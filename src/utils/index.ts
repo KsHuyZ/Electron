@@ -70,6 +70,8 @@ export const createRegexValidator = (regex: RegExp, errorMessage: string) => {
   };
 };
 
+const getDateTime = () => {};
+
 export const formatDate = (
   newDate: any,
   suffix: boolean = false,
@@ -84,13 +86,10 @@ export const formatDate = (
     const currentYear = new Date().getFullYear();
     return dayjs(new Date(currentYear, 0, 1)).format(`YYYY/MM/DD`);
   }
-
   // Format the date based on the type
   switch (type) {
     case "date_First":
-      formattedDate = dayjs(newDate).format(
-        `${suffix ? "HH:MM" : ""} DD/MM/YYYY`
-      );
+      formattedDate = newDate.format(`${suffix ? "HH:mm" : ""} DD/MM/YYYY`);
       break;
     case "after_Date":
       formattedDate = dayjs(newDate).format(
@@ -109,7 +108,8 @@ export const formatDate = (
       formattedDate = dayjs(newDate).format(`YYYY/MM/DD`);
       break;
   }
-
+  console.log(type);
+  console.log(formattedDate);
   return formattedDate;
 };
 
@@ -276,7 +276,7 @@ export const convertItemKey = (arrayList: any) => {
         const newKey = convertKey(oldKey);
         newObj[newKey] = obj[oldKey];
       }
-      return newObj;
+      return { ...newObj, date: formatDate(dayjs(), true) };
     })
   );
 };
