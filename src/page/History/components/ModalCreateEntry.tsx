@@ -139,7 +139,7 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, rec
                   if (record.quantityOrigin ? (Number(value) - Number(record.quantityOrigin)) > Number(record.quantityRemain) : Number(value) - Number(record.quantityRemain) > 0)
                     return Promise.reject(`Trong kho chỉ còn ${record.quantityRemain} ${record.unit}`)
                 }
-                if (record.quantityOrigin - Number(record.quantityI) > value && !isExport) {
+                if (dataIndex === "quantity" && record.quantityOrigin - Number(record.quantityI) > value && !isExport && record.quantityExport) {
                   return Promise.reject(`Bạn đã xuất đi ${record.quantityExport}  ${record.unit} rồi`)
                 }
                 return Promise.resolve();
