@@ -95,7 +95,7 @@ const EditableRow: React.FC<EditableRowProps> = ({ index, ...props }) => {
   );
 };
 
-const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, record: DataType, dataIndex: keyof DataType, save: () => void, isExport: boolean) => {
+const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, record: DataType, dataIndex: keyof DataType, save: () => void, isExport: boolean, isTemp: boolean) => {
   const numberValidator = (_: unknown, value: any) => {
     if (value && (isNaN(value) || parseFloat(value) <= 0)) {
       return Promise.reject(`Giá trị phải là số và lớn hơn 0.`);
@@ -136,12 +136,15 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, rec
                   return Promise.reject(`${title} bắt buộc nhập.`);
                 }
                 if (dataIndex === "quantity" && isExport) {
-                  if (record.quantityOrigin ? (Number(value) - Number(record.quantityOrigin)) > Number(record.quantityRemain) : Number(value) - Number(record.quantityRemain) > 0)
+                  if ((record.status === 1 || record.status === 3) && value > record.quantityRemain) return Promise.reject(`Trong kho chỉ còn ${record.quantityRemain} ${record.unit}`)
+                  if (value - record.quantityOrigin - record.quantityRemain > 0)
                     return Promise.reject(`Trong kho chỉ còn ${record.quantityRemain} ${record.unit}`)
+
                 }
                 if (dataIndex === "quantity" && record.quantityOrigin - Number(record.quantityI) > value && !isExport && record.quantityExport) {
                   return Promise.reject(`Bạn đã xuất đi ${record.quantityExport}  ${record.unit} rồi`)
                 }
+                if (dataIndex === "quantity" && record.quantityI === 0 && value - record.quantityOrigin <= 0) return Promise.reject("Bạn đã chuyển mặt hàng qua kho khác hoặc xuất đi rồi")
                 return Promise.resolve();
               },
             }),
@@ -192,6 +195,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
   const pathName = location.pathname
   const path = getPath(pathName)
   const isExport = path.includes("export")
+  const isTemp = path.includes("temp")
   const { isError, setIsError } = useContext(CheckingErrorContext);
   const form = useContext(EditableContext)!;
   useEffect(() => {
@@ -225,7 +229,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
   if (editable) {
     childNode = editing ? (
-      handleSelectInput(title, inputRef, record, dataIndex, save, isExport)
+      handleSelectInput(title, inputRef, record, dataIndex, save, isExport, isTemp)
     ) : (
       <div className="editable-cell-value-wrap" style={{ paddingRight: 24 }} onClick={toggleEdit}>
         {children}
@@ -409,8 +413,8 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       render: (_, record: any) => (
         <Space size="middle">
           <UilMultiply
-            style={{ cursor: "pointer", color: record.quantityExport ? "red" : "" }}
-            onClick={() => handleRemoveItem(record.IDIntermediary, record.quantityExport)}
+            style={{ cursor: "pointer", color: record.quantityExport || record.quantityI === 0 ? "red" : "" }}
+            onClick={() => handleRemoveItem(record.IDIntermediary, record.quantityExport, record.quantityI)}
           />
         </Space>
       ),
@@ -477,7 +481,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     if (!isValidForm.isValid) {
       return message.error(isValidForm.message)
     }
-    console.log(isError)
+
     if (isError) return
     const idWarehouse = formRef.current?.getFieldValue(path.includes("export") ? "id_WareHouse" : "id_Source")
     const item = listSource.find(src => src.ID === idWarehouse)
@@ -497,8 +501,9 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       id_WareHouse: idWarehouse,
       idSource: idWarehouse,
     };
+
     const result = await ipcRenderer.invoke(!isOfficial ? `${path}-edit` : `print-form-${isExport ? "export" : "import"}`, { ...params })
-    console.log(result)
+
     if (result.success) {
       if (!isOfficial) {
         reFetch()
@@ -514,17 +519,18 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     }
   };
 
-  const handleRemoveItem = (id: string, quantityExport: number) => {
+  const handleRemoveItem = (id: string, quantityExport: number, quantityI: number) => {
     if (quantityExport > 0) {
       return message.error("Bạn đã xuất mặt hàng đi. Không thể xóa")
+    }
+    if (quantityI) {
+      return message.error("Mặt hàng đã được xuất hoặc chuyển qua kho khác")
     }
     const filterItem = listItemEntryForm.filter(
       (cur) => cur.IDIntermediary !== id
     );
     const removeItem = listItemEntryForm.find(item => item.IDIntermediary === id)
     const isNewItemIndex = newItemList.findIndex(item => item.IDIntermediary === id)
-    // const newArray = itemEditList.filter(item => item.IDIntermediary !== id)
-    // if (newArray) setItemEditList(newArray)
     setListItemEntryForm(filterItem);
     if (removeItem && isNewItemIndex === -1) {
       setRemoveItemList(prev => ([...prev, removeItem]))

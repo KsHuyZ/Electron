@@ -171,11 +171,14 @@ const tempCountDelivery = {
           row.quality,
           row.date_expried
         );
-      return {
-        ...row,
-        quantityRemain: quantityInWareHouse.quantity,
-        IDIntermediary1: quantityInWareHouse.IDIntermediary,
-      };
+      if (quantityInWareHouse) {
+        return {
+          ...row,
+          quantityRemain: quantityInWareHouse.quantity,
+          IDIntermediary1: quantityInWareHouse.IDIntermediary,
+        };
+      }
+      return row;
     });
     const newRows = await Promise.all(promises);
     return newRows;
@@ -220,6 +223,7 @@ const tempCountDelivery = {
     ID: number,
     IDIntermediary: number,
     quantity: number,
+    quantityOrigin: number,
     quantityRemain: number,
     IDIntermediary1: number
   ) => {
@@ -228,15 +232,17 @@ const tempCountDelivery = {
         quantity,
         IDIntermediary,
       ]);
-      const newQuantity = quantity - quantityRemain;
-      await runQuery(
-        `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`,
-        [newQuantity, IDIntermediary1]
-      );
+      const newQuantity = quantityRemain - (quantity - quantityOrigin);
+      if (newQuantity < 0) throw new Error("Số lượng chưa hợp lệ");
+      await runQuery(`UPDATE Intermediary SET quantity =  ? WHERE ID = ?`, [
+        newQuantity,
+        IDIntermediary1,
+      ]);
       await runQuery(
         `UPDATE Delivery_Temp_Item SET quantity = ? WHERE ID = ?`,
-        [ID]
+        [quantity, ID]
       );
+      console.log("ID: ", ID);
       return { success: true, message: "" };
     } catch (error) {
       console.log(error);
@@ -285,6 +291,7 @@ const tempCountDelivery = {
           IDWarehouseItem,
           IDWarehouse,
           quality,
+          quantityOrigin,
           IDIntermediary1,
           quantityRemain,
           id_WareHouse,
@@ -294,6 +301,7 @@ const tempCountDelivery = {
               ID,
               IDIntermediary,
               quantity,
+              quantityOrigin,
               quantityRemain,
               IDIntermediary1
             );

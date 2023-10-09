@@ -17,6 +17,7 @@ export type WarehouseItem = {
 };
 
 export type Intermediary = {
+  ID: number;
   IDIntermediary: number;
   id_wareHouse: number;
   id_WareHouse?: number;
@@ -30,6 +31,7 @@ export type Intermediary = {
   date_temp_export: Moment | null;
   IDIntermediary1?: number;
   quantityRemain: number;
+  quantityOrigin: number
 };
 
 export type DataType = {

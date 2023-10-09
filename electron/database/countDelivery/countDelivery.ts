@@ -6,7 +6,7 @@ import {
   runQueryReturnID,
 } from "../../utils";
 import wareHouseItemDB from "../wareHouseItem/wareHouseItem";
-import { DataType } from "../../types";
+import { DataType, Intermediary } from "../../types";
 
 const countDelivery = {
   createCountDelivery: async (
@@ -51,7 +51,7 @@ const countDelivery = {
     quantity: number
   ) => {
     const createQuery =
-      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermediary, quantity) VALUES(?,?, ?)";
+      "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermediary, quantity) VALUES(?, ?, ?)";
     try {
       await runQuery(createQuery, [idCoutDelivery, idIntermediary, quantity]);
       return true;
@@ -84,7 +84,7 @@ const countDelivery = {
   getDeliveryItembyDeliveryID: async (id: number) => {
     const { getWareHouseItemInWareHouse } = wareHouseItemDB;
 
-    const selectQuery = `select ci.ID,wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried,ci.quantity as quantityOrigin,i.status,wi.price, wi.unit from Delivery_Item ci
+    const selectQuery = `select ci.ID,wi.ID as IDWarehouseItem,i.ID as IDIntermediary,i.quality,wi.name, ci.quantity,ci.quantity AS quantityOrigin,i.prev_idwarehouse AS IDWarehouse, w.name as nameWareHouse,wi.quantity_plane,wi.date_expried,ci.quantity as quantityOrigin,i.status,wi.price, wi.unit from Delivery_Item ci
     join Intermediary i on i.ID = ci.id_intermediary
     join WareHouseItem wi on wi.ID = i.id_WareHouseItem
    join warehouse w on w.ID = i.prev_idwarehouse
@@ -199,7 +199,7 @@ const countDelivery = {
     }
   },
   updateCountDeliveryItem: async (ID: number, quantity: number) => {
-    console.log(ID);
+    console.log(ID, quantity);
     try {
       await runQuery(`UPDATE Delivery_Item SET quantity = ? WHERE ID = ?`, [
         quantity,
@@ -212,7 +212,7 @@ const countDelivery = {
   },
   editCountDelivery: async (
     removeItemList: DataType[],
-    items: DataType[],
+    items: Intermediary[],
     ID: number,
     idWarehouse: number,
     name: string,
@@ -255,7 +255,10 @@ const countDelivery = {
           const result = await updateWarehouseItemExport(
             idWarehouse,
             item.quantity,
-            item.IDIntermediary
+            item.IDIntermediary,
+            item.IDIntermediary1,
+            item.quantityRemain,
+            item.quantityOrigin
           );
           if (!result.success) {
             isError = { error: true, message: result.message };

@@ -92,7 +92,6 @@ const History = () => {
         });
     };
 
-    const { notifySuccess } = toastify
     const pathName = location.pathname
     let columns: ColumnsType<CountDeliveryType> = [
         {
@@ -194,21 +193,7 @@ const History = () => {
         const { current, pageSize, total } = pagination
         setSearchParams(prev => ({ ...prev, current, pageSize }))
     };
-
-    const onUpdateSuccessCallback = (event: Electron.IpcRendererEvent) => {
-        handleGetData()
-        setShowUpdateModal(false)
-        notifySuccess("Sửa phiếu thành công")
-    }
-
-    useEffect(() => {
-        ipcRenderer.on("edit-import-success", onUpdateSuccessCallback)
-        ipcRenderer.on("edit-export-success", onUpdateSuccessCallback)
-        return () => {
-            ipcRenderer.removeListener("edit-import-success", onUpdateSuccessCallback)
-            ipcRenderer.removeListener("edit-export-success", onUpdateSuccessCallback)
-        }
-    }, [])
+   
 
     useEffect(() => {
         handleGetData()

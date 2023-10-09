@@ -480,7 +480,8 @@ const wareHouseItem = {
         ]
       );
 
-      const quantityFinal = quantityI + quantity - quantityOrigin;
+      const quantityFinal =
+        Number(quantityI) + Number(quantity) - quantityOrigin;
       if (quantityI < 0) throw new Error("Bạn đã xuất mặt hàng này đi rồi");
       await runQuery(
         `UPDATE Intermediary SET quality = ?, quantity = ?, id_WareHouse = ? WHERE ID = ?`,
@@ -664,6 +665,22 @@ const wareHouseItem = {
       return false;
     }
   },
+  tempExportWarehouseExist: async (
+    ID: number,
+    idCoutDelivery: number | unknown,
+    item: Intermediary
+  ) => {
+    const updateQuery1 = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
+    const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`;
+    await runQuery(updateQuery1, [item.quantity, ID]);
+    await runQuery(updateQuery2, [item.quantity, item.IDIntermediary]);
+    const result = await createTempDeliveryItem(
+      idCoutDelivery,
+      ID,
+      item.quantity
+    );
+    return result;
+  },
   tempExportWareHouse: async (
     idCoutDelivery: number | unknown,
     id_newWareHouse: number,
@@ -673,15 +690,10 @@ const wareHouseItem = {
     try {
       const promises = intermediary.map(async (item) => {
         const row: any = await new Promise((resolve, reject) => {
-          const query = `SELECT ID,quantity, status from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? and quality = ? and prev_idwarehouse = ? AND status IN (2,5) AND quantity > 0`;
+          const query = `SELECT ID,quantity, status from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? and quality = ? AND status IN (2,5)`;
           db.all(
             query,
-            [
-              id_newWareHouse,
-              item.IDWarehouseItem,
-              item.quantity,
-              item["id_WareHouse"],
-            ],
+            [id_newWareHouse, item.IDWarehouseItem, item.quality],
             function (err, row: any) {
               if (err) {
                 console.log(err);
@@ -695,27 +707,31 @@ const wareHouseItem = {
 
         if (row.length > 0) {
           await row.forEach(async (element) => {
-            console.log("This is row data", element);
-            const { quantity, status, ID } = element;
-            if (Number(quantity) < item.quantity) {
-              isError = {
-                error: true,
-                message: "Số lượng xuất ra lớn hơn số lượng trong kho",
-              };
-            } else {
-              const updateQuery1 = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
-              const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
-              await runQuery(updateQuery1, [item.quantity, ID]);
-
-              await runQuery(updateQuery2, [
-                item.quantity,
-                item.IDWarehouseItem,
-                item["id_WareHouse"],
-              ]);
-              const result = await createTempDeliveryItem(
-                idCoutDelivery,
+            const { status, ID } = element;
+            if (status === 5 && item.status === 1) {
+              if (item.quantityOrigin < item.quantity) {
+                isError = {
+                  error: true,
+                  message: "Số lượng xuất ra lớn hơn số lượng trong kho",
+                };
+              } else {
+                const result = await wareHouseItem.tempExportWarehouseExist(
+                  ID,
+                  idCoutDelivery,
+                  item
+                );
+                if (!result.success) {
+                  isError = {
+                    error: true,
+                    message: result.message,
+                  };
+                }
+              }
+            } else if (status === 2 && item.status === 3) {
+              const result = await wareHouseItem.tempExportWarehouseExist(
                 ID,
-                item.quantity
+                idCoutDelivery,
+                item
               );
               if (!result.success) {
                 isError = {
@@ -723,23 +739,17 @@ const wareHouseItem = {
                   message: result.message,
                 };
               }
+            } else {
+              isError = {
+                error: true,
+                message: "Dữ liệu không hợp lệ",
+              };
             }
           });
         } else {
           const changeWareHouseQuery = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, prev_idwarehouse, status, quality, quantity, date) VALUES (?, ?,?,?, ?, ?, ?)`;
           const updateWareHouseQuery = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? `;
-          const quantity = await new Promise((resolve, reject) => {
-            const query = `SELECT quantity from Intermediary WHERE ID = ?`;
-            db.get(query, [item["IDIntermediary"]], function (err, row: any) {
-              if (err) {
-                console.log(err);
-                reject(err);
-              } else {
-                resolve(row.quantity);
-              }
-            });
-          });
-          if (Number(quantity) < item.quantity) {
+          if (item.quantityOrigin < item.quantity) {
             isError = {
               error: true,
               message: "Số lượng xuất ra lớn hơn số lượng trong kho",
@@ -794,6 +804,7 @@ const wareHouseItem = {
     numContract: string | number
   ) => {
     try {
+      let isError = { error: false, message: "" };
       const { createCountDelivery, createDeliveryItem } = countDelivery;
       const result = await createCountDelivery(
         idReceiving,
@@ -808,6 +819,9 @@ const wareHouseItem = {
       );
       if (!result.success) throw new Error(result.message);
       const promises = intermediary.map(async (item) => {
+        if (item.status !== 2) {
+          isError = { error: true, message: "Mặt hàng chưa tạm xuất" };
+        }
         const insertQuery = `UPDATE Intermediary SET status = 4 WHERE ID = ?`;
         await runQueryReturnID(insertQuery, [item.IDIntermediary]);
         await createDeliveryItem(result.ID, item.IDIntermediary, item.quantity);
@@ -816,6 +830,9 @@ const wareHouseItem = {
       await runQuery(`UPDATE CoutTempDelivery SET status = 1 WHERE ID = ?`, [
         ID,
       ]);
+      if (isError.error) {
+        throw new Error(isError.message);
+      }
       return { success: true, message: "" };
     } catch (error) {
       console.error("Lỗi", error);
@@ -930,7 +947,10 @@ const wareHouseItem = {
   updateWarehouseItemExport: async (
     idWarehouse: number | string,
     quantity: number,
-    idIntermediary: number | string
+    idIntermediary: number | string,
+    IDIntermediary1: number,
+    quantityRemain: number,
+    quantityOrigin: number
   ) => {
     const updateIntMediary = `UPDATE Intermediary SET quantity = ?,id_WareHouse = ? WHERE ID = ?`;
     try {
@@ -938,6 +958,12 @@ const wareHouseItem = {
         quantity,
         idWarehouse,
         idIntermediary,
+      ]);
+      const newQuantity = quantityRemain - (quantity - quantityOrigin);
+      if (newQuantity < 0) throw new Error("Số lượng chưa hợp lệ");
+      await runQuery(`UPDATE Intermediary SET quantity =  ? WHERE ID = ?`, [
+        newQuantity,
+        IDIntermediary1,
       ]);
       return { success: result, message: "" };
     } catch (error) {
@@ -959,7 +985,7 @@ const wareHouseItem = {
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, i.ID as IDIntermediary, i.quantity
     FROM warehouseItem wi
     JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
-    WHERE i.id_WareHouse = ? AND IDWarehouseItem = ? AND i.quality = ?`;
+    WHERE i.id_WareHouse = ? AND IDWarehouseItem = ? AND i.quality = ? AND (i.status = 1 OR i.status = 3)`;
     const rows: any = await runQueryGetData(selectQuery, [
       wareHouseID,
       warehouseItemID,
