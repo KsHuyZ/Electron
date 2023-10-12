@@ -4,13 +4,12 @@ import Sidebar from "@/components/SideBar/Sidebar";
 import { FC } from "react";
 import "../App.scss"
 import Warehouse from "@/page/Warehouse/Warehouse";
-import ModalItemSource from "@/page/ItemSource/components/ModalItemSource";
 import ItemSource from "@/page/ItemSource/ItemSource";
+import ItemSourceItem from "@/page/ItemSource/components/ListEntryForm"
 import Product from "@/page/Product/Product";
 import WareHouseItem from "@/page/WarehouseItem/WareHouseItem";
 import Recipient from "@/page/Recipient/Recipient";
 import RecipientItem from "@/page/Recipient/components/RecipientItem";
-import EntryForm from "@/page/EntryForm/EntryForm";
 import History from "@/page/History/History";
 import HistoryItem from "@/page/History/components/HistoryItem";
 import UploadXlsx from "@/page/UploadXlsx";
@@ -38,7 +37,7 @@ const Routers = () => {
           <Route path='/recipient' element={<Recipient />} />
           <Route path='/recipient/:idRecipient/:nameReceiving' element={<RecipientItem />} />
           <Route path='/item-source' element={<ItemSource />} />
-          <Route path='/item-source/:id/:nameSource' element={<EntryForm />} />
+          <Route path='/item-source/:id/:nameSource' element={<ItemSourceItem />} />
           <Route path='/warehouse-item' element={<WareHouseItem />} />
           <Route path="/history" element={<Navigate to={"/history/import"} />} />
           <Route path="/history/export" element={<History />} />

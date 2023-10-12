@@ -567,102 +567,58 @@ const wareHouseItem = {
   ) => {
     try {
       const promises = intermediary.map(async (item) => {
-        const ID = await new Promise((resolve, reject) => {
-          const query = `SELECT ID from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? AND quantity > 0`;
-          db.get(
-            query,
-            [id_newWareHouse, item.id_wareHouse_item],
-            function (err, row: any) {
-              if (err) {
-                console.log(err);
-                reject(err);
-              } else {
-                if (row) {
-                  resolve(row.ID);
-                } else {
-                  resolve("NOT_EXITS");
-                }
-              }
-            }
-          );
-        });
-
-        if (ID !== "NOT_EXITS") {
-          const quantity = await new Promise((resolve, reject) => {
-            const query = `SELECT quantity from Intermediary WHERE ID = ?`;
-            db.get(query, [item.idIntermediary], function (err, row: any) {
-              if (err) {
-                console.log("bugs", err);
-                reject(err);
-              } else {
-                resolve(row.quantity);
-              }
-            });
-          });
-
-          if (Number(quantity) < item.quantity) {
-            throw new Error(
-              "Can't change warehouseitem to new warehouse. Is too large"
-            );
+        const resultID: any = await runQueryGetData(
+          `SELECT ID from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? AND status = ? AND quality = ?`,
+          [id_newWareHouse, item.id_wareHouse_item, item.status, item.quality]
+        );
+        const resultQuantity: any = await runQueryGetData(
+          `SELECT quantity from Intermediary WHERE ID = ?`,
+          [item.idIntermediary]
+        );
+        if (!resultQuantity) throw new Error("Có lỗi xảy ra! Vui lòng thử lại");
+        if (resultID) {
+          if (Number(resultQuantity.quantity) < item.quantity) {
+            throw new Error("Số lượng xuất ra lớn hơn số lượng trong kho");
           } else {
-            const updateQuery1 = `UPDATE Intermediary SET  quantity = quantity + ? WHERE ID = ?`;
-            const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE id_WareHouseItem = ? AND id_WareHouse = ?`;
+            await runQuery(
+              `UPDATE Intermediary SET  quantity = quantity + ? WHERE ID = ?`,
+              [item.quantity, resultID.ID]
+            );
 
-            await runQuery(updateQuery1, [item.quantity, ID]);
-
-            await runQuery(updateQuery2, [
-              item.quantity,
-              item.id_wareHouse_item,
-              item.id_wareHouse,
-            ]);
+            await runQuery(
+              `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`,
+              [item.quantity, item.idIntermediary]
+            );
           }
         } else {
-          const changeWareHouseQuery = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`;
-          const updateWareHouseQuery = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? AND id_WareHouse = ?`;
-          const quantity = await new Promise((resolve, reject) => {
-            const query = `SELECT quantity from Intermediary WHERE id_WareHouse = ? AND id_WareHouseItem = ?`;
-            db.get(
-              query,
-              [item.id_wareHouse, item.id_wareHouse_item],
-              function (err, row: any) {
-                if (err) {
-                  console.log(err);
-                  reject(err);
-                } else {
-                  resolve(row.quantity);
-                }
-              }
-            );
-          });
-
-          if (Number(quantity) < item.quantity) {
-            throw new Error(
-              "Can't change warehouseitem to new warehouse. Is too large"
-            );
+          if (Number(resultQuantity.quantity) < item.quantity) {
+            throw new Error("Số lượng xuất ra lớn hơn số lượng trong kho");
           } else {
-            await runQuery(changeWareHouseQuery, [
-              id_newWareHouse,
-              item.id_wareHouse_item,
-              item.status,
-              item.quality,
-              item.quantity,
-              item.date,
-            ]);
-            await runQuery(updateWareHouseQuery, [
-              item.quantity,
-              item.idIntermediary,
-              item.id_wareHouse,
-            ]);
+            await runQuery(
+              `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`,
+              [
+                id_newWareHouse,
+                item.id_wareHouse_item,
+                item.status,
+                item.quality,
+                item.quantity,
+                item.date,
+              ]
+            );
+            await runQuery(
+              `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? AND id_WareHouse = ?`,
+              [item.quantity, item.idIntermediary, item.id_wareHouse]
+            );
           }
         }
       });
 
       await Promise.all(promises);
 
-      return true;
+      return { success: true };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, message: "" };
     }
   },
   tempExportWarehouseExist: async (

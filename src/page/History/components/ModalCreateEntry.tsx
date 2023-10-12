@@ -144,7 +144,9 @@ const handleSelectInput = (title: React.ReactNode, ref: Ref<InputRef | any>, rec
                 if (dataIndex === "quantity" && record.quantityOrigin - Number(record.quantityI) > value && !isExport && record.quantityExport) {
                   return Promise.reject(`Bạn đã xuất đi ${record.quantityExport}  ${record.unit} rồi`)
                 }
-                if (dataIndex === "quantity" && record.quantityI === 0 && value - record.quantityOrigin <= 0) return Promise.reject("Bạn đã chuyển mặt hàng qua kho khác hoặc xuất đi rồi")
+                if (dataIndex === "quantity" && record.quantityI === 0 && value - record.quantityOrigin <= 0) {
+                  return Promise.reject("Bạn đã chuyển mặt hàng qua kho khác hoặc xuất đi rồi")
+                }
                 return Promise.resolve();
               },
             }),

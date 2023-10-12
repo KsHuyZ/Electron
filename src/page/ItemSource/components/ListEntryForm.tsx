@@ -8,7 +8,6 @@ import { ResponseIpc, TableData, FormatTypeTable, OptionSelect, QUALITY_PRODUCT,
 import { TablePaginationConfig } from "antd/es/table";
 import { useSearchParams, useParams } from "react-router-dom";
 import { ipcRenderer } from "electron";
-import ModalCreateEntry from "../components/ModalCreateEntry";
 import TableWareHouse from "@/page/WarehouseItem/components/TableWareHouse";
 
 const defaultTable: TableData<DataType[]> = {
@@ -170,17 +169,13 @@ const ListEntryForm = () => {
 
 
   useEffect(() => {
-    new Promise(async () => {
-      await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-      await getListWareHouse();
-    })
+    getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
+    getListWareHouse();
   }, []);
 
   useEffect(() => {
     if (isSearch) {
-      new Promise(async () => {
-        await getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
-      })
+      getListItem(listData.pagination.pageSize, listData.pagination.current, listData.pagination.total);
     }
   }, [isSearch, selectSearch]);
 
@@ -279,6 +274,11 @@ const ListEntryForm = () => {
 
   return (
     <Row className="filter-bar">
+      <Row style={{ width: '100%' }} align="middle">
+        <Col span={12}>
+          <h2>{nameSource}</h2>
+        </Col>
+      </Row>
       <Col span={24}>
         <div>
           <div>

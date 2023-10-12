@@ -54,10 +54,10 @@ const countDelivery = {
       "INSERT INTO Delivery_Item(id_Cout_Delivery,id_intermediary, quantity) VALUES(?, ?, ?)";
     try {
       await runQuery(createQuery, [idCoutDelivery, idIntermediary, quantity]);
-      return true;
+      return { success: true };
     } catch (error) {
       console.log(error);
-      return false;
+      return { success: false, message: error.message };
     }
   },
   getCountDelivery: async (pageSize: number, currentPage: number) => {
@@ -97,10 +97,11 @@ const countDelivery = {
         row.quality,
         3
       );
+      if (!quantityInWareHouse) return row;
       return {
         ...row,
-        quantityRemain: quantityInWareHouse.quantity,
-        IDIntermediary1: quantityInWareHouse.IDIntermediary,
+        quantityRemain: quantityInWareHouse ? quantityInWareHouse.quantity : 0,
+        IDIntermediary1: quantityInWareHouse?.IDIntermediary,
       };
     });
     const newRows = await Promise.all(promises);
@@ -111,18 +112,54 @@ const countDelivery = {
     idCoutDelivery: number,
     quantity: number,
     idWarehouse: number,
-    idReceiving: number
+    idReceiving: number,
+    idWareHouseItem: number,
+    quality: number
   ) => {
-    const updateQueryI = `UPDATE Intermediary SET status = 4, quantity = ?,prev_idwarehouse =?,id_WareHouse = ? WHERE ID = ?`;
+    const query = `SELECT ID,quantity from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? and quality = ? AND status = 4`;
+    const selectQuery = "SELECT quantity FROM Intermediary WHERE ID = ?";
     try {
-      const isSuccess = await runQuery(updateQueryI, [
-        quantity,
-        idWarehouse,
+      const quantityRemain = await runQueryGetData(selectQuery, [id]);
+      if (!quantityRemain) throw new Error("Có lỗi xảy ra, Vui lòng thử lại!");
+      if (Number(quantityRemain) < quantity)
+        throw new Error("Số lượng xuất ra lớn hơn số lượng trong kho");
+
+      const row: any = await runQueryGetData(query, [
         idReceiving,
-        id,
+        idWareHouseItem,
+        quality,
       ]);
-      await countDelivery.createDeliveryItem(idCoutDelivery, id, quantity);
-      return { success: isSuccess, message: "" };
+      await runQuery(
+        `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`,
+        [quantity, id]
+      );
+      if (row) {
+        await runQuery(
+          `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`,
+          [quantity, row.ID]
+        );
+        const result = await countDelivery.createDeliveryItem(
+          idCoutDelivery,
+          row.id,
+          quantity
+        );
+        if (!result.success) throw new Error(result.message);
+      } else {
+        const ID: any = await runQueryReturnID(
+          `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, prev_idwarehouse
+          , quality, quantity) VALUES (?, ?, ?, ?, ?, ?)`,
+          [idReceiving, idWareHouseItem, 4, idWarehouse, quality, quantity]
+        );
+        if (!ID) throw new Error("Đã có lỗi xảy ra! Vui lòng thử lại");
+        const result = await countDelivery.createDeliveryItem(
+          idCoutDelivery,
+          ID,
+          quantity
+        );
+        if (!result.success) throw new Error(result.message);
+      }
+
+      return { success: true, message: "" };
     } catch (error) {
       console.log(error);
       return { success: false, message: error.message };
@@ -247,7 +284,9 @@ const countDelivery = {
             ID,
             item.quantity,
             item.id_WareHouse,
-            idWarehouse
+            idWarehouse,
+            item.IDWarehouseItem,
+            item.quality
           );
           if (!result.success)
             isError = { error: true, message: result.message };
@@ -318,7 +357,7 @@ const countDelivery = {
     }
     const whereClause =
       whereConditions.length > 0
-        ? `WHERE ${whereConditions.join(" AND ")}  ${
+        ? `WHERE ${whereConditions.join(" AND ") + "AND"}  ${
             id ? `AND wi.id_Source = ${id} AND ` : ""
           } 
           status = 3 AND i.quantity > 0`

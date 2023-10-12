@@ -159,8 +159,10 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
   ipcMain.handle(
     "change-warehouse",
     async (event, id_newWareHouse: number, id_list: Intermediary[]) => {
-      const isSuccess = await changeWareHouse(id_newWareHouse, id_list);
-      return isSuccess;
+      const result = handleTransaction(
+        async () => await changeWareHouse(id_newWareHouse, id_list)
+      );
+      return result;
     }
   );
 

@@ -6,7 +6,6 @@ import { OptionSelect, WareHouse } from "@/types";
 import { DataType } from "../types";
 import { UilMultiply } from "@iconscout/react-unicons";
 import { formatNumberWithCommas, renderTextStatus } from "@/utils";
-import ModalCreateEntry from "../../Product/components/ModalCreateEntry"
 import type { FormInstance } from 'antd/es/form';
 import "../styles/transferModal.scss"
 
@@ -284,18 +283,17 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
 
     if (isShow === STATUS_MODAL.TRANSFER) {
       if (newList) {
-        try {
-          const result = await ipcRenderer.invoke(`${isShow === STATUS_MODAL.TRANSFER ? "change-warehouse" : "temp-export-warehouse"}`, item, newList);
-          if (result) {
-            await props.fetching();
-            setIsShow();
-            props.removeItemList(newList.map(i => i.idIntermediary));
-            if (isShow === STATUS_MODAL.TRANSFER) return message.success('Chuyển kho thành công');
-            return message.success('Tạm xuất kho thành công');
-          }
-        } catch (error) {
-          message.error('Loi server')
+        const result = await ipcRenderer.invoke(`${isShow === STATUS_MODAL.TRANSFER ? "change-warehouse" : "temp-export-warehouse"}`, item, newList);
+        if (result.success) {
+          await props.fetching();
+          setIsShow();
+          props.removeItemList(newList.map(i => i.idIntermediary));
+          if (isShow === STATUS_MODAL.TRANSFER) return message.success('Chuyển kho thành công');
+          return message.success('Tạm xuất kho thành công');
+        } else {
+          message.error(result.message)
         }
+
       }
     } else {
       setShowEntry(true)
@@ -394,14 +392,6 @@ const TransferModal = ({ isShow, setIsShow, idWareHouse, listItem, ...props }: T
             {isShow === STATUS_MODAL.TRANSFER ? 'Chuyển kho' : 'Xuất kho'}
           </Button>
         </Space>
-        <ModalCreateEntry
-          isShowModal={showEntry}
-          onCloseModal={() => setShowEntry(false)}
-          listItem={listItemTransfer}
-          idReceiving={item}
-          reFetch={props.fetching}
-          onCloseTransferModal={setIsShow}
-        />
       </Modal>
     </CheckingErrorContext.Provider>
   )

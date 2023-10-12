@@ -28,6 +28,7 @@ interface TableListProps {
 }
 
 const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem, isTemp }: TableListProps) => {
+    console.log("is temp: ", isTemp)
     const [nameSearch, setNameSearch] = useState("");
     const [isSearch, setIsSearch] = useState<Boolean>(false);
     const [listData, setListData] = useState<TableData<FormatTypeTable<DataType>[]>>(defaultTable);
