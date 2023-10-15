@@ -1,6 +1,7 @@
 import { ipcMain } from "electron";
 import tempCountDeliveryDB from "../../database/tempCountDelivery/index";
 import { handleTransaction } from "../../utils";
+import { DataType } from "../../types";
 
 const tempCountDelivery = () => {
   const {
@@ -8,6 +9,7 @@ const tempCountDelivery = () => {
     getTempDeliveryItem,
     getTemptDeliveryItembyID,
     editTempExport,
+    getNewTempExportItem,
   } = tempCountDeliveryDB;
   ipcMain.handle(
     "get-history-temp-export",
@@ -60,5 +62,27 @@ const tempCountDelivery = () => {
     );
     return result;
   });
+  ipcMain.handle(
+    "get-warehouse-item-temp",
+    async (
+      event,
+      data: {
+        pageSize: number;
+        currentPage: number;
+        id?: number;
+        paramsSearch?: any;
+        listEntryForm: DataType[];
+      }
+    ) => {
+      const { pageSize, currentPage, paramsSearch, listEntryForm } = data;
+
+      return await getNewTempExportItem(
+        pageSize,
+        currentPage,
+        paramsSearch,
+        listEntryForm
+      );
+    }
+  );
 };
 export default tempCountDelivery;

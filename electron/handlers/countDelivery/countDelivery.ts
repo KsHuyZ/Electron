@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain } from "electron";
 import countDeliveryDB from "../../database/countDelivery/countDelivery";
+import { DataType } from "../../types";
 
 const {
   getCountDelivery,
@@ -39,17 +40,16 @@ const countDelivery = (mainScreen: BrowserWindow) => {
         currentPage: number;
         id?: number;
         paramsSearch?: any;
-      } = {
-        pageSize: 10,
-        currentPage: 1,
+        listEntryForm: DataType[];
       }
     ) => {
-      const { pageSize, currentPage, paramsSearch, id } = data;
+      const { pageSize, currentPage, paramsSearch, id, listEntryForm } = data;
       const result = await getWareHouseItemOfficialInWareHouse(
         id,
         pageSize,
         currentPage,
-        paramsSearch
+        paramsSearch,
+        listEntryForm
       );
       return result;
     }

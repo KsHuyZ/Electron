@@ -31,14 +31,15 @@ export type Intermediary = {
   date_temp_export: Moment | null;
   IDIntermediary1?: number;
   quantityRemain: number;
-  quantityOrigin: number
+  quantityOrigin: number;
 };
 
 export type DataType = {
   ID: number;
   key?: string;
-  IDIntermediary: string;
-  IDWarehouseItem?: string;
+  IDIntermediary: number;
+  IDIntermediary1: number;
+  IDWarehouseItem?: number;
   name: string;
   price: number;
   unit: string;

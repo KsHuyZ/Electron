@@ -8,9 +8,9 @@ import { ColumnsType } from 'antd/es/table'
 import docso from '@/utils/toVietnamese'
 import { UilExclamationCircle, UilPen } from '@iconscout/react-unicons'
 import ModalCreateEntry from './components/ModalCreateEntry'
-import toastify from '@/lib/toastify'
 import { getPath } from './utils';
 import { UilPrint } from "@iconscout/react-unicons";
+import '@/components/TabMenu/tabMenu.scss'
 
 const dataTab = [
     {
@@ -193,7 +193,7 @@ const History = () => {
         const { current, pageSize, total } = pagination
         setSearchParams(prev => ({ ...prev, current, pageSize }))
     };
-   
+
 
     useEffect(() => {
         handleGetData()

@@ -340,12 +340,16 @@ const countDelivery = {
     id: number,
     pageSize: number,
     currentPage: number,
-    paramsSearch: { name: string; itemWareHouse: string }
+    paramsSearch: { name: string; itemWareHouse: string },
+    listItemHasChoose: DataType[]
   ) => {
     const { name, itemWareHouse } = paramsSearch;
     const offsetValue = (currentPage - 1) * pageSize;
     const whereConditions: string[] = [];
     const queryParams: any[] = [pageSize, offsetValue];
+    const listIntermediaryID = listItemHasChoose
+      .filter((item) => item.status === 4)
+      .map((item) => item.IDIntermediary1);
 
     if (name) {
       whereConditions.unshift(`wi.name LIKE ?`);
@@ -355,15 +359,17 @@ const countDelivery = {
       whereConditions.unshift(`i.id_WareHouse = ?`);
       queryParams.unshift(itemWareHouse);
     }
+    const sameCondition = `status = 3 AND i.quantity > 0 ${
+      listIntermediaryID.length > 0
+        ? `AND IDIntermediary NOT IN (${listIntermediaryID.toString()})`
+        : ""
+    }`;
+    console.log(sameCondition);
     const whereClause =
       whereConditions.length > 0
-        ? `WHERE ${whereConditions.join(" AND ") + "AND"}  ${
-            id ? `AND wi.id_Source = ${id} AND ` : ""
-          } 
-          status = 3 AND i.quantity > 0`
-        : `WHERE ${
-            id ? `wi.id_Source = ${id} AND ` : ""
-          } status =3 AND i.quantity > 0`;
+        ? `WHERE ${whereConditions.join(" AND ") + "AND"} 
+          ${sameCondition}`
+        : `WHERE ${sameCondition}`;
     const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
     wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
     i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity, i.quantity AS quantityRemain,

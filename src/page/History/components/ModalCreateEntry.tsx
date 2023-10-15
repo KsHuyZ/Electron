@@ -525,7 +525,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
     if (quantityExport > 0) {
       return message.error("Bạn đã xuất mặt hàng đi. Không thể xóa")
     }
-    if (quantityI) {
+    if (quantityI === 0) {
       return message.error("Mặt hàng đã được xuất hoặc chuyển qua kho khác")
     }
     const filterItem = listItemEntryForm.filter(
@@ -781,6 +781,7 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
           onCloseModal={() => setShowAddItem(false)}
           setListItem={setListItemHasChoose}
           listItem={listItemHasChoose}
+          listEntryForm={listItemEntryForm}
           isTemp={isTemp}
         /> : <AddWareHouseItem
           isShowModal={showAddItem}

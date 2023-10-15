@@ -353,6 +353,53 @@ const tempCountDelivery = {
       return { success: false, message: error.message };
     }
   },
+  getNewTempExportItem: async (
+    pageSize: number,
+    currentPage: number,
+    paramsSearch: { name: string; itemWareHouse: string },
+    listItemHasChoose: DataType[]
+  ) => {
+    const { name, itemWareHouse } = paramsSearch;
+    const offsetValue = (currentPage - 1) * pageSize;
+    const whereConditions: string[] = [];
+    const queryParams: any[] = [pageSize, offsetValue];
+    const listIntermediaryID = listItemHasChoose
+      .filter((item) => item.status === 2 || item.status === 5)
+      .map((item) => item.IDIntermediary1);
+
+    // Add query conditions based on the provided search parameters
+    if (name) {
+      whereConditions.unshift(`wi.name LIKE ?`);
+      queryParams.unshift(`%${name}%`);
+    }
+    if (itemWareHouse) {
+      whereConditions.unshift(`i.id_WareHouse = ?`);
+      queryParams.unshift(itemWareHouse);
+    }
+    const sameCondition = `status IN(1,3) AND i.quantity > 0 ${
+      listIntermediaryID.length > 0
+        ? `AND IDIntermediary NOT IN (${listIntermediaryID.toString()})`
+        : ""
+    }`;
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(" AND ")} AND ${sameCondition}`
+        : `WHERE ${sameCondition}`;
+    const selectQuery = `SELECT wi.ID as IDWarehouseItem, wi.name, wi.price, wi.unit,
+    wi.id_Source, wi.date_expried, wi.note, wi.quantity_plane, wi.quantity_real,
+    i.ID as IDIntermediary, i.id_WareHouse, i.status, i.prev_idwarehouse, i.quality, i.quantity, i.quantity AS quantityRemain,
+    h.name as nameWareHouse,CASE WHEN i.prev_idwarehouse IS NULL THEN i.id_WareHouse ELSE i.prev_idwarehouse END AS IDWarehouse,
+    i.date, COUNT(i.ID) OVER() AS total 
+    FROM warehouseItem wi
+    JOIN Intermediary i ON wi.ID = i.id_WareHouseItem
+    JOIN WareHouse h ON h.ID = IDWarehouse
+    ${whereClause}
+    ORDER BY i.ID DESC
+    LIMIT ? OFFSET ?`;
+    const rows: any = await runQueryGetAllData(selectQuery, [...queryParams]);
+    const countResult = rows.length > 0 ? rows[0].total : 0;
+    return { rows, total: countResult };
+  },
 };
 
 export default tempCountDelivery;

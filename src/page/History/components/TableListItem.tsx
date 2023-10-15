@@ -24,11 +24,12 @@ interface TableListProps {
     onCloseModal: () => void;
     setListItem: Dispatch<SetStateAction<DataType[]>>;
     listItem: DataType[];
+    listEntryForm: DataType[];
     isTemp: boolean;
 }
 
-const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem, isTemp }: TableListProps) => {
-    console.log("is temp: ", isTemp)
+const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem, isTemp, listEntryForm }: TableListProps) => {
+
     const [nameSearch, setNameSearch] = useState("");
     const [isSearch, setIsSearch] = useState<Boolean>(false);
     const [listData, setListData] = useState<TableData<FormatTypeTable<DataType>[]>>(defaultTable);
@@ -172,7 +173,8 @@ const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem, isTemp }: 
             itemWareHouse: selectSearch?.select ?? ''
         };
 
-        const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke(isTemp ? "source-entry-form-request-read" : "get-warehouse-item-official", { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, paramsSearch: paramsSearch, isEdit: true, isExport: true });
+        const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke(`get-warehouse-item-${isTemp ? "temp" : "official"}`, { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, paramsSearch: paramsSearch, listEntryForm });
+        console.log("result: ", result)
         if (result) {
             setListData((prev) => (
                 {

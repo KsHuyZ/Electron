@@ -106,14 +106,16 @@ const countCoupon = {
       const results = await tempCountCoupon.getListStatusItem(
         row.IDIntermediary
       );
-      if (results.some((element) => [2, 4].includes(element.status))) {
-        const quantityExport = results.reduce(
+
+      const quantityExport = results
+        .filter(({ status }) => status === 2 || status === 4)
+        .reduce(
           (accumulator: number, currentValue: any) =>
             accumulator + currentValue.quantity,
           0
         );
-        return { ...row, quantityExport };
-      }
+      return { ...row, quantityExport };
+
       return row;
     });
     const rowsWithStatus = await Promise.all(promises);

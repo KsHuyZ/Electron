@@ -168,7 +168,7 @@ const Source = {
               FROM Intermediary t3
               WHERE t3.id_WareHouseItem = IDWarehouseItem
                 AND (t3.quality <> quality OR t3.id_WareHouse <> IDWarehouse AND t3.status <> 5 AND status NOT IN(2,4) AND quantity > 0)
-)))`;
+))) AND quantity > 0`;
       const whereClause =
         whereConditions.length > 0
           ? `WHERE ${whereConditions.join(" AND ")} AND ${
@@ -190,6 +190,7 @@ const Source = {
         ${whereClause}
         ORDER BY i.ID DESC
         LIMIT ? OFFSET ?`;
+
       const rows: any = await new Promise((resolve, reject) => {
         db.all(selectQuery, ...queryParams, (err, rows) => {
           if (err) {
@@ -207,5 +208,6 @@ const Source = {
       return null;
     }
   },
+  
 };
 export default Source;
