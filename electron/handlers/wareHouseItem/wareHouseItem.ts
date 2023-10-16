@@ -487,9 +487,8 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
       event,
       data: {
         ID: number;
-        newItemList: DataType[];
         removeItemList: DataType[];
-        items: DataType[];
+        items: Intermediary[];
         name: string;
         note: string;
         nature: string;

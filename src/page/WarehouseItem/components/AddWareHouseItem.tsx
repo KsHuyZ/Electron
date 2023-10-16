@@ -329,7 +329,7 @@ const AddWareHouseItem = React.memo(
                 rules={[
                   {
                     required: true,
-                    message: getMessage(ERROR.ERROR_1, "Đơn vị tính"),
+                    message: getMessage(ERROR.ERROR_1, "Xuất xứ"),
                   },
                 ]}
               >

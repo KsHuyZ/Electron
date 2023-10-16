@@ -183,28 +183,16 @@ const tempCountDelivery = {
     const newRows = await Promise.all(promises);
     return newRows;
   },
-  backToImportWareHouse: async (
-    warehouseID: number,
-    wareHouseItemID: number | string,
-    status: number,
-    quantity: number,
-    quality: number
-  ) => {
+  backToImportWareHouse: async (id: number, IDIntermediary: number) => {
     try {
-      const selectQuery = `SELECT ID FROM Intermediary WHERE id_WareHouse = ? AND id_WareHouseItem = ? AND quality = ? AND status = ${
-        status === 5 ? 1 : 3
-      }`;
-      const row: any = await runQueryGetData(selectQuery, [
-        warehouseID,
-        wareHouseItemID,
-        quality,
-      ]);
-      if (row) {
-        const updateQuery = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
-        await runQuery(updateQuery, [quantity, row.ID]);
-        return { success: true, message: "" };
-      }
-      throw new Error("Không tìm thấy mặt hàng trong kho");
+      const quantityResult: any = await runQueryGetData(
+        `SELECT quantity FROM Intermediary WHERE ID = ?`,
+        [id]
+      );
+      const updateQuery = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
+      await runQuery(updateQuery, [quantityResult.quantity, IDIntermediary]);
+      await runQuery("UPDATE Intermediary set quantity = 0 WHERE ID = ?", [id]);
+      return { success: true };
     } catch (error) {
       console.error(error.message);
       return { success: false, message: error.message };
@@ -268,11 +256,8 @@ const tempCountDelivery = {
       let isError = { error: false, message: "" };
       removeItemList.forEach(async (item) => {
         const result = await tempCountDelivery.backToImportWareHouse(
-          item.id_prev_warehouse,
-          item.IDWarehouseItem,
-          item.status,
-          item.quantity,
-          item.quality
+          item.IDIntermediary,
+          item.IDIntermediary1
         );
         if (!result.success) {
           isError = { error: true, message: result.message };
