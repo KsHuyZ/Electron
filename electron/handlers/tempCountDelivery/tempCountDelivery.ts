@@ -2,6 +2,9 @@ import { ipcMain } from "electron";
 import tempCountDeliveryDB from "../../database/tempCountDelivery/index";
 import { handleTransaction } from "../../utils";
 import { DataType } from "../../types";
+import { startPrint } from "../../module/print";
+import { formExportBill } from "../../utils/formExportBill";
+import WareHouse from "../../database/WareHouse-Receiving/wareHouse-Receiving";
 
 const tempCountDelivery = () => {
   const {
@@ -84,5 +87,14 @@ const tempCountDelivery = () => {
       );
     }
   );
+  ipcMain.on("print-temp-export", async (event, data) => {
+    const items = await getTemptDeliveryItembyID(data.ID)
+    startPrint(
+      {
+        htmlString: await formExportBill({ ...data, temp: true, items,  }),
+      },
+      undefined
+    );
+  });
 };
 export default tempCountDelivery;

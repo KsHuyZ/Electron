@@ -13,16 +13,16 @@ export const formImportBill = async (data: {
   date: any;
   title: string;
   ID?: number;
-  temp?: boolean;
+  temp: boolean;
   nameSource: string;
   nameWareHouse?: string;
   numContract: number;
 }) => {
   const { countCouponRow } = countCoupon;
-  const totalMoney = countMoney(data.items, data.temp);
+  const totalMoney = countMoney(data.items);
   const count = await countCouponRow();
 
-  const groupByWarehouse = data.items.reduce((acc: any, item: any) => {
+  const groupByWarehouse = data.items?.reduce((acc: any, item: any) => {
     const { nameWareHouse, ...rest } = item;
     if (!acc[nameWareHouse]) {
       acc[nameWareHouse] = [rest];
@@ -51,6 +51,10 @@ export const formImportBill = async (data: {
     margin-bottom: 20px;
     width: 90%;
     }
+   .page-number:after { 
+  counter-increment: pages; 
+  content: counter(page) " of " counter(pages); 
+ }
 </style>
 <div style="margin: auto; display: block; width: 1123px; height: 794px;" id="phieu-nhap-kho">
    
@@ -91,6 +95,7 @@ export const formImportBill = async (data: {
       <p style="text-align: right;" class="tinhchat">Tính chất: ${
         data.nature
       }</p>
+      <div class="pageNumber"> </div>
     </div>
     
     <table style="width: 100%; border-collapse: collapse; margin: auto; margin-top: 20px; border: 1px solid black; padding: 8px; text-align: left; border-collapse: collapse;" class="data-table">
@@ -143,22 +148,23 @@ export const formImportBill = async (data: {
                   item.quantity_plane
                 }</td>
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${
-                  item.quantity ? item.quantity : item.quantity_real
+                  item.quantity
                 }</td>
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${new Intl.NumberFormat().format(
                   item.price
                 )}</td>
                 <td style="border:1px solid black; padding: 8px; text-align:center;">${new Intl.NumberFormat().format(
-                  item.totalPrice
+                  item.quantity * item.price
                 )}</td>
-                <td style="border:1px solid black; padding: 8px; text-align:center;"></td>
+                <td style="border:1px solid black; padding: 8px; text-align:center;">${
+                  item.note ? item.note : ""
+                }</td>
             </tr>
                 `
               )}
               
               `
             )}
-
         </tbody>
     </table>
     <!-- Footer -->

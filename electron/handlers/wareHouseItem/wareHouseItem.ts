@@ -346,12 +346,6 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
           )
       );
       return isSuccess;
-      // startPrint(
-      //   {
-      //     htmlString: await formImportBill(data),
-      //   },
-      //   undefined
-      // );
     }
   );
 
@@ -402,12 +396,7 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
           )
       );
       return result;
-      // startPrint(
-      //   {
-      //     htmlString: await formExportBill({ ...data, temp: true }),
-      //   },
-      //   undefined
-      // );
+    
     }
   );
 

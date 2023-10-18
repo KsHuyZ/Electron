@@ -174,7 +174,7 @@ const ListEntryForm = ({ isShow, onCloseModal, setListItem, listItem, isTemp, li
         };
 
         const result: ResponseIpc<DataType[]> = await ipcRenderer.invoke(`get-warehouse-item-${isTemp ? "temp" : "official"}`, { pageSize: pageSize, currentPage: isSearch ? 1 : currentPage, paramsSearch: paramsSearch, listEntryForm });
-        console.log("result: ", result)
+
         if (result) {
             setListData((prev) => (
                 {

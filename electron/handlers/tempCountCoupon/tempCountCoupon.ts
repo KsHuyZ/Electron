@@ -1,6 +1,9 @@
 import { ipcMain } from "electron";
 import tempCountCouponDB from "../../database/tempCountCoupon/tempCountCoupon";
 import { handleTransaction } from "../../utils";
+import { startPrint } from "../../module/print";
+import { formImportBill } from "../../utils/formImportBill";
+import WareHouse from "../../database/WareHouse-Receiving/wareHouse-Receiving";
 
 const tempCountCoupon = () => {
   const {
@@ -60,6 +63,23 @@ const tempCountCoupon = () => {
       )
     );
     return result;
+  });
+  ipcMain.on("print-temp-import", async (event, data) => {
+    const { getWareHousebyID } = WareHouse;
+    const items = await getTempCouponItembyCouponID(data.ID);
+    const wareHouse: any = await getWareHousebyID(data.idWareHouse);
+
+    startPrint(
+      {
+        htmlString: await formImportBill({
+          ...data,
+          items,
+          temp: true,
+          nameWareHouse: wareHouse.name,
+        }),
+      },
+      undefined
+    );
   });
 };
 export default tempCountCoupon;

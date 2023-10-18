@@ -1,5 +1,8 @@
 import { BrowserWindow, ipcMain } from "electron";
 import countCouponDB from "../../database/countCoupon/countCoupon";
+import { startPrint } from "../../module/print";
+import { formImportBill } from "../../utils/formImportBill";
+import WareHouse from "../../database/WareHouse-Receiving/wareHouse-Receiving";
 
 const {
   getCountCoupon,
@@ -27,6 +30,22 @@ const countCoupon = (mainScreen: BrowserWindow) => {
   });
   ipcMain.handle("approve-import", async (event, id: number | string) => {
     return await approveAccept(id);
+  });
+  ipcMain.on("print-import", async (event, data) => {
+    console.log("Ye")
+    const { getWareHousebyID } = WareHouse;
+    const items = await getCouponItembyCouponID(data.ID);
+    const wareHouse: any = await getWareHousebyID(data.idWareHouse);
+    startPrint(
+      {
+        htmlString: await formImportBill({
+          ...data,
+          items,
+          nameWareHouse: wareHouse.name,
+        }),
+      },
+      undefined
+    );
   });
 };
 export default countCoupon;

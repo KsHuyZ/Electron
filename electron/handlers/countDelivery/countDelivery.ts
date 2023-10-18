@@ -1,6 +1,8 @@
 import { BrowserWindow, ipcMain } from "electron";
 import countDeliveryDB from "../../database/countDelivery/countDelivery";
 import { DataType } from "../../types";
+import { startPrint } from "../../module/print";
+import { formExportBill } from "../../utils/formExportBill";
 
 const {
   getCountDelivery,
@@ -54,5 +56,14 @@ const countDelivery = (mainScreen: BrowserWindow) => {
       return result;
     }
   );
+  ipcMain.on("print-temp-export", async (event, data) => {
+    const items = await getDeliveryItembyDeliveryID(data.ID);
+    startPrint(
+      {
+        htmlString: await formExportBill({ ...data, items }),
+      },
+      undefined
+    );
+  });
 };
 export default countDelivery;

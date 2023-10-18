@@ -93,6 +93,8 @@ const History = () => {
     };
 
     const pathName = location.pathname
+    const isTemp = getPath(pathName).includes("temp")
+    const isExport = getPath(pathName).includes("export")
     let columns: ColumnsType<CountDeliveryType> = [
         {
             title: "Số phiếu",
@@ -156,13 +158,17 @@ const History = () => {
                             {getPath(pathName).includes("temp") ? <Button type='text' onClick={() => handleShowModalOfficial(value)}>Làm phiếu {getPath(pathName).includes("export") ? "xuất" : "nhập"}</Button> : <Button type='text' onClick={() => handleApprove(value)}>Duyệt phiếu</Button>}
                         </>
                     ) : <></>}
-                    <UilPrint style={{ cursor: "pointer" }} />
+                    <UilPrint style={{ cursor: "pointer" }} onClick={() => handlePrint(value)} />
                 </Space>
             )
         }
     ]
     if (getPath(pathName).includes("temp")) {
         columns = columns.filter(col => col.key !== "status")
+    }
+
+    const handlePrint = (value: CountDeliveryType) => {
+        ipcRenderer.send(`print-${isTemp ? "temp-" : ""}${isExport ? "export" : "import"}`, value)
     }
 
     const handleApproveAccept = async (id: number | string) => {

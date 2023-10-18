@@ -173,6 +173,10 @@ const WareHouse = {
       console.log(err);
     }
   },
+  getWareHousebyID: async (ID: number) => {
+    const warehouse = await runQueryGetData("SELECT * FROM WareHouse WHERE id = ?", [ID])
+    return warehouse
+  }
 };
 
 export default WareHouse;
