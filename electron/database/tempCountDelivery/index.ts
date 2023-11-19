@@ -6,6 +6,8 @@ import {
   runQueryReturnID,
 } from "../../utils";
 import wareHouseItem from "../wareHouseItem/wareHouseItem";
+import historyItem from "../historyItem/historyItem";
+const { updateLastedVersionIntermediary } = historyItem;
 
 const tempCountDelivery = {
   createTempCountDelivery: async (
@@ -125,7 +127,8 @@ const tempCountDelivery = {
       const result2 = await tempExportWareHouse(
         result1.ID,
         id_newWareHouse,
-        intermediary
+        intermediary,
+        date
       );
       if (!result2.success) throw new Error(result2.message);
       return { success: true };
@@ -191,7 +194,13 @@ const tempCountDelivery = {
       );
       const updateQuery = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
       await runQuery(updateQuery, [quantityResult.quantity, IDIntermediary]);
+      const updateResult: any = await runQueryGetData(
+        "SELECT quantity FROM Intermediary WHERE ID = ?",
+        [IDIntermediary]
+      );
+      await updateLastedVersionIntermediary(IDIntermediary, updateResult);
       await runQuery("UPDATE Intermediary set quantity = 0 WHERE ID = ?", [id]);
+      await updateLastedVersionIntermediary(id, 0);
       return { success: true };
     } catch (error) {
       console.error(error.message);
@@ -220,12 +229,14 @@ const tempCountDelivery = {
         quantity,
         IDIntermediary,
       ]);
+      await updateLastedVersionIntermediary(IDIntermediary, quantity);
       const newQuantity = quantityRemain - (quantity - quantityOrigin);
       if (newQuantity < 0) throw new Error("Số lượng chưa hợp lệ");
       await runQuery(`UPDATE Intermediary SET quantity =  ? WHERE ID = ?`, [
         newQuantity,
         IDIntermediary1,
       ]);
+      await updateLastedVersionIntermediary(IDIntermediary1, newQuantity);
       await runQuery(
         `UPDATE Delivery_Temp_Item SET quantity = ? WHERE ID = ?`,
         [quantity, ID]
@@ -304,13 +315,21 @@ const tempCountDelivery = {
               quality,
               quantity,
             ]);
-
+            await updateLastedVersionIntermediary(newID, quantity);
             const result = await tempCountDelivery.createTempDeliveryItem(
               idTempCoutDelivery,
               newID,
               quantity
             );
             await runQuery(updateWareHouseQuery, [quantity, IDIntermediary]);
+            const updateResult: any = await runQueryGetData(
+              "SELECT quantity FROM Intermediary WHERE ID = ?",
+              [IDIntermediary]
+            );
+            await updateLastedVersionIntermediary(
+              IDIntermediary,
+              updateResult.quantity
+            );
             if (!result.success) {
               isError = { error: true, message: result.message };
             }

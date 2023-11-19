@@ -7,6 +7,7 @@ import {
   IDateRangerItem,
 } from "../../types";
 import {
+  getTimeNow,
   isDate,
   runQuery,
   runQueryGetAllData,
@@ -15,9 +16,14 @@ import {
 } from "../../utils";
 import countDelivery from "../countDelivery/countDelivery";
 import countCoupon from "../countCoupon/countCoupon";
+import historyItem from "../historyItem/historyItem";
 import { Moment } from "moment";
 import tempCountDelivery from "../tempCountDelivery";
+import { historyItemType } from "../../utils";
 const { createTempDeliveryItem } = tempCountDelivery;
+const { createHistoryItem, updateLastedVersionIntermediary, getLastItemType } = historyItem;
+const { IMPORT, EXPORT, TRANSFER } = historyItemType;
+
 const wareHouseItem = {
   getAllWarehouseItembyWareHouseId: async (
     id: number,
@@ -261,7 +267,8 @@ const wareHouseItem = {
     idWareHouse: number,
     idSource: number | string,
     data: WarehouseItem & Intermediary,
-    status: number
+    status: number,
+    dateBill?: string
   ) => {
     const {
       name,
@@ -291,7 +298,7 @@ const wareHouseItem = {
             price,
             unit,
             date_expried,
-            date_created_at,
+            date_created_at ? date_created_at : getTimeNow(),
             date_updated_at,
             note,
             quantity_plane,
@@ -309,7 +316,7 @@ const wareHouseItem = {
       });
       const createIntermediary = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status
         , quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`;
-      const idIntermediary = await new Promise((resolve, reject) => {
+      const idIntermediary: any = await new Promise((resolve, reject) => {
         db.run(
           createIntermediary,
           [idWareHouse, idWarehouseItem, status, quality, quantity_real, date],
@@ -322,6 +329,13 @@ const wareHouseItem = {
           }
         );
       });
+      await createHistoryItem(
+        idIntermediary,
+        quantity_real,
+        quality,
+        IMPORT,
+        dateBill
+      );
       if (status === 1) {
         const createTempCountCoupon = `INSERT INTO Coupon_Temp_Item (id_Temp_Cout_Coupon,id_intermediary,quantity,quality,id_Warehouse)
         VALUES (?, ?, ?, ?, ?)`;
@@ -350,100 +364,7 @@ const wareHouseItem = {
       return { success: false, message: error.message };
     }
   },
-  createWareHouseItemMultiple: async (
-    dataArray: IPostMultipleItem[],
-    idSource: number,
-    paramsOther: {
-      id_wareHouse: number;
-      status: string;
-      date: string;
-      date_created_at: string;
-      date_updated_at: string;
-    }
-  ) => {
-    try {
-      const status = 1;
 
-      const createItemQuery = `INSERT INTO warehouseItem (id_Source, name, price, unit, date_expried, 
-        date_created_at, date_updated_at, note, quantity_plane, quantity_real) VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-      const createIntermediary = `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status
-        , quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`;
-
-      const results = await Promise.all(
-        dataArray.map(async (data) => {
-          const {
-            name,
-            price,
-            unit,
-            quality,
-            date_expried,
-            note,
-            quantity_plane,
-            quantity_real,
-          } = data;
-
-          const idWarehouseItem = await new Promise<number>(
-            (resolve, reject) => {
-              db.run(
-                createItemQuery,
-                [
-                  idSource,
-                  name,
-                  price,
-                  unit,
-                  isDate(date_expried) ? date_expried : null,
-                  paramsOther.date_created_at,
-                  paramsOther.date_updated_at,
-                  note,
-                  quantity_plane,
-                  quantity_real,
-                ],
-                function (err) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resolve(this.lastID);
-                  }
-                }
-              );
-            }
-          );
-
-          const idIntermediary = await new Promise<number>(
-            (resolve, reject) => {
-              db.run(
-                createIntermediary,
-                [
-                  paramsOther.id_wareHouse,
-                  idWarehouseItem,
-                  status,
-                  quality,
-                  quantity_real,
-                  paramsOther.date,
-                ],
-                function (err) {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resolve(this.lastID);
-                  }
-                }
-              );
-            }
-          );
-
-          return { idWarehouseItem, idIntermediary };
-        })
-      );
-
-      return results;
-    } catch (error) {
-      console.log(error);
-      return [];
-    }
-  },
   updateWareHouseItem: async (
     idSource: number,
     data: WarehouseItem &
@@ -487,6 +408,7 @@ const wareHouseItem = {
         `UPDATE Intermediary SET quality = ?, quantity = ?, id_WareHouse = ? WHERE ID = ?`,
         [quality, quantityFinal, idWareHouse, IDIntermediary]
       );
+      await updateLastedVersionIntermediary(IDIntermediary, quantityFinal);
       const updateCoutCouponItem = `UPDATE Coupon_Temp_Item SET quantity = ?, id_Warehouse = ? WHERE ID= ?`;
       await runQuery(updateCoutCouponItem, [quantity, idWareHouse, ID]);
       return { success: true };
@@ -568,7 +490,7 @@ const wareHouseItem = {
     try {
       const promises = intermediary.map(async (item) => {
         const resultID: any = await runQueryGetData(
-          `SELECT ID from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? AND status = ? AND quality = ?`,
+          `SELECT * from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? AND status = ? AND quality = ?`,
           [id_newWareHouse, item.id_wareHouse_item, item.status, item.quality]
         );
         const resultQuantity: any = await runQueryGetData(
@@ -581,20 +503,38 @@ const wareHouseItem = {
             throw new Error("Số lượng xuất ra lớn hơn số lượng trong kho");
           } else {
             await runQuery(
-              `UPDATE Intermediary SET  quantity = quantity + ? WHERE ID = ?`,
+              `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`,
               [item.quantity, resultID.ID]
             );
-
+            const quantityIncrease = resultID.quantity + item.quantity;
+            await createHistoryItem(
+              resultID.ID,
+              quantityIncrease,
+              item.quality,
+              TRANSFER
+            );
             await runQuery(
               `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`,
               [item.quantity, item.idIntermediary]
+            );
+
+            const updateResult: any = await runQueryGetData(
+              "SELECT quantity FROM Intermediary WHERE ID = ?",
+              [item.idIntermediary]
+            );
+            const type = await getLastItemType(item.idIntermediary)
+            await createHistoryItem(
+              item.idIntermediary,
+              updateResult.quantity,
+              item.quality,
+              type
             );
           }
         } else {
           if (Number(resultQuantity.quantity) < item.quantity) {
             throw new Error("Số lượng xuất ra lớn hơn số lượng trong kho");
           } else {
-            await runQuery(
+            const IDIntermediary: any = await runQueryReturnID(
               `INSERT INTO Intermediary(id_WareHouse, id_WareHouseItem, status, quality, quantity, date) VALUES (?, ?, ?, ?, ?, ?)`,
               [
                 id_newWareHouse,
@@ -605,9 +545,26 @@ const wareHouseItem = {
                 item.date,
               ]
             );
+            await createHistoryItem(
+              IDIntermediary,
+              item.quantity,
+              item.quality,
+              TRANSFER
+            );
             await runQuery(
-              `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ? AND id_WareHouse = ?`,
-              [item.quantity, item.idIntermediary, item.id_wareHouse]
+              `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`,
+              [item.quantity, item.idIntermediary]
+            );
+            const updateResult: any = await runQueryGetData(
+              "SELECT quantity FROM Intermediary WHERE ID = ?",
+              [item.idIntermediary]
+            );
+            const type = await getLastItemType(item.idIntermediary)
+            await createHistoryItem(
+              item.idIntermediary,
+              updateResult.quantity,
+              item.quality,
+              type
             );
           }
         }
@@ -628,8 +585,27 @@ const wareHouseItem = {
   ) => {
     const updateQuery1 = `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`;
     const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`;
+    const selectQuery =
+      "SELECT quantity, quality FROM Intermediary WHERE ID = ?";
     await runQuery(updateQuery1, [item.quantity, ID]);
+    const updateResult1: any = await runQueryGetData(selectQuery, [ID]);
+    await createHistoryItem(
+      ID,
+      updateResult1.quantity,
+      updateResult1.quality,
+      EXPORT
+    );
     await runQuery(updateQuery2, [item.quantity, item.IDIntermediary]);
+    const updateResult2: any = await runQueryGetData(selectQuery, [
+      item.IDIntermediary,
+    ]);
+    const type = await getLastItemType(item.IDIntermediary)
+    await createHistoryItem(
+      item.IDIntermediary,
+      updateResult2.quantity,
+      updateResult1.quality,
+      type
+    );
     const result = await createTempDeliveryItem(
       idCoutDelivery,
       ID,
@@ -640,7 +616,8 @@ const wareHouseItem = {
   tempExportWareHouse: async (
     idCoutDelivery: number | unknown,
     id_newWareHouse: number,
-    intermediary: Intermediary[]
+    intermediary: Intermediary[],
+    date: string
   ) => {
     let isError = { error: false, message: "" };
     try {
@@ -711,7 +688,7 @@ const wareHouseItem = {
               message: "Số lượng xuất ra lớn hơn số lượng trong kho",
             };
           } else {
-            const ID = await runQueryReturnID(changeWareHouseQuery, [
+            const ID: any = await runQueryReturnID(changeWareHouseQuery, [
               id_newWareHouse,
               item.IDWarehouseItem,
               item.id_WareHouse,
@@ -720,11 +697,28 @@ const wareHouseItem = {
               item.quantity,
               item.date,
             ]);
-
+            await createHistoryItem(
+              ID,
+              item.quantity,
+              item.quality,
+              EXPORT,
+              date
+            );
             await runQuery(updateWareHouseQuery, [
               item.quantity,
               item.IDIntermediary,
             ]);
+            const updateResult: any = await runQueryGetData(
+              "SELECT quantity FROM Intermediary WHERE ID = ?",
+              [item.IDIntermediary]
+            );
+            const type = await getLastItemType(item.IDIntermediary)
+            await createHistoryItem(
+              item.IDIntermediary,
+              updateResult.quantity,
+              item.quality,
+              type
+            );
             const result = await createTempDeliveryItem(
               idCoutDelivery,
               ID,
@@ -915,12 +909,14 @@ const wareHouseItem = {
         idWarehouse,
         idIntermediary,
       ]);
+      await updateLastedVersionIntermediary(idIntermediary, quantity);
       const newQuantity = quantityRemain - (quantity - quantityOrigin);
       if (newQuantity < 0) throw new Error("Số lượng chưa hợp lệ");
-      await runQuery(`UPDATE Intermediary SET quantity =  ? WHERE ID = ?`, [
+      await runQuery(`UPDATE Intermediary SET quantity = ? WHERE ID = ?`, [
         newQuantity,
         IDIntermediary1,
       ]);
+      await updateLastedVersionIntermediary(IDIntermediary1, newQuantity);
       return { success: result, message: "" };
     } catch (error) {
       console.log(error);

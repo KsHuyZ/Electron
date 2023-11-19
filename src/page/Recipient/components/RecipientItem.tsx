@@ -15,23 +15,6 @@ import FilterWareHouseItem from "@/page/WarehouseItem/components/FilterWareHouse
 import toasitify from "../../../lib/toastify"
 import ModalCreateEntry from "@/page/EntryForm/components/ModalCreateEntry";
 
-const defaultRows: DataType[] = [
-  {
-    IDIntermediary: '',
-    name: '',
-    price: '',
-    unit: '',
-    quality: null,
-    note: '',
-    quantity_plane: null,
-    quantity_real: null,
-    status: null,
-    date_expried: '',
-    prev_idwarehouse: 0,
-    date_created_at: '',
-    date_updated_at: '',
-  }
-];
 
 const defaultTable: TableData<DataType[]> = {
   pagination: {

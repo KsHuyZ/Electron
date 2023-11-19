@@ -19,10 +19,12 @@ export type WarehouseItem = {
 export type Intermediary = {
   ID: number;
   IDIntermediary: number;
+  idIntermediary: number;
   id_wareHouse: number;
   id_WareHouse?: number;
   IDWarehouse?: number;
   IDWarehouseItem: number;
+  id_wareHouse_item: number;
   quantity_real?: number;
   status: number;
   quality: number;

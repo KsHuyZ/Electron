@@ -43,7 +43,7 @@ export const formImportBill = async (data: {
 </head>
 
 <body>
-<style>
+<style type="text/css" media="print">
     .header {
     margin: auto;
     align-items: center;
@@ -51,6 +51,7 @@ export const formImportBill = async (data: {
     margin-bottom: 20px;
     width: 90%;
     }
+ 
    .page-number:after { 
   counter-increment: pages; 
   content: counter(page) " of " counter(pages); 

@@ -1,7 +1,7 @@
 import { BrowserWindow } from "electron";
 import db from "../../utils/connectDB";
 import { WarehouseReceiving } from "../../types";
-import { runQueryGetData } from "../../utils";
+import { runQueryGetAllData, runQueryGetData } from "../../utils";
 
 const WareHouse = {
   //Insert warehouse and Receiving
@@ -174,9 +174,12 @@ const WareHouse = {
     }
   },
   getWareHousebyID: async (ID: number) => {
-    const warehouse = await runQueryGetData("SELECT * FROM WareHouse WHERE id = ?", [ID])
-    return warehouse
-  }
+    const warehouse = await runQueryGetData(
+      "SELECT * FROM WareHouse WHERE id = ?",
+      [ID]
+    );
+    return warehouse;
+  },
 };
 
 export default WareHouse;

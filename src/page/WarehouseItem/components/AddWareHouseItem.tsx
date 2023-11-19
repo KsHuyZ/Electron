@@ -102,7 +102,7 @@ const AddWareHouseItem = React.memo(
         nameSource: sourceSelect?.label,
       };
 
-  
+
       setLoadingButton(false);
       handleClean();
       onCreateItem(params)
@@ -182,7 +182,6 @@ const AddWareHouseItem = React.memo(
     const handleClean = () => {
       formWareHouseItem.resetFields();
       onCloseModal();
-      // setIsEdit(false);
     };
 
     return (
@@ -214,7 +213,6 @@ const AddWareHouseItem = React.memo(
               >
                 <AutoComplete
                   options={options}
-                  // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                   onSelect={onSelect}
                   value={inputValue}
                   onChange={setInputValue}
@@ -249,7 +247,6 @@ const AddWareHouseItem = React.memo(
               >
                 <Select
                   options={defaultQuality}
-                // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>
@@ -272,7 +269,6 @@ const AddWareHouseItem = React.memo(
               >
                 <Input
                   style={{ width: "100%" }}
-                // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>
@@ -295,7 +291,6 @@ const AddWareHouseItem = React.memo(
               >
                 <Input
                   style={{ width: "100%" }}
-                // disabled={itemEdit && itemEdit.status === 3 ? true : false}
                 />
               </Form.Item>
             </Col>

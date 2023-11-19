@@ -7,7 +7,10 @@ import {
 } from "../../utils";
 import wareHouseItemDB from "../wareHouseItem/wareHouseItem";
 import { DataType, Intermediary } from "../../types";
-
+import historyItem from "../historyItem/historyItem";
+import { historyItemType } from "../../utils";
+const { createHistoryItem, updateLastedVersionIntermediary } = historyItem;
+const { EXPORT } = historyItemType;
 const countDelivery = {
   createCountDelivery: async (
     idWarehouse: number,
@@ -110,6 +113,7 @@ const countDelivery = {
   exportWarehouseEdit: async (
     id: number | string,
     idCoutDelivery: number,
+    date: string,
     quantity: number,
     idWarehouse: number,
     idReceiving: number,
@@ -119,9 +123,9 @@ const countDelivery = {
     const query = `SELECT ID,quantity from Intermediary WHERE id_WareHouse = ? and id_WareHouseItem = ? and quality = ? AND status = 4`;
     const selectQuery = "SELECT quantity FROM Intermediary WHERE ID = ?";
     try {
-      const quantityRemain = await runQueryGetData(selectQuery, [id]);
+      const quantityRemain: any = await runQueryGetData(selectQuery, [id]);
       if (!quantityRemain) throw new Error("Có lỗi xảy ra, Vui lòng thử lại!");
-      if (Number(quantityRemain) < quantity)
+      if (Number(quantityRemain.quantity) < quantity)
         throw new Error("Số lượng xuất ra lớn hơn số lượng trong kho");
 
       const row: any = await runQueryGetData(query, [
@@ -133,14 +137,23 @@ const countDelivery = {
         `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`,
         [quantity, id]
       );
+      await updateLastedVersionIntermediary(
+        id,
+        quantityRemain.quantity - quantity
+      );
       if (row) {
         await runQuery(
           `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`,
           [quantity, row.ID]
         );
+        const updateResult: any = await runQueryGetData(
+          "SELECT quantity FROM Intermediary WHERE ID = ?",
+          [row.ID]
+        );
+        await updateLastedVersionIntermediary(id, updateResult.quantity);
         const result = await countDelivery.createDeliveryItem(
           idCoutDelivery,
-          row.id,
+          row.ID,
           quantity
         );
         if (!result.success) throw new Error(result.message);
@@ -150,6 +163,7 @@ const countDelivery = {
           , quality, quantity) VALUES (?, ?, ?, ?, ?, ?)`,
           [idReceiving, idWareHouseItem, 4, idWarehouse, quality, quantity]
         );
+        await createHistoryItem(ID, quantity, quality, EXPORT, date);
         if (!ID) throw new Error("Đã có lỗi xảy ra! Vui lòng thử lại");
         const result = await countDelivery.createDeliveryItem(
           idCoutDelivery,
@@ -186,7 +200,16 @@ const countDelivery = {
         `UPDATE Intermediary SET quantity = quantity + ? WHERE ID = ?`,
         [quantityResult.quantity, IDIntermediary]
       );
+      const updateResult: any = await runQueryGetData(
+        "SELECT quantity FROM Intermediary WHERE ID = ?",
+        [IDIntermediary]
+      );
+      await updateLastedVersionIntermediary(
+        IDIntermediary,
+        updateResult.quantity
+      );
       await runQuery("UPDATE Intermediary set quantity = 0 WHERE ID = ?", [id]);
+      await updateLastedVersionIntermediary(id, 0);
       return { success: true, message: "" };
     } catch (error) {
       console.log(error);
@@ -266,6 +289,7 @@ const countDelivery = {
           const result = await countDelivery.exportWarehouseEdit(
             item.IDIntermediary,
             ID,
+            date,
             item.quantity,
             item.id_WareHouse,
             idWarehouse,

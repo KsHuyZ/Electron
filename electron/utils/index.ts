@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import db from "./connectDB";
 
 export const runQuery = (query, params) => {
@@ -95,4 +96,12 @@ export const handleTransaction = async (callback: () => Promise<any>) => {
 
     return { success: false, error: error.message };
   }
+};
+
+export const getTimeNow = () => dayjs().format(`YYYY/MM/DD`);
+
+export const historyItemType = {
+  TRANSFER: "TRANSFER",
+  EXPORT: "EXPORT",
+  IMPORT: "IMPORT",
 };

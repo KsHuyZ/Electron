@@ -107,15 +107,6 @@ const FilterWareHouseItem = (props: PropsFilter) => {
 
   const onFinish = (value: ISearch) => {
 
-    // const nowDate = formatDate(Date.now(), false, 'no_date');
-    // const after_Date = formatDate(Date.now(), false, 'after_7day');
-    // const after_Month = formatDate(Date.now(), false, 'after_month');
-
-    // const checkDate = () => {
-    //   if (!value.date_expried) return ''
-    //   return value.date_expried === '7_days' ? after_Date : (value.date_expried === 'out_date' ? nowDate : after_Month)
-    // }
-
     const objSearch = {
       status: value.status ?? '',
       startDate: value.date && value.date[0] ? dayjs(value.date[0]).format('YYYY/MM/DD') : undefined,

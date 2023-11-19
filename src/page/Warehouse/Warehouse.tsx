@@ -1,6 +1,6 @@
 
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
-import { Button, Col, Row, Space, Table, message } from 'antd';
+import { Button, Col, DatePicker, Row, Space, Table, message } from 'antd';
 import { UilPen } from '@iconscout/react-unicons'
 import { useEffect, useState } from "react";
 import { ipcRenderer } from "electron";
@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 
 import ModalWareHouse from "./components/ModalWareHouse";
 import Update from "@/components/update";
+import dayjs from 'dayjs';
 
 type DataType = {
     ID: string;
@@ -23,6 +24,8 @@ interface TableParams {
     pagination?: TablePaginationConfig;
 }
 
+const { RangePicker } = DatePicker;
+
 const Warehouse = () => {
 
     const [showAddModal, setShowAddModal] = useState<boolean>(false)
@@ -35,9 +38,9 @@ const Warehouse = () => {
             total: 0
         },
     });
-
     const [formEdit, setFormEdit] = useState<{ idEdit: string, name: string }>();
-
+    const [showTime, setShowTime] = useState(false)
+    const [selectTime, setSelectTime] = useState({ start: "", end: "" })
     const columns: ColumnsType<DataType> = [
         {
             title: 'Mã kho hàng',
@@ -125,15 +128,37 @@ const Warehouse = () => {
         cleanFormEdit();
     }
 
+    const handleChangeTime = (values: any) => {
+        setSelectTime({ start: dayjs(values[0]).format('YYYY/MM/DD'), end: dayjs(values[1]).format('YYYY/MM/DD') })
+    }
+    const handleCreateExcelReport = async () => {
+        const result = await ipcRenderer.invoke('export-request-xlsx', "Báo cáo xuất nhập");
+        if (result.filePath) {
+            const response = await ipcRenderer.invoke('export-report-import-export', { filePath: result.filePath, startTime: selectTime.start, endTime: selectTime.end });
+
+            if (response === 'error') {
+                message.error('Xuất file không thành công');
+            } else {
+                message.success('Xuất file thành công');
+            }
+            setSelectTime({ start: "", end: "" })
+            setShowTime(false)
+        }
+    }
 
     return (
         <>
-            {/* <Update /> */}
             <ModalWareHouse isShow={showAddModal} dataEdit={formEdit} clean={() => cleanFormEdit()} closeModal={() => handleCloseModal()} setLoading={() => handleOpenModal()} fetching={async () => await handleGetAllWarehouse(tableParams.pagination?.pageSize!, tableParams.pagination?.current!)} />
             <Row style={{ margin: '10px 0' }}>
                 <Col span={24}>
-                    <Space>
+                    <Space align='start'>
                         <Button type="primary" onClick={handleShowAddModal}>Thêm kho hàng</Button>
+                        <Space direction='vertical'>
+                            <Button type="primary" onClick={() => setShowTime(prev => !prev)}>Xuất báo cáo xuất nhập</Button>
+                            <Row>
+                                {showTime ? <><RangePicker onChange={(value) => handleChangeTime(value)} />  <Button type='primary' onClick={handleCreateExcelReport} style={{ marginLeft: 10 }}>Xuất file</Button> </> : <></>}
+                            </Row>
+                        </Space>
                     </Space>
                 </Col>
             </Row>

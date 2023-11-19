@@ -89,12 +89,7 @@ export const formatDate = (
   // Format the date based on the type
   switch (type) {
     case "date_First":
-      formattedDate = newDate.format(`${suffix ? "HH:mm" : ""} DD/MM/YYYY`);
-      break;
-    case "after_Date":
-      formattedDate = dayjs(newDate).format(
-        `YYYY/MM/DD ${suffix ? "HH:MM" : ""}`
-      );
+      formattedDate = newDate.format(`YYYY/MM/DD`);
       break;
     case "after_7day":
       const before7Days = dayjs(newDate).add(7, "day");

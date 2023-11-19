@@ -8,9 +8,9 @@ import {
 import { DataType, Intermediary, WarehouseItem } from "../../types";
 import wareHouseItemDB from "../wareHouseItem/wareHouseItem";
 import tempCountCoupon from "../tempCountCoupon/tempCountCoupon";
-
+import historyItem from "../historyItem/historyItem";
 const { createWareHouseItem } = wareHouseItemDB;
-
+const { updateLastedVersionIntermediary } = historyItem;
 const countCoupon = {
   createCountCoupon: async (
     id_Source: number | string,
@@ -186,9 +186,10 @@ const countCoupon = {
         throw new Error("Bạn không thể sửa quá số lượng xuống nữa");
       const updateQueryI = `UPDATE Intermediary SET status = ${
         status === 5 || status === 1 ? 2 : 3
-      }, quantity = ?, id_WareHouse = ? WHERE ID = ?`;
+      }, quantity = ?,id_WareHouse = ? WHERE ID = ?`;
       const updateQueryW = `UPDATE warehouseItem SET name = ?, price = ?, date_expried = ?, quantity_plane = ?,id_Source = ? WHERE ID = ?`;
       await runQuery(updateQueryI, [finalQuantity, idWareHouse, id]);
+      await updateLastedVersionIntermediary(id, finalQuantity);
       await runQuery(updateQueryW, [
         name,
         price,
@@ -210,6 +211,7 @@ const countCoupon = {
         item.status === 2 ? 5 : 1
       },quantity = 0 WHERE ID = ?`;
       await runQuery(updateQuery, [item.IDIntermediary]);
+      await updateLastedVersionIntermediary(item.IDIntermediary, 0);
       return { success: true, message: "" };
     } catch (error) {
       return { success: false, message: error.message };
@@ -280,7 +282,8 @@ const countCoupon = {
             idWareHouse,
             idSource,
             item,
-            3
+            3,
+            date
           );
           if (!result.success)
             isError = { error: true, message: result.message };

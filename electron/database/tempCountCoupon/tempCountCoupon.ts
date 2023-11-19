@@ -53,7 +53,8 @@ const tempCountCoupon = {
     idTempCoutCoupon: number | unknown,
     items: (WarehouseItem & Intermediary)[],
     idSource: number,
-    idWareHouse: number
+    idWareHouse: number,
+    date: string
   ) => {
     try {
       items.forEach(
@@ -63,7 +64,8 @@ const tempCountCoupon = {
             idWareHouse,
             idSource,
             item,
-            1
+            1,
+            date
           )
       );
       return true;
@@ -191,7 +193,8 @@ const tempCountCoupon = {
             idWareHouse,
             idSource,
             item,
-            1
+            1,
+            date
           );
           if (!result.success)
             isError = { error: true, message: isError.message };

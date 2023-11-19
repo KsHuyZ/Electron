@@ -32,7 +32,6 @@ const countCoupon = (mainScreen: BrowserWindow) => {
     return await approveAccept(id);
   });
   ipcMain.on("print-import", async (event, data) => {
-    console.log("Ye")
     const { getWareHousebyID } = WareHouse;
     const items = await getCouponItembyCouponID(data.ID);
     const wareHouse: any = await getWareHousebyID(data.idWareHouse);
