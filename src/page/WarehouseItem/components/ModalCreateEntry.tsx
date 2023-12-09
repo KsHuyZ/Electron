@@ -181,11 +181,11 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       dataIndex: "action",
       fixed: "right",
       width: 150,
-      render: (_, record: any) => (
+      render: (_, record: any, index: number) => (
         <Space size="middle">
           <UilMultiply
             style={{ cursor: "pointer" }}
-            onClick={() => handleRemoveItem(record)}
+            onClick={() => handleRemoveItem(index)}
           />
         </Space>
       ),
@@ -270,18 +270,15 @@ const ModalCreateEntry: React.FC<PropsModal> = (props) => {
       }, 500)
 
     }
-    // if (result) {
-    //   setListItemEntryForm([])
-    // }
   };
 
   const handleCreateNewItem = (item: DataType) => {
     setListItemEntryForm(prev => removeItemChildrenInTable([...prev, item]))
   }
 
-  const handleRemoveItem = (item: DataType) => {
+  const handleRemoveItem = (index: number) => {
     const filterItem = listItemEntryForm.filter(
-      (cur) => cur.IDIntermediary !== item.IDIntermediary
+      (_, i) => i !== index
     );
     setListItemEntryForm(filterItem);
   };

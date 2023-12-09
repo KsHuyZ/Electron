@@ -85,7 +85,6 @@ const UploadXlsx = () => {
   const [editingKey, setEditingKey] = useState('');
   const refError = useRef<any>(null);
   const refInputFile = useRef<any>(null);
-  const [isErrorSelect, setIsErrorSelect] = useState(false);
   const [showModal, setShowModal] = useState<boolean>(false)
   const { idWareHouse, nameWareHouse } = useParams();
   const navigate = useNavigate();

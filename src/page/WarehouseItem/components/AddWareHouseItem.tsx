@@ -14,7 +14,7 @@ import {
 import "../styles/wareHouseItem.scss";
 import { WarehouseItem, FormWareHouseItem, DataType } from "../types";
 import { getMessage, ERROR, ERROR_SERVER } from "../constants/messValidate";
-import { createRegexValidator, formatDate, convertPrice } from "@/utils";
+import { createRegexValidator, formatDate, convertPrice, checkBigger } from "@/utils";
 import { priceRegex, OptionSelect, ItemSource, QUALITY, STATUS } from "@/types";
 import { useState, useEffect } from "react";
 import { ipcRenderer } from "electron";
@@ -285,6 +285,11 @@ const AddWareHouseItem = React.memo(
                     validator: createRegexValidator(
                       priceRegex,
                       getMessage(ERROR.ERROR_2, "SL thực tế")
+                    ),
+                  },
+                  {
+                    validator: checkBigger(
+                      "Số lượng mặt hàng phải lớn hơn 0"
                     ),
                   },
                 ]}

@@ -374,10 +374,10 @@ export const formReportInventory = async (
     { header: "Nước SX", key: "origin", width: 40 },
     { header: "ĐVT", key: "unit", width: 40 },
     { header: "NHSX", key: "", width: 40 },
-    { header: "NHSD", key: "", width: 40 },
+    { header: "NHSD", key: "date_expried", width: 40 },
     { header: "Giá lẻ", key: "price", width: 40 },
     { header: "Tồn đầu", key: "quantity", width: 40 },
-    { header: "Chờ nhập", key: "import", width: 40 },
+    { header: "Chờ nhập", key: "quantityImport", width: 40 },
     { header: "Chờ xuất", key: "quantityExport", width: 40 },
     { header: "Tồn cuối", key: "quantityFinal", width: 40 },
   ];
@@ -428,6 +428,11 @@ export const formReportInventory = async (
         dataRow.getCell(1 + colIndex).numFmt = "#,##0";
         dataRow.getCell(1 + colIndex).value = rowData["price"];
       }
+      if (colKey === "date_expried") {
+        dataRow.getCell(1 + colIndex).value = convertDate(
+          rowData["date_expried"]
+        );
+      }
     }
     rowIndex++;
   }
@@ -463,7 +468,7 @@ export const formInventoryRecords = async (
     { header: `Tên quy cách (Theo danh mục)`, key: "name", width: 40 },
     { header: "ĐVT", key: "unit", width: 40 },
     { header: "CL", key: "quality", width: 40 },
-    { header: "Hạn dùng", key: "date_expired", width: 40 },
+    { header: "Hạn dùng", key: "date_expried", width: 40 },
     { header: "SL-SS Kho", key: "quantity", width: 40 },
     { header: "SL-TK Kho", key: "", width: 40 },
     { header: "Số lượng thừa Kho", key: "", width: 40 },

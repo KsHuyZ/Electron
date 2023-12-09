@@ -21,7 +21,8 @@ import { Moment } from "moment";
 import tempCountDelivery from "../tempCountDelivery";
 import { historyItemType } from "../../utils";
 const { createTempDeliveryItem } = tempCountDelivery;
-const { createHistoryItem, updateLastedVersionIntermediary, getLastItemType } = historyItem;
+const { createHistoryItem, updateLastedVersionIntermediary, getLastItemType } =
+  historyItem;
 const { IMPORT, EXPORT, TRANSFER } = historyItemType;
 
 const wareHouseItem = {
@@ -522,12 +523,12 @@ const wareHouseItem = {
               "SELECT quantity FROM Intermediary WHERE ID = ?",
               [item.idIntermediary]
             );
-            const type = await getLastItemType(item.idIntermediary)
+            // const type = await getLastItemType(item.idIntermediary)
             await createHistoryItem(
               item.idIntermediary,
               updateResult.quantity,
               item.quality,
-              type
+              TRANSFER
             );
           }
         } else {
@@ -559,12 +560,12 @@ const wareHouseItem = {
               "SELECT quantity FROM Intermediary WHERE ID = ?",
               [item.idIntermediary]
             );
-            const type = await getLastItemType(item.idIntermediary)
+            // const type = await getLastItemType(item.idIntermediary)
             await createHistoryItem(
               item.idIntermediary,
               updateResult.quantity,
               item.quality,
-              type
+              TRANSFER
             );
           }
         }
@@ -587,6 +588,19 @@ const wareHouseItem = {
     const updateQuery2 = `UPDATE Intermediary SET quantity = quantity - ? WHERE ID = ?`;
     const selectQuery =
       "SELECT quantity, quality FROM Intermediary WHERE ID = ?";
+
+      await runQuery(updateQuery2, [item.quantity, item.IDIntermediary]);
+    const updateResult2: any = await runQueryGetData(selectQuery, [
+      item.IDIntermediary,
+    ]);
+    // const type = await getLastItemType(item.IDIntermediary)
+    await createHistoryItem(
+      item.IDIntermediary,
+      updateResult2.quantity,
+      updateResult2.quality,
+      EXPORT
+    );
+
     await runQuery(updateQuery1, [item.quantity, ID]);
     const updateResult1: any = await runQueryGetData(selectQuery, [ID]);
     await createHistoryItem(
@@ -595,17 +609,7 @@ const wareHouseItem = {
       updateResult1.quality,
       EXPORT
     );
-    await runQuery(updateQuery2, [item.quantity, item.IDIntermediary]);
-    const updateResult2: any = await runQueryGetData(selectQuery, [
-      item.IDIntermediary,
-    ]);
-    const type = await getLastItemType(item.IDIntermediary)
-    await createHistoryItem(
-      item.IDIntermediary,
-      updateResult2.quantity,
-      updateResult1.quality,
-      type
-    );
+    
     const result = await createTempDeliveryItem(
       idCoutDelivery,
       ID,
@@ -712,12 +716,12 @@ const wareHouseItem = {
               "SELECT quantity FROM Intermediary WHERE ID = ?",
               [item.IDIntermediary]
             );
-            const type = await getLastItemType(item.IDIntermediary)
+            // const type = await getLastItemType(item.IDIntermediary)
             await createHistoryItem(
               item.IDIntermediary,
               updateResult.quantity,
               item.quality,
-              type
+              EXPORT
             );
             const result = await createTempDeliveryItem(
               idCoutDelivery,

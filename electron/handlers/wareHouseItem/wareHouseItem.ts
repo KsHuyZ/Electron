@@ -44,8 +44,8 @@ const {
   getWarehouseItemIsAprove,
   getWarehouseItemFinal,
   getWarehouseItemExportInTime,
+  getWarehouseItemImportIntime,
 } = historyItem;
-let isForm = "";
 
 const wareHouseItem = (mainScreen: BrowserWindow) => {
   const {
@@ -585,10 +585,7 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
       }: { ID: string; startTime: string; endTime: string; filePath: string }
     ) => {
       try {
-        const warehouseitems: any = await getWarehouseItemIsAprove(
-          ID,
-          startTime
-        );
+        const warehouseitems: any = await getWarehouseItemIsAprove(ID, endTime);
         const promise = warehouseitems.map(async (item, index) => {
           const resultFinal: any = await getWarehouseItemFinal(
             item.ID,
@@ -600,17 +597,25 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
             startTime,
             endTime
           );
+
+          const resultImport: any = await getWarehouseItemImportIntime(
+            item.ID,
+            startTime,
+            endTime
+          );
           return {
             ...item,
             index: ++index,
-            quantityExport: resultExport.quantityExport,
+            quantityExport: resultExport,
+            quantityImport: resultImport,
             quantityFinal: resultFinal,
           };
         });
         const items = await Promise.all(promise);
-        formReportInventory(items, filePath, startTime, endTime);
+        await formReportInventory(items, filePath, startTime, endTime);
         return { status: "success" };
       } catch (error) {
+        console.log(error);
         return { status: "error" };
       }
     }

@@ -69,8 +69,18 @@ export const createRegexValidator = (regex: RegExp, errorMessage: string) => {
     });
   };
 };
+export const checkBigger = (errorMessage: string) => {
+  return (rule: RuleObject, value: number) => {
+    return new Promise<void>((resolve, reject) => {
+      if (value <= 0) {
+        reject(errorMessage);
+      } else {
+        resolve();
+      }
+    });
+  };
+};
 
-const getDateTime = () => {};
 
 export const formatDate = (
   newDate: any,
