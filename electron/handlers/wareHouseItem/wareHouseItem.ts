@@ -587,6 +587,11 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
       try {
         const warehouseitems: any = await getWarehouseItemIsAprove(ID, endTime);
         const promise = warehouseitems.map(async (item, index) => {
+          const quantity: any = await getWarehouseItemFinal(
+            item.ID,
+            endTime,
+            startTime
+          );
           const resultFinal: any = await getWarehouseItemFinal(
             item.ID,
             startTime,
@@ -606,6 +611,7 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
           return {
             ...item,
             index: ++index,
+            quantity,
             quantityExport: resultExport,
             quantityImport: resultImport,
             quantityFinal: resultFinal,

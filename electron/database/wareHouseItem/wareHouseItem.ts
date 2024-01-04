@@ -523,12 +523,12 @@ const wareHouseItem = {
               "SELECT quantity FROM Intermediary WHERE ID = ?",
               [item.idIntermediary]
             );
-            // const type = await getLastItemType(item.idIntermediary)
+            const type = await getLastItemType(item.idIntermediary)
             await createHistoryItem(
               item.idIntermediary,
               updateResult.quantity,
               item.quality,
-              TRANSFER
+              type
             );
           }
         } else {
@@ -560,12 +560,12 @@ const wareHouseItem = {
               "SELECT quantity FROM Intermediary WHERE ID = ?",
               [item.idIntermediary]
             );
-            // const type = await getLastItemType(item.idIntermediary)
+            const type = await getLastItemType(item.idIntermediary)
             await createHistoryItem(
               item.idIntermediary,
               updateResult.quantity,
               item.quality,
-              TRANSFER
+              type
             );
           }
         }
@@ -593,12 +593,12 @@ const wareHouseItem = {
     const updateResult2: any = await runQueryGetData(selectQuery, [
       item.IDIntermediary,
     ]);
-    // const type = await getLastItemType(item.IDIntermediary)
+    const type = await getLastItemType(item.IDIntermediary)
     await createHistoryItem(
       item.IDIntermediary,
       updateResult2.quantity,
       updateResult2.quality,
-      EXPORT
+      type
     );
 
     await runQuery(updateQuery1, [item.quantity, ID]);
@@ -716,12 +716,12 @@ const wareHouseItem = {
               "SELECT quantity FROM Intermediary WHERE ID = ?",
               [item.IDIntermediary]
             );
-            // const type = await getLastItemType(item.IDIntermediary)
+            const type = await getLastItemType(item.IDIntermediary)
             await createHistoryItem(
               item.IDIntermediary,
               updateResult.quantity,
               item.quality,
-              EXPORT
+              type
             );
             const result = await createTempDeliveryItem(
               idCoutDelivery,

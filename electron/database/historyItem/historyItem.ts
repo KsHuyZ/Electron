@@ -29,43 +29,77 @@ const historyItem = {
     );
   },
   getTotalHistoryItemBefore: async (ID: number | string, time: string) => {
-    const query = `SELECT DISTINCT hi.IDIntermediary ,SUM(i.quantity * wi.price) as total
-    FROM HistoryItem hi
-    join Intermediary i on i.ID = hi.IDIntermediary
-    join WareHouseItem wi on wi.ID = i.id_WareHouseItem
-    join WareHouse w on w.ID = i.id_WareHouse
-    WHERE w.ID = ? AND hi.time < ?
-    `;
+    const query = `SELECT SUM (totalRow) as total FROM (
+      SELECT sub.totalRow FROM (
+      SELECT (hi.quantity * wi.price) AS totalRow, hi.IDIntermediary FROM HistoryItem hi
+      JOIN Intermediary i ON hi.IDIntermediary = i.ID
+      JOIN WareHouseItem wi ON  wi.ID = i.id_WareHouseItem 
+      WHERE i.id_WareHouse = ? AND hi.type = "IMPORT" AND hi.time <= ?
+      ORDER BY hi.ID DESC
+      ) as sub
+      GROUP BY sub.IDIntermediary
+      )`;
     const result: any = await runQueryGetData(query, [ID, time]);
-    return result.total ? result.total : 0;
+    const response = result?.total ? result.total : 0;
+    return response;
   },
   getTotalImportItem: async (
     ID: number | string,
     startTime: string,
     endTime: string
   ) => {
-    const query = `SELECT DISTINCT hi.IDIntermediary ,SUM(hi.quantity * wi.price) as total
-    FROM HistoryItem hi
-    join Intermediary i on i.ID = hi.IDIntermediary
-    join WareHouseItem wi on wi.ID = i.id_WareHouseItem
-    join WareHouse w on w.ID = i.id_WareHouse
-    WHERE w.ID = ? AND hi.time >= ? AND hi.time <= ? AND hi.type = "${IMPORT}"`;
-    const result: any = await runQueryGetData(query, [ID, startTime, endTime]);
-    return result.total ? result.total : 0;
+    const querySelectTemp = `SELECT SUM(ci.quantity * wi.price) as total FROM CoutTempCoupon cc
+JOIN Coupon_Temp_Item ci ON ci.id_Temp_Cout_Coupon = cc.ID
+JOIN Intermediary i ON ci.id_intermediary = i.ID
+JOIN WareHouseItem wi ON wi.ID = i.id_WareHouseItem
+WHERE cc.idWareHouse = ? AND cc.date >= ? AND cc.date <= ? AND cc.status = 0`;
+    const resultTemp: any = await runQueryGetData(querySelectTemp, [
+      ID,
+      startTime,
+      endTime,
+    ]);
+    const totalTemp = resultTemp.total ? resultTemp.total : 0;
+    const querySelect = `SELECT SUM(ci.quantity * wi.price) as total FROM CoutCoupon cc
+JOIN Coupon_Item ci ON ci.id_Cout_Coupon = cc.ID
+JOIN Intermediary i ON ci.id_intermediary = i.ID
+JOIN WareHouseItem wi ON wi.ID = i.id_WareHouseItem
+WHERE cc.idWareHouse = ? AND cc.date >= ? AND cc.date <= ?`;
+    const result: any = await runQueryGetData(querySelect, [
+      ID,
+      startTime,
+      endTime,
+    ]);
+    const totalOffice = result.total ? result.total : 0;
+    return totalTemp + totalOffice;
   },
   getTotalExportItem: async (
     ID: number | string,
     startTime: string,
     endTime: string
   ) => {
-    const query = `SELECT DISTINCT hi.IDIntermediary ,SUM(hi.quantity * wi.price) as total
-    FROM HistoryItem hi
-    join Intermediary i on i.ID = hi.IDIntermediary
-    join WareHouseItem wi on wi.ID = i.id_WareHouseItem
-    join WareHouse w on w.ID = i.id_WareHouse
-    WHERE w.ID = ? AND hi.time >= ? AND hi.time <= ? AND hi.type = "${EXPORT}"`;
-    const result: any = await runQueryGetData(query, [ID, startTime, endTime]);
-    return result.total ? result.total : 0;
+    const querySelectTemp = `SELECT SUM(ci.quantity * wi.price) as total FROM CoutTempDelivery cc
+    JOIN Delivery_Temp_Item ci ON ci.id_Temp_Cout_Delivery = cc.ID
+    JOIN Intermediary i ON ci.id_intermediary = i.ID
+    JOIN WareHouseItem wi ON wi.ID = i.id_WareHouseItem
+    WHERE i.prev_idwarehouse = ? AND cc.date >= ? AND cc.date <= ? AND cc.status = 0`;
+    const resultTemp: any = await runQueryGetData(querySelectTemp, [
+      ID,
+      startTime,
+      endTime,
+    ]);
+    const totalTemp = resultTemp.total ? resultTemp.total : 0;
+    const querySelect = `SELECT SUM(ci.quantity * wi.price) as total FROM CoutDelivery cc
+    JOIN Delivery_Item ci ON ci.id_Cout_Delivery = cc.ID
+    JOIN Intermediary i ON ci.id_intermediary = i.ID
+    JOIN WareHouseItem wi ON wi.ID = i.id_WareHouseItem
+    WHERE i.prev_idwarehouse = ? AND cc.date >= ? AND cc.date <= ?`;
+    const result: any = await runQueryGetData(querySelect, [
+      ID,
+      startTime,
+      endTime,
+    ]);
+    const totalOffice = result.total ? result.total : 0;
+    return totalTemp + totalOffice;
   },
 
   getInventoryRecords: async (
@@ -80,7 +114,7 @@ const historyItem = {
     JOIN WareHouse w on w.ID = i.id_WareHouse
     JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
     JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon 
-    WHERE w.ID = 1 AND hi.time >= "${startTime}" AND hi.time <= "${endTime}" AND cc.status = 1 
+    WHERE w.ID = ${ID} AND hi.time >= "${startTime}" AND hi.time <= "${endTime}" AND cc.status = 1 
     GROUP BY hi.IDIntermediary
     HAVING hi.quantity > 0
     `;
@@ -125,7 +159,7 @@ HAVING hi.quantity > 0
     JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
     JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
     JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon 
-    WHERE hi.time <= "${endTime}" AND i.id_WareHouse = ${ID} AND hi.type = "IMPORT"
+    WHERE hi.time <= "${endTime}" AND i.id_WareHouse = ${ID} AND hi.type = "IMPORT" AND cc.dateApproved <= "${endTime}"
     GROUP BY hi.IDIntermediary
     HAVING hi.quantity > 0`;
     const result = await runQueryGetAllData(selectQuery, []);
@@ -136,14 +170,13 @@ HAVING hi.quantity > 0
     startTime: string,
     endTime: string
   ) => {
-    const selectQuery = `select hi.quantity as quantityExport, max(hi.ID) from WareHouseItem wi
+    const selectQuery = `select di.quantity as quantityExport from WareHouseItem wi
     JOIN Intermediary i on i.id_WareHouseItem = wi.ID
-    JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
     JOIN Delivery_Item di ON di.id_intermediary = i.ID
     JOIN CoutDelivery cd ON cd.ID = di.id_Cout_Delivery
-    where hi.time <= "${endTime}" AND cd.date <= "${endTime}" AND wi.ID = ? AND cd.status = 0`;
+    WHERE cd.date <= "${endTime}" AND wi.ID = ? AND (cd.dateApproved IS NULL OR cd.dateApproved <= "${startTime}")`;
     const result: any = await runQueryGetData(selectQuery, [ID]);
-    return result.quantityExport;
+    return result?.quantityExport ? result.quantityExport : null;
   },
   getWarehouseItemImportIntime: async (
     ID: string,
@@ -154,7 +187,7 @@ HAVING hi.quantity > 0
     JOIN Intermediary i on i.id_WareHouseItem = wi.ID
     JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
     JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon
-    WHERE  cc.date >= "${startTime}" AND cc.date <= "${endTime}" AND wi.ID = ? AND cc.status = 0`;
+    WHERE  cc.date <= "${endTime}" AND wi.ID = ? AND (cc.dateApproved IS NULL OR cc.dateApproved <= "${startTime}")`;
     const result: any = await runQueryGetData(selectQuery, [ID]);
     return result ? result.quantityImport : null;
   },
@@ -168,7 +201,7 @@ HAVING hi.quantity > 0
     JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
     JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
     JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon
-    where hi.time < "${endTime}" AND cc.date < "${endTime}" AND cc.status = 1 AND hi.type = "IMPORT" AND wi.ID = ${ID}
+    where hi.time <= "${endTime}" AND cc.date <= "${endTime}" AND cc.status = 1 AND hi.type = "IMPORT" AND wi.ID = ${ID}
     GROUP BY hi.IDIntermediary`;
 
     const finalResult: any = await runQueryGetData(selectQuery, []);
