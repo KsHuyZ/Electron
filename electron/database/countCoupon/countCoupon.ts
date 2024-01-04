@@ -4,6 +4,7 @@ import {
   runQueryGetData,
   runQueryGetAllData,
   runQueryReturnID,
+  getTimeNow,
 } from "../../utils";
 import { DataType, Intermediary, WarehouseItem } from "../../types";
 import wareHouseItemDB from "../wareHouseItem/wareHouseItem";
@@ -309,8 +310,9 @@ const countCoupon = {
     }
   },
   approveAccept: async (id: number | string) => {
-    const updateQuery = `UPDATE CoutCoupon SET status = 1 where id = ?`;
-    const isSuccess = await runQuery(updateQuery, [id]);
+    const time = getTimeNow();
+    const updateQuery = `UPDATE CoutCoupon SET status = 1, dateApproved = ?  where id = ?`;
+    const isSuccess = await runQuery(updateQuery, [time,id]);
     return isSuccess;
   },
 };

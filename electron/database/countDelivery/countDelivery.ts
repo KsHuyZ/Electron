@@ -1,5 +1,6 @@
 import { Moment } from "moment";
 import {
+  getTimeNow,
   runQuery,
   runQueryGetAllData,
   runQueryGetData,
@@ -340,8 +341,9 @@ const countDelivery = {
     }
   },
   approveAccept: async (id: number | string) => {
-    const updateQuery = `UPDATE CoutDelivery SET status = 1 where id = ?`;
-    const isSuccess = await runQuery(updateQuery, [id]);
+    const time = getTimeNow();
+    const updateQuery = `UPDATE CoutDelivery SET status = 1, dateApproved = ? where id = ?`;
+    const isSuccess = await runQuery(updateQuery, [time,id]);
     return isSuccess;
   },
   getWareHouseItemOfficialInWareHouse: async (
