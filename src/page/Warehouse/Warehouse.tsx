@@ -129,6 +129,10 @@ const Warehouse = () => {
     }
 
     const handleChangeTime = (values: any) => {
+        if(!values) {
+            setSelectTime({start: "", end: ""})
+            return
+        }
         setSelectTime({ start: dayjs(values[0]).format('YYYY/MM/DD'), end: dayjs(values[1]).format('YYYY/MM/DD') })
     }
     const handleCreateExcelReport = async () => {
@@ -156,7 +160,7 @@ const Warehouse = () => {
                         <Space direction='vertical'>
                             <Button type="primary" onClick={() => setShowTime(prev => !prev)}>Xuất báo cáo xuất nhập</Button>
                             <Row>
-                                {showTime ? <><RangePicker onChange={(value) => handleChangeTime(value)} />  <Button type='primary' onClick={handleCreateExcelReport} style={{ marginLeft: 10 }}>Xuất file</Button> </> : <></>}
+                                {showTime ? <><RangePicker onChange={(value) => handleChangeTime(value)}/>  <Button type='primary' onClick={handleCreateExcelReport} style={{ marginLeft: 10 }} disabled={!selectTime.start || !selectTime.end}>Xuất file</Button> </> : <></>}
                             </Row>
                         </Space>
                     </Space>

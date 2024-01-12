@@ -965,7 +965,6 @@ const wareHouseItem = {
       quality,
       status,
     ]);
-    console.log("rows: ", rows);
     return rows;
   },
 };

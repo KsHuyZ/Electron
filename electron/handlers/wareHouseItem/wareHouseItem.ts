@@ -588,11 +588,15 @@ const wareHouseItem = (mainScreen: BrowserWindow) => {
         const warehouseitems: any = await getWarehouseItemIsAprove(ID, endTime);
         const promise = warehouseitems.map(async (item, index) => {
           const quantity: any = await getWarehouseItemFinal(
+            "start",
+            ID,
             item.ID,
-            endTime,
-            startTime
+            startTime,
+            endTime
           );
           const resultFinal: any = await getWarehouseItemFinal(
+            "end",
+            ID,
             item.ID,
             startTime,
             endTime

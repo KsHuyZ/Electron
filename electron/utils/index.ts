@@ -84,7 +84,6 @@ export const handleTransaction = async (callback: () => Promise<any>) => {
   try {
     await runQuery("BEGIN", []);
     const result = await callback();
-    console.log("Ketqacuoi", result);
     if (!result.success) {
       throw new Error(result.message);
     }

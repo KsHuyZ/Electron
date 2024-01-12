@@ -34,7 +34,7 @@ const historyItem = {
       SELECT (hi.quantity * wi.price) AS totalRow, hi.IDIntermediary FROM HistoryItem hi
       JOIN Intermediary i ON hi.IDIntermediary = i.ID
       JOIN WareHouseItem wi ON  wi.ID = i.id_WareHouseItem 
-      WHERE i.id_WareHouse = ? AND hi.type = "IMPORT" AND hi.time <= ?
+      WHERE i.id_WareHouse = ? AND (hi.type = "IMPORT" OR hi.type = "TRANSFER") AND hi.time <= ?
       ORDER BY hi.ID DESC
       ) as sub
       GROUP BY sub.IDIntermediary
@@ -154,14 +154,28 @@ HAVING hi.quantity > 0
     return rows;
   },
   getWarehouseItemIsAprove: async (ID: string, endTime: string) => {
-    const selectQuery = `SELECT hi.quantity,i.ID as IDIntermediary, max(hi.ID), wi.ID, wi.name, wi.price, wi.unit, wi.date_expried, wi.origin FROM WareHouseItem wi
-    JOIN Intermediary i ON i.id_WareHouseItem = wi.ID
+    // const selectQuery = `SELECT hi.quantity,i.ID as IDIntermediary, max(hi.ID), wi.ID, wi.name, wi.price, wi.unit, wi.date_expried, wi.origin FROM WareHouseItem wi
+    // JOIN Intermediary i ON i.id_WareHouseItem = wi.ID
+    // JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
+    // JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
+    // JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon
+    // WHERE hi.time <= "${endTime}" AND i.id_WareHouse = ${ID} AND hi.type = "IMPORT" AND cc.dateApproved <= "${endTime}"
+    // GROUP BY hi.IDIntermediary
+    // HAVING hi.quantity > 0`;
+    const selectQuery = `SELECT hi.quantity,max(hi.ID), i.ID as IDIntermediary, wi.ID, wi.name, wi.price, wi.unit, wi.date_expried, wi.origin FROM Intermediary i
     JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
-    JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
-    JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon 
-    WHERE hi.time <= "${endTime}" AND i.id_WareHouse = ${ID} AND hi.type = "IMPORT" AND cc.dateApproved <= "${endTime}"
-    GROUP BY hi.IDIntermediary
-    HAVING hi.quantity > 0`;
+    JOIN WareHouseItem wi ON wi.ID = i.id_WareHouseItem
+    WHERE id_WareHouseItem IN (SELECT wi.ID FROM WareHouseItem wi
+    JOIN Intermediary i ON i.id_WareHouseItem = wi.ID
+    WHERE i.ID IN (
+    SELECT i.ID FROM WareHouseItem wi
+        JOIN Intermediary i ON i.id_WareHouseItem = wi.ID
+        JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
+        JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
+        JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon 
+        GROUP BY hi.IDIntermediary
+        HAVING (cc.dateApproved IS NULL OR cc.dateApproved <= "${endTime}"))) AND hi.time <= "${endTime}" AND id_WareHouse = ${ID} AND hi.quantity > 0 AND (hi.type = "IMPORT" OR hi.type = "TRANSFER")
+    GROUP BY hi.IDIntermediary`;
     const result = await runQueryGetAllData(selectQuery, []);
     return result;
   },
@@ -174,7 +188,7 @@ HAVING hi.quantity > 0
     JOIN Intermediary i on i.id_WareHouseItem = wi.ID
     JOIN Delivery_Item di ON di.id_intermediary = i.ID
     JOIN CoutDelivery cd ON cd.ID = di.id_Cout_Delivery
-    WHERE cd.date <= "${endTime}" AND wi.ID = ? AND (cd.dateApproved IS NULL OR cd.dateApproved <= "${startTime}")`;
+    WHERE cd.date <= "${endTime}" AND wi.ID = ? AND (cd.dateApproved IS NULL OR cd.dateApproved < "${startTime}")`;
     const result: any = await runQueryGetData(selectQuery, [ID]);
     return result?.quantityExport ? result.quantityExport : null;
   },
@@ -187,23 +201,41 @@ HAVING hi.quantity > 0
     JOIN Intermediary i on i.id_WareHouseItem = wi.ID
     JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
     JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon
-    WHERE  cc.date <= "${endTime}" AND wi.ID = ? AND (cc.dateApproved IS NULL OR cc.dateApproved <= "${startTime}")`;
+    WHERE  cc.date <= "${endTime}" AND wi.ID = ? AND (cc.dateApproved IS NULL OR cc.dateApproved < "${startTime}")`;
     const result: any = await runQueryGetData(selectQuery, [ID]);
     return result ? result.quantityImport : null;
   },
   getWarehouseItemFinal: async (
+    type: string,
+    warehouseID: number | string,
     ID: string,
     startTime: string,
     endTime: string
   ) => {
-    const selectQuery = `select hi.quantity as quantityFinal, hi.type from WareHouseItem wi
-    JOIN Intermediary i on i.id_WareHouseItem = wi.ID
+    // const selectQuery = `select hi.quantity as quantityFinal, hi.type from WareHouseItem wi
+    // JOIN Intermediary i on i.id_WareHouseItem = wi.ID
+    // JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
+    // JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
+    // JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon
+    // where hi.time <= "${endTime}" AND cc.date <= "${endTime}" AND cc.status = 1 AND hi.type = "IMPORT" AND wi.ID = ${ID}
+    // GROUP BY hi.IDIntermediary`;
+    const selectQuery = `SELECT hi.quantity as quantityFinal, max(hi.ID) FROM Intermediary i
     JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
-    JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
-    JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon
-    where hi.time <= "${endTime}" AND cc.date <= "${endTime}" AND cc.status = 1 AND hi.type = "IMPORT" AND wi.ID = ${ID}
-    GROUP BY hi.IDIntermediary`;
-
+    JOIN WareHouseItem wi ON wi.ID = i.id_WareHouseItem
+    WHERE id_WareHouseItem IN (SELECT wi.ID FROM WareHouseItem wi
+    JOIN Intermediary i ON i.id_WareHouseItem = wi.ID
+    WHERE i.ID IN (
+    SELECT i.ID FROM WareHouseItem wi
+        JOIN Intermediary i ON i.id_WareHouseItem = wi.ID
+        JOIN HistoryItem hi ON hi.IDIntermediary = i.ID
+        JOIN Coupon_Item ci ON ci.id_intermediary = i.ID
+        JOIN CoutCoupon cc ON cc.ID = ci.id_Cout_Coupon 
+        GROUP BY hi.IDIntermediary
+        HAVING cc.dateApproved <= "${startTime}")) AND hi.time <= ${
+      type === "start" ? `"${startTime}"` : `"${endTime}"`
+    } AND id_WareHouse = ${warehouseID} AND hi.quantity > 0 AND (hi.type = "IMPORT" OR hi.type = "TRANSFER") AND wi.ID = ${ID}
+    GROUP BY hi.IDIntermediary
+    `;
     const finalResult: any = await runQueryGetData(selectQuery, []);
     return finalResult ? finalResult.quantityFinal : null;
   },

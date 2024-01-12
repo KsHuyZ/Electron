@@ -166,6 +166,7 @@ const ExportFiles = ({
                 type="primary"
                 onClick={handleExportReport}
                 loading={loading.remain}
+                disabled={!selectTimeRemain.startTime || !selectTimeRemain.endTime}
               >
                 Xuất báo cáo
               </Button>
@@ -204,6 +205,7 @@ const ExportFiles = ({
                 type="primary"
                 onClick={handleExportReportKK}
                 loading={loading.kk}
+                disabled={!selectTime.startTime || !selectTime.endTime}
               >
                 Xuất báo cáo
               </Button>
